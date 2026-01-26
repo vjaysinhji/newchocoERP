@@ -8617,4 +8617,70 @@ return array (
     'key' => 'Basement Name',
     'value' => 'اسم القبو',
   ),
+  1436 => 
+  array (
+    'locale' => 'ar',
+    'key' => 'Greeting card',
+    'value' => 'بطاقة تهنئة',
+  ),
+  1437 => 
+  array (
+    'locale' => 'ar',
+    'key' => 'Order Type',
+    'value' => 'نوع الطلب',
+  ),
+  1438 => 
+  array (
+    'locale' => 'ar',
+    'key' => 'Select Order Type',
+    'value' => 'اختر نوع الطلب',
+  ),
+  1439 => 
+  array (
+    'locale' => 'ar',
+    'key' => 'Delivery Type',
+    'value' => 'نوع التسليم',
+  ),
+  1440 => 
+  array (
+    'locale' => 'ar',
+    'key' => 'Select Delivery Type',
+    'value' => 'اختر نوع التسليم',
+  ),
+  1441 => 
+  array (
+    'locale' => 'ar',
+    'key' => 'Delivery Date',
+    'value' => 'تاريخ التسليم',
+  ),
+  1442 => 
+  array (
+    'locale' => 'ar',
+    'key' => 'Delivery Time',
+    'value' => 'وقت التسليم',
+  ),
+  1443 => 
+  array (
+    'locale' => 'ar',
+    'key' => 'Delivery Time2',
+    'value' => 'وقت التسليم 2',
+  ),
+  1444 => 
+  array (
+    'locale' => 'ar',
+    'key' => 'Select Time',
+    'value' => 'اختر الوقت',
+  ),
+  1445 => 
+  array (
+    'locale' => 'ar',
+    'key' => 'Receiver Name',
+    'value' => 'اسم المستلم',
+  ),
+  1446 => 
+  array (
+    'locale' => 'ar',
+    'key' => 'Receiver Number',
+    'value' => 'رقم المستلم',
+  ),
 );

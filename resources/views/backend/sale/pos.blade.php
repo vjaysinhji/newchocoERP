@@ -1827,6 +1827,107 @@
                                 <div class="modal-body">
                                     <div class="row">
                                         <div class="col-md-10" id="payment-select-row">
+                                            <!-- Sale Note and Greeting Card -->
+                                            <div class="form-group">
+                                                <div class="row">
+                                                    <div class="col-sm-6 col-xs-6">
+                                                        <label>{{ __('db.Sale Note') }}</label>
+                                                        <textarea name="sale_note" id="sale_note" class="form-control kb-text skip" style="height: 40px;" placeholder="{{ __('db.Sale Note') }}" maxlength="250"></textarea>
+                                                    </div>
+                                                    <div class="col-sm-6 col-xs-6">
+                                                        <label>{{ __('db.Greeting card') }}</label>
+                                                        <textarea name="staff_note" id="staffnote" class="form-control kb-text skip" style="height: 40px;" placeholder="{{ __('db.Greeting card') }}" maxlength="250"></textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Order Type and Delivery Type -->
+                                            <div class="form-group">
+                                                <div class="row">
+                                                    <div class="col-sm-6 col-xs-6">
+                                                        <label for="Order Type">{{ __('db.Order Type') }}</label>
+                                                        <select name="delivery_type" class="form-control selectpicker" id="posdeliverytype" required>
+                                                            <option value="" selected>{{ __('db.Select Order Type') }}</option>
+                                                            <option value="factory">Factory</option>
+                                                            <option value="baby_order_shop">Baby Order - Shop</option>
+                                                            <option value="baby_order_factory">Baby Order - Factory</option>
+                                                            <option value="gift_order_shop">Gift Order - Shop</option>
+                                                            <option value="gift_order_factory">Gift Order - Factory</option>
+                                                            <option value="shop_fixing">Shop Fixing</option>
+                                                            <option value="inshop_sales">Inshop Sales</option>
+                                                            <option value="owner">Owner-100% Discount</option>
+                                                            <option value="owner_factory">Owner 100% Discount - Factory</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-sm-6 col-xs-6">
+                                                        <label for="Delivery Type">{{ __('db.Delivery Type') }}</label>
+                                                        <select name="order_mode" class="form-control selectpicker" id="order_mode" required>
+                                                            <option value="" selected>{{ __('db.Select Delivery Type') }}</option>
+                                                            <option value="delivery">Delivery</option>
+                                                            <option value="self_pick_up">Self Pick Up</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Delivery Date and Time -->
+                                            <div class="form-group" id="deliverycontainer">
+                                                <div class="row">
+                                                    <div class="col-sm-6 col-xs-6">
+                                                        <label for="delivery_date">{{ __('db.Delivery Date') }}</label>
+                                                        <input type="text" name="delivery_date" value="" class="form-control input-tip datetime" id="sldate" placeholder="{{ __('db.Select Date') }}">
+                                                    </div>
+                                                    <div class="col-sm-6 col-xs-6">
+                                                        <label for="delivery_time">{{ __('db.Delivery Time') }}</label>
+                                                        <select name="delivery_time" class="form-control selectpicker" id="posdeliverytime" required>
+                                                            <option value="" selected>{{ __('db.Select Time') }}</option>
+                                                            <option value="09:00 AM - 01:00 PM">09:00 AM - 01:00 PM</option>
+                                                            <option value="10:00 AM - 02:00 PM">10:00 AM - 02:00 PM</option>
+                                                            <option value="11:00 AM - 03:00 PM">11:00 AM - 03:00 PM</option>
+                                                            <option value="12:00 PM - 04:00 PM">12:00 PM - 04:00 PM</option>
+                                                            <option value="01:00 PM - 05:00 PM">01:00 PM - 05:00 PM</option>
+                                                            <option value="02:00 PM - 06:00 PM">02:00 PM - 06:00 PM</option>
+                                                            <option value="03:00 PM - 07:00 PM">03:00 PM - 07:00 PM</option>
+                                                            <option value="04:00 PM - 08:00 PM">04:00 PM - 08:00 PM</option>
+                                                            <option value="05:00 PM - 09:00 PM">05:00 PM - 09:00 PM</option>
+                                                            <option value="06:00 PM - 10:00 PM">06:00 PM - 10:00 PM</option>
+                                                            <option value="07:00 PM - 11:00 PM">07:00 PM - 11:00 PM</option>
+                                                            <option value="08:00 PM - 12:00 AM">08:00 PM - 12:00 AM</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-sm-6 col-xs-6">
+                                                        <label for="delivery_time2">{{ __('db.Delivery Time2') }}</label>
+                                                        <select name="delivery_time2" class="form-control selectpicker" id="posdeliverytime2" required>
+                                                            <option value="" selected>{{ __('db.Select Time') }}</option>
+                                                            <option value="09:00 AM - 01:00 PM">09:00 AM - 01:00 PM</option>
+                                                            <option value="10:00 AM - 02:00 PM">10:00 AM - 02:00 PM</option>
+                                                            <option value="11:00 AM - 03:00 PM">11:00 AM - 03:00 PM</option>
+                                                            <option value="12:00 PM - 04:00 PM">12:00 PM - 04:00 PM</option>
+                                                            <option value="01:00 PM - 05:00 PM">01:00 PM - 05:00 PM</option>
+                                                            <option value="02:00 PM - 06:00 PM">02:00 PM - 06:00 PM</option>
+                                                            <option value="03:00 PM - 07:00 PM">03:00 PM - 07:00 PM</option>
+                                                            <option value="04:00 PM - 08:00 PM">04:00 PM - 08:00 PM</option>
+                                                            <option value="05:00 PM - 09:00 PM">05:00 PM - 09:00 PM</option>
+                                                            <option value="06:00 PM - 10:00 PM">06:00 PM - 10:00 PM</option>
+                                                            <option value="07:00 PM - 11:00 PM">07:00 PM - 11:00 PM</option>
+                                                            <option value="08:00 PM - 12:00 AM">08:00 PM - 12:00 AM</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-sm-6 hide col-xs-6" id="receivername_block">
+                                                        <div class="form-group">
+                                                            <label for="Receiver_Name">{{ __('db.Receiver Name') }}</label>
+                                                            <input name="receiver_name" type="text" id="receiver_name" class="pa form-control kb-pad1 mobile_number" value="">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-6 hide col-xs-6" id="receivernumber_block">
+                                                        <div class="form-group">
+                                                            <label for="Receiver_Number">{{ __('db.Receiver Number') }}</label>
+                                                            <input name="receiver_number" type="text" id="receiver_number" class="pa form-control kb-pad1 mobile_number" value="">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
                                             <div class="row">
                                                 <div class="col-md-3 col-6 mt-1 paying-amount-container">
                                                     <label>{{ __('db.Paying Amount') }} *</label>
@@ -1899,14 +2000,6 @@
                                                 <div class="form-group col-md-12">
                                                     <label>{{ __('db.Payment Note') }}</label>
                                                     <textarea id="payment_note" rows="2" class="form-control" name="payment_note"></textarea>
-                                                </div>
-                                                <div class="col-md-6 form-group">
-                                                    <label>{{ __('db.Sale Note') }}</label>
-                                                    <textarea rows="3" class="form-control" name="sale_note"></textarea>
-                                                </div>
-                                                <div class="col-md-6 form-group">
-                                                    <label>{{ __('db.Staff Note') }}</label>
-                                                    <textarea rows="3" class="form-control" name="staff_note"></textarea>
                                                 </div>
                                             </div>
                                         </div>
@@ -6690,10 +6783,43 @@
 
         $('#add-payment').on('shown.bs.modal', function(e) {
             saveDataToLocalStorageForCustomerDisplay('clear_no');
+            // Initialize selectpicker for new fields
+            $('#posdeliverytype, #order_mode, #posdeliverytime, #posdeliverytime2').selectpicker('refresh');
+            // Initialize datetime picker for delivery date
+            if ($('#sldate').length && typeof $.fn.datetimepicker !== 'undefined') {
+                $('#sldate').datetimepicker({
+                    format: 'YYYY-MM-DD',
+                    useCurrent: false,
+                    icons: {
+                        time: 'fa fa-time',
+                        date: 'fa fa-calendar',
+                        up: 'fa fa-chevron-up',
+                        down: 'fa fa-chevron-down',
+                        previous: 'fa fa-chevron-left',
+                        next: 'fa fa-chevron-right',
+                        today: 'fa fa-screenshot',
+                        clear: 'fa fa-trash',
+                        close: 'fa fa-remove'
+                    }
+                });
+            }
         });
         $('#add-payment').on('hidden.bs.modal', function(e) {
             saveDataToLocalStorageForCustomerDisplay('clear_partial');
         });
+
+        // Show/hide receiver fields based on delivery type
+        $(document).on('change', '#order_mode', function() {
+            if ($(this).val() === 'delivery') {
+                $('#receivername_block, #receivernumber_block').removeClass('hide');
+            } else {
+                $('#receivername_block, #receivernumber_block').addClass('hide');
+                $('#receiver_name, #receiver_number').val('');
+            }
+        });
+
+        // Make delivery_time2 optional
+        $('#posdeliverytime2').attr('required', false);
 
         function saveDataToLocalStorageForCustomerDisplay(is_clear_local_storage) {
             if (is_clear_local_storage == 'clear_all') {

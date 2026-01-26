@@ -8611,4 +8611,70 @@ return array (
     'key' => 'Basement Name',
     'value' => 'Nom du Sous-sol',
   ),
+  1435 => 
+  array (
+    'locale' => 'fr',
+    'key' => 'Greeting card',
+    'value' => 'Carte de vœux',
+  ),
+  1436 => 
+  array (
+    'locale' => 'fr',
+    'key' => 'Order Type',
+    'value' => 'Type de Commande',
+  ),
+  1437 => 
+  array (
+    'locale' => 'fr',
+    'key' => 'Select Order Type',
+    'value' => 'Sélectionner le Type de Commande',
+  ),
+  1438 => 
+  array (
+    'locale' => 'fr',
+    'key' => 'Delivery Type',
+    'value' => 'Type de Livraison',
+  ),
+  1439 => 
+  array (
+    'locale' => 'fr',
+    'key' => 'Select Delivery Type',
+    'value' => 'Sélectionner le Type de Livraison',
+  ),
+  1440 => 
+  array (
+    'locale' => 'fr',
+    'key' => 'Delivery Date',
+    'value' => 'Date de Livraison',
+  ),
+  1441 => 
+  array (
+    'locale' => 'fr',
+    'key' => 'Delivery Time',
+    'value' => 'Heure de Livraison',
+  ),
+  1442 => 
+  array (
+    'locale' => 'fr',
+    'key' => 'Delivery Time2',
+    'value' => 'Heure de Livraison 2',
+  ),
+  1443 => 
+  array (
+    'locale' => 'fr',
+    'key' => 'Select Time',
+    'value' => 'Sélectionner l\'Heure',
+  ),
+  1444 => 
+  array (
+    'locale' => 'fr',
+    'key' => 'Receiver Name',
+    'value' => 'Nom du Destinataire',
+  ),
+  1445 => 
+  array (
+    'locale' => 'fr',
+    'key' => 'Receiver Number',
+    'value' => 'Numéro du Destinataire',
+  ),
 );

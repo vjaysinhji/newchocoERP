@@ -8611,4 +8611,70 @@ return array (
     'key' => 'Basement Name',
     'value' => 'Nombre del Sótano',
   ),
+  1435 => 
+  array (
+    'locale' => 'es',
+    'key' => 'Greeting card',
+    'value' => 'Tarjeta de felicitación',
+  ),
+  1436 => 
+  array (
+    'locale' => 'es',
+    'key' => 'Order Type',
+    'value' => 'Tipo de Pedido',
+  ),
+  1437 => 
+  array (
+    'locale' => 'es',
+    'key' => 'Select Order Type',
+    'value' => 'Seleccionar Tipo de Pedido',
+  ),
+  1438 => 
+  array (
+    'locale' => 'es',
+    'key' => 'Delivery Type',
+    'value' => 'Tipo de Entrega',
+  ),
+  1439 => 
+  array (
+    'locale' => 'es',
+    'key' => 'Select Delivery Type',
+    'value' => 'Seleccionar Tipo de Entrega',
+  ),
+  1440 => 
+  array (
+    'locale' => 'es',
+    'key' => 'Delivery Date',
+    'value' => 'Fecha de Entrega',
+  ),
+  1441 => 
+  array (
+    'locale' => 'es',
+    'key' => 'Delivery Time',
+    'value' => 'Hora de Entrega',
+  ),
+  1442 => 
+  array (
+    'locale' => 'es',
+    'key' => 'Delivery Time2',
+    'value' => 'Hora de Entrega 2',
+  ),
+  1443 => 
+  array (
+    'locale' => 'es',
+    'key' => 'Select Time',
+    'value' => 'Seleccionar Hora',
+  ),
+  1444 => 
+  array (
+    'locale' => 'es',
+    'key' => 'Receiver Name',
+    'value' => 'Nombre del Receptor',
+  ),
+  1445 => 
+  array (
+    'locale' => 'es',
+    'key' => 'Receiver Number',
+    'value' => 'Número del Receptor',
+  ),
 );

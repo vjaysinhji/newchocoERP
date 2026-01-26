@@ -8611,4 +8611,70 @@ return array (
     'key' => 'Basement Name',
     'value' => 'Keller Name',
   ),
+  1435 => 
+  array (
+    'locale' => 'de',
+    'key' => 'Greeting card',
+    'value' => 'Grußkarte',
+  ),
+  1436 => 
+  array (
+    'locale' => 'de',
+    'key' => 'Order Type',
+    'value' => 'Bestelltyp',
+  ),
+  1437 => 
+  array (
+    'locale' => 'de',
+    'key' => 'Select Order Type',
+    'value' => 'Bestelltyp auswählen',
+  ),
+  1438 => 
+  array (
+    'locale' => 'de',
+    'key' => 'Delivery Type',
+    'value' => 'Liefertyp',
+  ),
+  1439 => 
+  array (
+    'locale' => 'de',
+    'key' => 'Select Delivery Type',
+    'value' => 'Liefertyp auswählen',
+  ),
+  1440 => 
+  array (
+    'locale' => 'de',
+    'key' => 'Delivery Date',
+    'value' => 'Lieferdatum',
+  ),
+  1441 => 
+  array (
+    'locale' => 'de',
+    'key' => 'Delivery Time',
+    'value' => 'Lieferzeit',
+  ),
+  1442 => 
+  array (
+    'locale' => 'de',
+    'key' => 'Delivery Time2',
+    'value' => 'Lieferzeit 2',
+  ),
+  1443 => 
+  array (
+    'locale' => 'de',
+    'key' => 'Select Time',
+    'value' => 'Zeit auswählen',
+  ),
+  1444 => 
+  array (
+    'locale' => 'de',
+    'key' => 'Receiver Name',
+    'value' => 'Empfängername',
+  ),
+  1445 => 
+  array (
+    'locale' => 'de',
+    'key' => 'Receiver Number',
+    'value' => 'Empfängernummer',
+  ),
 );

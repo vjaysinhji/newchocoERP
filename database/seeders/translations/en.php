@@ -10007,4 +10007,70 @@ return array(
         'key' => 'Basement Name',
         'value' => 'Basement Name',
     ),
+    1692 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Greeting card',
+        'value' => 'Greeting card',
+    ),
+    1693 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Order Type',
+        'value' => 'Order Type',
+    ),
+    1694 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Select Order Type',
+        'value' => 'Select Order Type',
+    ),
+    1695 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Delivery Type',
+        'value' => 'Delivery Type',
+    ),
+    1696 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Select Delivery Type',
+        'value' => 'Select Delivery Type',
+    ),
+    1697 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Delivery Date',
+        'value' => 'Delivery Date',
+    ),
+    1698 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Delivery Time',
+        'value' => 'Delivery Time',
+    ),
+    1699 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Delivery Time2',
+        'value' => 'Delivery Time2',
+    ),
+    1700 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Select Time',
+        'value' => 'Select Time',
+    ),
+    1701 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Receiver Name',
+        'value' => 'Receiver Name',
+    ),
+    1702 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Receiver Number',
+        'value' => 'Receiver Number',
+    ),
 );

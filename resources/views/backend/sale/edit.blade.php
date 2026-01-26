@@ -498,6 +498,93 @@
                                             <textarea rows="5" class="form-control" name="staff_note">{{ $lims_sale_data->staff_note }}</textarea>
                                         </div>
                                     </div>
+                                    <!-- Order Type and Delivery Type -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="Order Type">{{ __('db.Order Type') }}</label>
+                                            <select name="delivery_type" class="form-control selectpicker" id="posdeliverytype">
+                                                <option value="">{{ __('db.Select Order Type') }}</option>
+                                                <option value="factory" {{ $lims_sale_data->delivery_type == 'factory' ? 'selected' : '' }}>Factory</option>
+                                                <option value="baby_order_shop" {{ $lims_sale_data->delivery_type == 'baby_order_shop' ? 'selected' : '' }}>Baby Order - Shop</option>
+                                                <option value="baby_order_factory" {{ $lims_sale_data->delivery_type == 'baby_order_factory' ? 'selected' : '' }}>Baby Order - Factory</option>
+                                                <option value="gift_order_shop" {{ $lims_sale_data->delivery_type == 'gift_order_shop' ? 'selected' : '' }}>Gift Order - Shop</option>
+                                                <option value="gift_order_factory" {{ $lims_sale_data->delivery_type == 'gift_order_factory' ? 'selected' : '' }}>Gift Order - Factory</option>
+                                                <option value="shop_fixing" {{ $lims_sale_data->delivery_type == 'shop_fixing' ? 'selected' : '' }}>Shop Fixing</option>
+                                                <option value="inshop_sales" {{ $lims_sale_data->delivery_type == 'inshop_sales' ? 'selected' : '' }}>Inshop Sales</option>
+                                                <option value="owner" {{ $lims_sale_data->delivery_type == 'owner' ? 'selected' : '' }}>Owner-100% Discount</option>
+                                                <option value="owner_factory" {{ $lims_sale_data->delivery_type == 'owner_factory' ? 'selected' : '' }}>Owner 100% Discount - Factory</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="Delivery Type">{{ __('db.Delivery Type') }}</label>
+                                            <select name="order_mode" class="form-control selectpicker" id="order_mode">
+                                                <option value="">{{ __('db.Select Delivery Type') }}</option>
+                                                <option value="delivery" {{ $lims_sale_data->order_mode == 'delivery' ? 'selected' : '' }}>Delivery</option>
+                                                <option value="self_pick_up" {{ $lims_sale_data->order_mode == 'self_pick_up' ? 'selected' : '' }}>Self Pick Up</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <!-- Delivery Date and Time -->
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="delivery_date">{{ __('db.Delivery Date') }}</label>
+                                            <input type="text" name="delivery_date" value="{{ $lims_sale_data->delivery_date ? date($general_setting->date_format, strtotime($lims_sale_data->delivery_date)) : '' }}" class="form-control input-tip datetime" id="sldate" placeholder="{{ __('db.Select Date') }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="delivery_time">{{ __('db.Delivery Time') }}</label>
+                                            <select name="delivery_time" class="form-control selectpicker" id="posdeliverytime">
+                                                <option value="">{{ __('db.Select Time') }}</option>
+                                                <option value="09:00 AM - 01:00 PM" {{ $lims_sale_data->delivery_time == '09:00 AM - 01:00 PM' ? 'selected' : '' }}>09:00 AM - 01:00 PM</option>
+                                                <option value="10:00 AM - 02:00 PM" {{ $lims_sale_data->delivery_time == '10:00 AM - 02:00 PM' ? 'selected' : '' }}>10:00 AM - 02:00 PM</option>
+                                                <option value="11:00 AM - 03:00 PM" {{ $lims_sale_data->delivery_time == '11:00 AM - 03:00 PM' ? 'selected' : '' }}>11:00 AM - 03:00 PM</option>
+                                                <option value="12:00 PM - 04:00 PM" {{ $lims_sale_data->delivery_time == '12:00 PM - 04:00 PM' ? 'selected' : '' }}>12:00 PM - 04:00 PM</option>
+                                                <option value="01:00 PM - 05:00 PM" {{ $lims_sale_data->delivery_time == '01:00 PM - 05:00 PM' ? 'selected' : '' }}>01:00 PM - 05:00 PM</option>
+                                                <option value="02:00 PM - 06:00 PM" {{ $lims_sale_data->delivery_time == '02:00 PM - 06:00 PM' ? 'selected' : '' }}>02:00 PM - 06:00 PM</option>
+                                                <option value="03:00 PM - 07:00 PM" {{ $lims_sale_data->delivery_time == '03:00 PM - 07:00 PM' ? 'selected' : '' }}>03:00 PM - 07:00 PM</option>
+                                                <option value="04:00 PM - 08:00 PM" {{ $lims_sale_data->delivery_time == '04:00 PM - 08:00 PM' ? 'selected' : '' }}>04:00 PM - 08:00 PM</option>
+                                                <option value="05:00 PM - 09:00 PM" {{ $lims_sale_data->delivery_time == '05:00 PM - 09:00 PM' ? 'selected' : '' }}>05:00 PM - 09:00 PM</option>
+                                                <option value="06:00 PM - 10:00 PM" {{ $lims_sale_data->delivery_time == '06:00 PM - 10:00 PM' ? 'selected' : '' }}>06:00 PM - 10:00 PM</option>
+                                                <option value="07:00 PM - 11:00 PM" {{ $lims_sale_data->delivery_time == '07:00 PM - 11:00 PM' ? 'selected' : '' }}>07:00 PM - 11:00 PM</option>
+                                                <option value="08:00 PM - 12:00 AM" {{ $lims_sale_data->delivery_time == '08:00 PM - 12:00 AM' ? 'selected' : '' }}>08:00 PM - 12:00 AM</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label for="delivery_time2">{{ __('db.Delivery Time2') }}</label>
+                                            <select name="delivery_time2" class="form-control selectpicker" id="posdeliverytime2">
+                                                <option value="">{{ __('db.Select Time') }}</option>
+                                                <option value="09:00 AM - 01:00 PM" {{ $lims_sale_data->delivery_time2 == '09:00 AM - 01:00 PM' ? 'selected' : '' }}>09:00 AM - 01:00 PM</option>
+                                                <option value="10:00 AM - 02:00 PM" {{ $lims_sale_data->delivery_time2 == '10:00 AM - 02:00 PM' ? 'selected' : '' }}>10:00 AM - 02:00 PM</option>
+                                                <option value="11:00 AM - 03:00 PM" {{ $lims_sale_data->delivery_time2 == '11:00 AM - 03:00 PM' ? 'selected' : '' }}>11:00 AM - 03:00 PM</option>
+                                                <option value="12:00 PM - 04:00 PM" {{ $lims_sale_data->delivery_time2 == '12:00 PM - 04:00 PM' ? 'selected' : '' }}>12:00 PM - 04:00 PM</option>
+                                                <option value="01:00 PM - 05:00 PM" {{ $lims_sale_data->delivery_time2 == '01:00 PM - 05:00 PM' ? 'selected' : '' }}>01:00 PM - 05:00 PM</option>
+                                                <option value="02:00 PM - 06:00 PM" {{ $lims_sale_data->delivery_time2 == '02:00 PM - 06:00 PM' ? 'selected' : '' }}>02:00 PM - 06:00 PM</option>
+                                                <option value="03:00 PM - 07:00 PM" {{ $lims_sale_data->delivery_time2 == '03:00 PM - 07:00 PM' ? 'selected' : '' }}>03:00 PM - 07:00 PM</option>
+                                                <option value="04:00 PM - 08:00 PM" {{ $lims_sale_data->delivery_time2 == '04:00 PM - 08:00 PM' ? 'selected' : '' }}>04:00 PM - 08:00 PM</option>
+                                                <option value="05:00 PM - 09:00 PM" {{ $lims_sale_data->delivery_time2 == '05:00 PM - 09:00 PM' ? 'selected' : '' }}>05:00 PM - 09:00 PM</option>
+                                                <option value="06:00 PM - 10:00 PM" {{ $lims_sale_data->delivery_time2 == '06:00 PM - 10:00 PM' ? 'selected' : '' }}>06:00 PM - 10:00 PM</option>
+                                                <option value="07:00 PM - 11:00 PM" {{ $lims_sale_data->delivery_time2 == '07:00 PM - 11:00 PM' ? 'selected' : '' }}>07:00 PM - 11:00 PM</option>
+                                                <option value="08:00 PM - 12:00 AM" {{ $lims_sale_data->delivery_time2 == '08:00 PM - 12:00 AM' ? 'selected' : '' }}>08:00 PM - 12:00 AM</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 hide" id="receivername_block">
+                                        <div class="form-group">
+                                            <label for="Receiver_Name">{{ __('db.Receiver Name') }}</label>
+                                            <input name="receiver_name" type="text" id="receiver_name" class="form-control" value="{{ $lims_sale_data->receiver_name ?? '' }}">
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 hide" id="receivernumber_block">
+                                        <div class="form-group">
+                                            <label for="Receiver_Number">{{ __('db.Receiver Number') }}</label>
+                                            <input name="receiver_number" type="text" id="receiver_number" class="form-control" value="{{ $lims_sale_data->receiver_number ?? '' }}">
+                                        </div>
+                                    </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <input type="hidden" name="payment_status" value="{{$lims_sale_data->payment_status}}" />
@@ -1952,4 +2039,25 @@ $('#payment-form').on('submit',function(e){
 
 </script>
 <script type="text/javascript" src="https://js.stripe.com/v3/"></script>
+
+<script>
+    // Show/hide receiver fields based on delivery type
+    $(document).on('change', '#order_mode', function() {
+        if ($(this).val() === 'delivery') {
+            $('#receivername_block, #receivernumber_block').removeClass('hide');
+        } else {
+            $('#receivername_block, #receivernumber_block').addClass('hide');
+            $('#receiver_name, #receiver_number').val('');
+        }
+    });
+
+    // Initialize on page load
+    $(document).ready(function() {
+        if ($('#order_mode').val() === 'delivery') {
+            $('#receivername_block, #receivernumber_block').removeClass('hide');
+        }
+        // Initialize selectpicker for new fields
+        $('#posdeliverytype, #order_mode, #posdeliverytime, #posdeliverytime2').selectpicker('refresh');
+    });
+</script>
 @endpush
