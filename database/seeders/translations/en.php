@@ -10115,4 +10115,10 @@ return array(
         'key' => 'Customer Type',
         'value' => 'Customer Type',
     ),
+    1710 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Edit Customer',
+        'value' => 'Edit Customer',
+    ),
 );

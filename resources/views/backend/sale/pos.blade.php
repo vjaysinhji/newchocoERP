@@ -1181,11 +1181,27 @@
                                             </select>
                                             @if ($customer_active)
                                                 <button type="button" class="btn btn-default btn-sm" data-toggle="modal"
-                                                    data-target="#addCustomer"><svg xmlns="http://www.w3.org/2000/svg"
+                                                    data-target="#addCustomer" title="Add Customer"><svg xmlns="http://www.w3.org/2000/svg"
                                                         fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                                         stroke="currentColor" class="size-6">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             d="M12 4.5v15m7.5-7.5h-15" />
+                                                    </svg></button>
+                                                <button type="button" class="btn btn-info btn-sm" id="viewCustomerBtn" 
+                                                    title="View Customer" disabled><svg xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                        stroke="currentColor" class="size-6" style="width: 16px; height: 16px;">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                    </svg></button>
+                                                <button type="button" class="btn btn-warning btn-sm" id="editCustomerBtn" 
+                                                    title="Edit Customer" disabled><svg xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                        stroke="currentColor" class="size-6" style="width: 16px; height: 16px;">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
                                                     </svg></button>
                                             @endif
                                             <x-validation-error fieldName="customer_id" />
@@ -2447,6 +2463,188 @@
                             </div>
                         </div>
                     </div>
+                    <!-- view customer modal -->
+                    <div id="viewCustomer" tabindex="-1" role="dialog" aria-labelledby="viewCustomerLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 id="viewCustomerLabel" class="modal-title">{{ __('db.Customer Details') }}</h5>
+                                    <button type="button" data-dismiss="modal" aria-label="Close"
+                                        class="close"><span aria-hidden="true"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18 18 6M6 6l12 12" />
+                                            </svg></span></button>
+                                </div>
+                                <div class="modal-body" id="viewCustomerBody">
+                                    <div class="text-center">
+                                        <div class="spinner-border" role="status">
+                                            <span class="sr-only">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-warning" id="editFromViewBtn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                            stroke="currentColor" class="size-6" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle;">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                        </svg>
+                                        {{ __('db.Edit Customer') }}
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('db.Close') }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- edit customer modal -->
+                    <div id="editCustomer" tabindex="-1" role="dialog" aria-labelledby="editCustomerLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog">
+                            <div class="alert-container-edit mb-3"></div>
+                            <div class="modal-content">
+                                {!! Form::open(['route' => ['customer.update', 0], 'method' => 'put', 'files' => true, 'id' => 'customer-edit-form']) !!}
+                                <input type="hidden" name="customer_id" id="edit_customer_id">
+                                <div class="modal-header">
+                                    <h5 id="editCustomerLabel" class="modal-title">{{ __('db.Edit Customer') }}</h5>
+                                    <button type="button" data-dismiss="modal" aria-label="Close"
+                                        class="close"><span aria-hidden="true"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18 18 6M6 6l12 12" />
+                                            </svg></span></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p class="italic">
+                                        <small>{{ __('db.The field labels marked with * are required input fields') }}.</small>
+                                    </p>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Customer Group') }}</label>
+                                                <select class="form-control selectpicker" name="customer_group_id" id="edit_customer_group_id">
+                                                    @foreach ($lims_customer_group_all as $customer_group)
+                                                        <option value="{{ $customer_group->id }}">
+                                                            {{ $customer_group->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.name') }}</label>
+                                                <input type="text" name="customer_name" id="edit_customer_name" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Email') }}</label>
+                                                <input type="text" name="email" id="edit_email" placeholder="example@example.com" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Phone Number') }}</label>
+                                                <input type="text" name="phone_number" id="edit_phone_number" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Mobile Number 2') }}</label>
+                                                <input type="text" name="mobile_number_2" id="edit_mobile_number_2" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="country-phone-group form-group">
+                                                <label>{{ __('db.WhatsApp Number') }} *</label>
+                                                <div class="d-flex">
+                                                    <select id="edit_country_code" name="country_code" class="form-control w-auto me-2">
+                                                    </select>
+                                                    <input type="tel" id="edit_wa_number" class="form-control" required>
+                                                    <input type="hidden" id="edit_full_phone" name="wa_number" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Customer Type') }}</label>
+                                                <select name="type" id="edit_type" class="form-control selectpicker">
+                                                    @foreach(\App\Enums\CustomerTypeEnum::cases() as $case)
+                                                        <option value="{{ $case->value }}">{{ $case->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                       <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Address') }}</label>
+                                                <input type="text" name="address" id="edit_address" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Area') }}</label>
+                                                <input type="text" name="area" id="edit_area" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.House Number') }}</label>
+                                                <input type="text" name="house_number" id="edit_house_number" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Street') }}</label>
+                                                <input type="text" name="street" id="edit_street" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Ave') }}</label>
+                                                <input type="text" name="ave" id="edit_ave" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Block') }}</label>
+                                                <input type="text" name="block" id="edit_block" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.City') }}</label>
+                                                <input type="text" name="city" id="edit_city" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Credit Limit') }} <x-info
+                                                        title="Leave it blank for unlimited credit"
+                                                        type="info" /></label>
+                                                <input type="number" name="credit_limit" id="edit_credit_limit" class="form-control"
+                                                    value="0" step="any" min="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Tax Number') }}</label>
+                                                <input type="text" name="tax_no" id="edit_tax_no" class="form-control">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <button type="button"
+                                            class="btn btn-primary customer-update-btn">{{ __('db.Update') }}</button>
+                                    </div>
+                                </div>
+                                {{ Form::close() }}
+                            </div>
+                        </div>
+                    </div>
                     <!-- recent transaction modal -->
                     <div id="recentTransaction" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
                         aria-hidden="true" class="modal fade text-left">
@@ -3109,15 +3307,35 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/intlTelInput.min.js"></script>
     <script>
         const input = document.querySelector("#wa_number");
-        window.intlTelInput(input, {
-            initialCountry: "auto",
-            geoIpLookup: function(callback) {
-                fetch("https://ipapi.co/json")
-                    .then((res) => res.json())
-                    .then((data) => callback(data.country_code))
-                    .catch(() => callback("us"));
-            },
-            utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js"
+        const editInput = document.querySelector("#edit_wa_number");
+        
+        if (input) {
+            window.intlTelInput(input, {
+                initialCountry: "auto",
+                geoIpLookup: function(callback) {
+                    fetch("https://ipapi.co/json")
+                        .then((res) => res.json())
+                        .then((data) => callback(data.country_code))
+                        .catch(() => callback("us"));
+                },
+                utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js"
+            });
+        }
+        
+        // Initialize intlTelInput for edit form when modal is shown
+        $(document).on('shown.bs.modal', '#editCustomer', function() {
+            if (editInput && !window.intlTelInputGlobals.getInstance(editInput)) {
+                window.intlTelInput(editInput, {
+                    initialCountry: "auto",
+                    geoIpLookup: function(callback) {
+                        fetch("https://ipapi.co/json")
+                            .then((res) => res.json())
+                            .then((data) => callback(data.country_code))
+                            .catch(() => callback("us"));
+                    },
+                    utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js"
+                });
+            }
         });
     </script>
     <script src="https://unpkg.com/html5-qrcode"></script>
@@ -3646,6 +3864,22 @@
             $.get('{{ url('sales/getcustomergroup') }}/' + customer_id, function(data) {
                 customer_group_rate = (data / 100);
             });
+            // Enable/disable view and edit buttons based on selection
+            if (customer_id && customer_id !== '') {
+                $('#viewCustomerBtn, #editCustomerBtn').prop('disabled', false);
+            } else {
+                $('#viewCustomerBtn, #editCustomerBtn').prop('disabled', true);
+            }
+        });
+
+        // Initialize button states on page load
+        $(document).ready(function() {
+            var customer_id = $('#customer_id').val();
+            if (customer_id && customer_id !== '') {
+                $('#viewCustomerBtn, #editCustomerBtn').prop('disabled', false);
+            } else {
+                $('#viewCustomerBtn, #editCustomerBtn').prop('disabled', true);
+            }
         });
 
         @if ($lims_pos_setting_data && $lims_pos_setting_data->cash_register)
@@ -4466,6 +4700,32 @@
                     $('select[name="customer_id"]').val(key);
                     $('.selectpicker').selectpicker('refresh');
                     $("#addCustomer").modal('hide');
+                    // Enable view and edit buttons
+                    $('#viewCustomerBtn, #editCustomerBtn').prop('disabled', false);
+                    
+                    // Add new customer data to global customerData array from form
+                    if (typeof window.customerData === 'undefined') {
+                        window.customerData = {};
+                    }
+                    window.customerData[key] = {
+                        'name': response['name'] || '',
+                        'email': $('#customer-form input[name="email"]').val() || '',
+                        'phone_number': response['phone_number'] || '',
+                        'wa_number': response['wa_number'] || '',
+                        'address': $('#customer-form input[name="address"]').val() || '',
+                        'area': $('#customer-form input[name="area"]').val() || '',
+                        'city': $('#customer-form input[name="city"]').val() || '',
+                        'credit_limit': $('#customer-form input[name="credit_limit"]').val() || '0',
+                        'customer_group_id': $('#customer-form select[name="customer_group_id"]').val() || '',
+                        'customer_group': $('#customer-form select[name="customer_group_id"] option:selected').text() || '',
+                        'type': $('#customer-form select[name="type"]').val() || '',
+                        'tax_no': $('#customer-form input[name="tax_no"]').val() || '',
+                        'mobile_number_2': $('#customer-form input[name="mobile_number_2"]').val() || '',
+                        'house_number': $('#customer-form input[name="house_number"]').val() || '',
+                        'street': $('#customer-form input[name="street"]').val() || '',
+                        'ave': $('#customer-form input[name="ave"]').val() || '',
+                        'block': $('#customer-form input[name="block"]').val() || '',
+                    };
                 },
                 error: function(xhr) {
                     if (xhr.status === 422) {
@@ -4484,6 +4744,268 @@
                             `);
                             });
                         });
+                    }
+                }
+            });
+        });
+
+        // View Customer Button Handler
+        $('#viewCustomerBtn').on('click', function() {
+            var customer_id = $('#customer_id').val();
+            if (!customer_id) {
+                alert('Please select a customer first');
+                return;
+            }
+
+            $('#viewCustomerBody').html('<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>');
+            $('#viewCustomer').modal('show');
+
+            // Fetch customer data from the selected option and customer list
+            var selectedOption = $('#customer_id option:selected');
+            var customer_name = selectedOption.text().split('(')[0].trim();
+            
+            // Get customer data from PHP array (passed to view)
+            @php
+                $customer_data_array = [];
+                foreach($lims_customer_list as $cust) {
+                    $customer_data_array[$cust->id] = [
+                        'name' => $cust->name,
+                        'email' => $cust->email ?? '',
+                        'phone_number' => $cust->phone_number ?? '',
+                        'wa_number' => $cust->wa_number ?? '',
+                        'address' => $cust->address ?? '',
+                        'area' => $cust->area ?? '',
+                        'city' => $cust->city ?? '',
+                        'credit_limit' => $cust->credit_limit ?? '0',
+                        'customer_group' => $cust->customerGroup->name ?? '',
+                        'customer_group_id' => $cust->customer_group_id ?? '',
+                        'type' => $cust->type ?? '',
+                        'tax_no' => $cust->tax_no ?? '',
+                        'mobile_number_2' => $cust->mobile_number_2 ?? '',
+                        'house_number' => $cust->house_number ?? '',
+                        'street' => $cust->street ?? '',
+                        'ave' => $cust->ave ?? '',
+                        'block' => $cust->block ?? '',
+                    ];
+                }
+            @endphp
+
+            // Use global customerData array or initialize if not exists
+            if (typeof window.customerData === 'undefined') {
+                window.customerData = @json($customer_data_array);
+            }
+            var data = window.customerData[customer_id] || {};
+            
+            // If data not found, try to get from selected option
+            if (!data || Object.keys(data).length === 0) {
+                var selectedOption = $('#customer_id option:selected');
+                var optionText = selectedOption.text();
+                data = {
+                    'name': optionText.split('(')[0].trim(),
+                    'phone_number': optionText.match(/\[(.*?)\]/) ? optionText.match(/\[(.*?)\]/)[1] : '',
+                };
+            }
+
+            var html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.name') }}:</strong></h6>
+                        <p>${data.name || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.Email') }}:</strong></h6>
+                        <p>${data.email || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.Phone Number') }}:</strong></h6>
+                        <p>${data.phone_number || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.Mobile Number 2') }}:</strong></h6>
+                        <p>${data.mobile_number_2 || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.WhatsApp Number') }}:</strong></h6>
+                        <p>${data.wa_number || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.Address') }}:</strong></h6>
+                        <p>${data.address || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.Area') }}:</strong></h6>
+                        <p>${data.area || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.City') }}:</strong></h6>
+                        <p>${data.city || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.Credit Limit') }}:</strong></h6>
+                        <p>${data.credit_limit || '0'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.Customer Group') }}:</strong></h6>
+                        <p>${data.customer_group || '-'}</p>
+                    </div>
+                </div>
+            `;
+            $('#viewCustomerBody').html(html);
+            $('#editFromViewBtn').data('customer-id', customer_id);
+        });
+
+        // Edit Customer Button Handler
+        $('#editCustomerBtn').on('click', function() {
+            var customer_id = $('#customer_id').val();
+            if (!customer_id) {
+                alert('Please select a customer first');
+                return;
+            }
+
+            // Use global customerData array
+            if (typeof window.customerData === 'undefined') {
+                @php
+                    $customer_data_array = [];
+                    foreach($lims_customer_list as $cust) {
+                        $customer_data_array[$cust->id] = [
+                            'name' => $cust->name,
+                            'email' => $cust->email ?? '',
+                            'phone_number' => $cust->phone_number ?? '',
+                            'wa_number' => $cust->wa_number ?? '',
+                            'address' => $cust->address ?? '',
+                            'area' => $cust->area ?? '',
+                            'city' => $cust->city ?? '',
+                            'credit_limit' => $cust->credit_limit ?? '0',
+                            'customer_group_id' => $cust->customer_group_id ?? '',
+                            'type' => $cust->type ?? '',
+                            'tax_no' => $cust->tax_no ?? '',
+                            'mobile_number_2' => $cust->mobile_number_2 ?? '',
+                            'house_number' => $cust->house_number ?? '',
+                            'street' => $cust->street ?? '',
+                            'ave' => $cust->ave ?? '',
+                            'block' => $cust->block ?? '',
+                        ];
+                    }
+                @endphp
+                window.customerData = @json($customer_data_array);
+            }
+            var data = window.customerData[customer_id] || {};
+
+            $('#edit_customer_id').val(customer_id);
+            $('#edit_customer_name').val(data.name || '');
+            $('#edit_email').val(data.email || '');
+            $('#edit_phone_number').val(data.phone_number || '');
+            $('#edit_mobile_number_2').val(data.mobile_number_2 || '');
+            $('#edit_address').val(data.address || '');
+            $('#edit_area').val(data.area || '');
+            $('#edit_house_number').val(data.house_number || '');
+            $('#edit_street').val(data.street || '');
+            $('#edit_ave').val(data.ave || '');
+            $('#edit_block').val(data.block || '');
+            $('#edit_city').val(data.city || '');
+            $('#edit_credit_limit').val(data.credit_limit || '0');
+            $('#edit_tax_no').val(data.tax_no || '');
+            $('#edit_customer_group_id').val(data.customer_group_id || '');
+            $('#edit_type').val(data.type || '');
+
+            // Handle WhatsApp number
+            if (data.wa_number) {
+                $('#edit_wa_number').val(data.wa_number);
+                $('#edit_full_phone').val(data.wa_number);
+            }
+
+            // Clear any previous alerts
+            $('.alert-container-edit').html('');
+
+            $('.selectpicker').selectpicker('refresh');
+            $('#editCustomer').modal('show');
+        });
+
+        // Edit from View Button Handler
+        $('#editFromViewBtn').on('click', function() {
+            var customer_id = $(this).data('customer-id') || $('#customer_id').val();
+            $('#viewCustomer').modal('hide');
+            $('#editCustomerBtn').click();
+        });
+
+        // Customer Update Handler
+        $('.customer-update-btn').on('click', function() {
+            var customer_id = $('#edit_customer_id').val();
+            var iti_edit = window.intlTelInputGlobals.getInstance(document.getElementById('edit_wa_number'));
+            var full_number_edit = iti_edit ? iti_edit.getNumber() : $('#edit_wa_number').val();
+            $('#edit_full_phone').val(full_number_edit);
+
+            // Update form action URL
+            var form = $('#customer-edit-form');
+            form.attr('action', "{{ url('customer') }}/" + customer_id);
+
+            $.ajax({
+                type: 'PUT',
+                url: "{{ url('customer') }}/" + customer_id,
+                data: $("#customer-edit-form").serialize(),
+                success: function(response) {
+                    // Update the select option with new data
+                    var customer_name = $('#edit_customer_name').val();
+                    var phone_number = $('#edit_phone_number').val();
+                    var option_text = customer_name;
+                    if (phone_number) {
+                        option_text += ' (' + phone_number + ')';
+                    }
+
+                    // Update the selected option
+                    $('#customer_id option:selected').text(option_text);
+                    $('.selectpicker').selectpicker('refresh');
+
+                    // Keep the same customer selected
+                    $('#customer_id').val(customer_id);
+                    $('.selectpicker').selectpicker('refresh');
+
+                    // Update customerData array with new data
+                    if (typeof window.customerData === 'undefined') {
+                        window.customerData = {};
+                    }
+                    window.customerData[customer_id] = {
+                        'name': customer_name,
+                        'email': $('#edit_email').val() || '',
+                        'phone_number': phone_number,
+                        'wa_number': $('#edit_full_phone').val() || '',
+                        'address': $('#edit_address').val() || '',
+                        'area': $('#edit_area').val() || '',
+                        'city': $('#edit_city').val() || '',
+                        'credit_limit': $('#edit_credit_limit').val() || '0',
+                        'customer_group_id': $('#edit_customer_group_id').val() || '',
+                        'customer_group': $('#edit_customer_group_id option:selected').text() || '',
+                        'type': $('#edit_type').val() || '',
+                        'tax_no': $('#edit_tax_no').val() || '',
+                        'mobile_number_2': $('#edit_mobile_number_2').val() || '',
+                        'house_number': $('#edit_house_number').val() || '',
+                        'street': $('#edit_street').val() || '',
+                        'ave': $('#edit_ave').val() || '',
+                        'block': $('#edit_block').val() || '',
+                    };
+
+                    $("#editCustomer").modal('hide');
+                    alert('Customer updated successfully');
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+
+                        // Clear old alerts
+                        $('.alert-container-edit').html('');
+
+                        // Loop through all errors and create a separate alert for each message
+                        $.each(errors, function(field, messages) {
+                            $.each(messages, function(index, message) {
+                                $('.alert-container-edit').append(`
+                                <div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
+                                    ${message}
+                                </div>
+                            `);
+                            });
+                        });
+                    } else {
+                        alert('Error updating customer');
                     }
                 }
             });
