@@ -35,7 +35,7 @@ class AccountsController extends Controller
         foreach ($lims_account_all as $account) {
 
             // -------------------
-            // CREDIT
+            // CREDITT
             // -------------------
             $payment_received = Payment::whereNotNull('sale_id')
                 ->where('account_id', $account->id)
