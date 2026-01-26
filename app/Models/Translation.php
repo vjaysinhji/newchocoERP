@@ -17,7 +17,7 @@ class Translation extends Model
     // Get Default Language (Cached)
     public static function getTrnaslactionsByLocale(string $locale)
     {
-        return Cache::rememberForever('translations_by_locale', function () use($locale) {
+        return Cache::rememberForever("translations_by_locale_{$locale}", function () use($locale) {
             return self::where('locale', $locale)
                 ->get()
                 ->mapWithKeys(function ($item) {
@@ -27,9 +27,19 @@ class Translation extends Model
         });
     }
 
-    public static function forgetCachedTranslations()
+    public static function forgetCachedTranslations($locale = null)
     {
-        Cache::forget('translations_by_locale');
+        if ($locale) {
+            Cache::forget("translations_by_locale_{$locale}");
+            Cache::forget("translations_{$locale}");
+        } else {
+            // Clear all locale caches - get all locales from database
+            $locales = self::distinct()->pluck('locale');
+            foreach ($locales as $loc) {
+                Cache::forget("translations_by_locale_{$loc}");
+                Cache::forget("translations_{$loc}");
+            }
+        }
         Cache::forget('languages_list');
     }
 

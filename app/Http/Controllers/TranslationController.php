@@ -67,6 +67,10 @@ class TranslationController extends Controller
     public function destroy($id)
     {
         Translation::findOrFail($id)->delete();
+        
+        // forget cached values
+        Translation::forgetCachedTranslations();
+        
         return response()->json(['success' => 'Translation deleted successfully.']);
     }
 }

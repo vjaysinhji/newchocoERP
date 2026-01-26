@@ -17,13 +17,13 @@ class TranslationsTableSeeder extends Seeder
     {
         // Step 1: Load existing translations from the database
         $existing = DB::table('translations')
-            ->select('locale', 'key')
+            ->select('locale', 'group', 'key')
             ->get();
 
         $existingMap = [];
 
         foreach ($existing as $item) {
-            $existingMap[$item->locale . '|' . $item->key] = true;
+            $existingMap[$item->locale . '|' . ($item->group ?? 'db') . '|' . $item->key] = true;
         }
 
         // Step 2: Load all locale files
@@ -36,11 +36,13 @@ class TranslationsTableSeeder extends Seeder
             $data = include $file;
 
             foreach ($data as $row) {
-                $lookupKey = $row['locale'] . '|' . $row['key'];
+                $group = $row['group'] ?? 'db';
+                $lookupKey = $row['locale'] . '|' . $group . '|' . $row['key'];
 
                 if (!isset($existingMap[$lookupKey])) {
                     $insertData[] = [
                         'locale' => $row['locale'],
+                        'group' => $group,
                         'key' => $row['key'],
                         'value' => $row['value'],
                         'created_at' => null,
@@ -58,6 +60,9 @@ class TranslationsTableSeeder extends Seeder
                 DB::table('translations')->insert($chunk->toArray());
             }
             $this->command->info('Successfully inserted ' . count($insertData) . ' translations.');
+            
+            // Clear translation cache after inserting new translations
+            \App\Models\Translation::forgetCachedTranslations();
         } else {
             $this->command->info('No new translations found. All translations already exist in database.');
         }
