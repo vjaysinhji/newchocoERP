@@ -674,7 +674,12 @@ class PurchaseController extends Controller
         $purchase_status = $request->input('purchase_status');
         $payment_status = $request->input('payment_status');
 
-        $q = Purchase::whereDate('created_at', '>=' ,$request->input('starting_date'))->whereDate('created_at', '<=' ,$request->input('ending_date'));
+        $q = Purchase::whereDate('created_at', '>=' ,$request->input('starting_date'))
+            ->whereDate('created_at', '<=' ,$request->input('ending_date'))
+            ->where(function($query) {
+                $query->whereNull('purchase_type')
+                      ->orWhere('purchase_type', '!=', 'raw_material');
+            });
         //check staff access
         $this->staffAccessCheck($q);
         if($warehouse_id)
@@ -707,6 +712,10 @@ class PurchaseController extends Controller
             $q = Purchase::with('supplier', 'warehouse','products')
                 ->whereDate('created_at', '>=' ,$request->input('starting_date'))
                 ->whereDate('created_at', '<=' ,$request->input('ending_date'))
+                ->where(function($query) {
+                    $query->whereNull('purchase_type')
+                          ->orWhere('purchase_type', '!=', 'raw_material');
+                })
                 ->offset($start)
                 ->limit($limit)
                 ->orderBy($order, $dir);
@@ -733,7 +742,11 @@ class PurchaseController extends Controller
                 ->whereBetween(DB::raw('DATE(purchases.created_at)'), [
                     $request->input('starting_date'),
                     $request->input('ending_date')
-                ]);
+                ])
+                ->where(function($query) {
+                    $query->whereNull('purchases.purchase_type')
+                          ->orWhere('purchases.purchase_type', '!=', 'raw_material');
+                });
 
             // ✅ APPLY FILTERS FIRST (DO NOT MOVE THESE)
             if ($warehouse_id) {
@@ -1109,12 +1122,18 @@ class PurchaseController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('purchases-edit')){
+            $lims_purchase_data = Purchase::find($id);
+            
+            // Prevent editing raw material purchases from regular purchase edit page
+            if($lims_purchase_data && $lims_purchase_data->purchase_type == 'raw_material') {
+                return redirect('purchases')->with('not_permitted', __('db.This is a raw material purchase. Please use raw purchases module to edit it.'));
+            }
+            
             $lims_supplier_list = Supplier::where('is_active', true)->get();
             $lims_warehouse_list = Warehouse::where('is_active', true)->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
             $lims_product_list_without_variant = $this->productWithoutVariant();
             $lims_product_list_with_variant = $this->productWithVariant();
-            $lims_purchase_data = Purchase::find($id);
             $lims_product_purchase_data = ProductPurchase::where('purchase_id', $id)->get();
             foreach ($lims_product_purchase_data as $purchase) {
                 $lims_product_data = Product::select('cost', 'profit_margin', 'profit_margin_type', 'price')->where('id', $purchase->product_id)->first();
@@ -1153,6 +1172,12 @@ class PurchaseController extends Controller
     public function update(UpdatePurchaseRequest $request, $id)
     {
         $lims_purchase_data = Purchase::find($id);
+        
+        // Prevent updating raw material purchases from regular purchase update
+        if($lims_purchase_data && $lims_purchase_data->purchase_type == 'raw_material') {
+            return redirect('purchases')->with('not_permitted', __('db.This is a raw material purchase. Please use raw purchases module to update it.'));
+        }
+        
         $data = $request->except('document');
         $document = $request->document;
         if ($document) {
@@ -1481,6 +1506,13 @@ class PurchaseController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('purchases-add')){
+            $lims_purchase_data = Purchase::find($id);
+            
+            // Prevent duplicating raw material purchases from regular purchase duplicate page
+            if($lims_purchase_data && $lims_purchase_data->purchase_type == 'raw_material') {
+                return redirect('purchases')->with('not_permitted', __('db.This is a raw material purchase. Please use raw purchases module to duplicate it.'));
+            }
+            
             $lims_supplier_list = Supplier::where('is_active', true)->get();
             $lims_warehouse_list = Warehouse::where('is_active', true)->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
@@ -1733,6 +1765,12 @@ class PurchaseController extends Controller
                 $role = Role::find(Auth::user()->role_id);
                 if($role->hasPermissionTo('purchases-delete')){
                     $lims_purchase_data = Purchase::find($id);
+                    
+                    // Skip raw material purchases - they should be deleted from raw purchases module
+                    if($lims_purchase_data && $lims_purchase_data->purchase_type == 'raw_material') {
+                        continue;
+                    }
+                    
                     $lims_product_purchase_data = ProductPurchase::where('purchase_id', $id)->get();
 
                     if ($this->purchaseHasSale($lims_product_purchase_data)) {
@@ -1846,6 +1884,12 @@ class PurchaseController extends Controller
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('purchases-delete')){
             $lims_purchase_data = Purchase::find($id);
+            
+            // Prevent deleting raw material purchases from regular purchase delete
+            if($lims_purchase_data && $lims_purchase_data->purchase_type == 'raw_material') {
+                return redirect('purchases')->with('not_permitted', __('db.This is a raw material purchase. Please use raw purchases module to delete it.'));
+            }
+            
             $lims_product_purchase_data = ProductPurchase::where('purchase_id', $id)->get();
 
             if ($this->purchaseHasSale($lims_product_purchase_data)) {
@@ -2199,6 +2243,10 @@ class PurchaseController extends Controller
     public function showDeletedPurchases()
     {
         $lims_deleted_data = Purchase::onlyTrashed()
+            ->where(function($query) {
+                $query->whereNull('purchase_type')
+                      ->orWhere('purchase_type', '!=', 'raw_material');
+            })
             ->with(['user', 'supplier', 'warehouse', 'deleter'])
             ->get();
 

@@ -151,7 +151,7 @@
                                         @endif
                                     @endforeach
                                     <div class="col-md-12 mt-3">
-                                        <label>{{__('db.Select Raw Material')}}</label>
+                                        <label>{{__('db.Select Raw Material')}} <small class="text-muted">({{__('db.Only raw materials can be purchased here')}})</small></label>
                                         <div class="search-box input-group">
                                             <button class="btn btn-secondary"><i class="fa fa-barcode"></i></button>
                                             <input type="text" name="raw_material_code_name" id="lims_rawmaterialcodeSearch" placeholder="{{__('db.Please type raw material code and select')}}" class="form-control" />
@@ -942,7 +942,8 @@
     function rawMaterialSearch(data) {
         $.ajax({
             type: 'GET',
-            url: 'raw-purchases/lims_raw_material_search',
+            // Use absolute URL via named route to avoid duplicate prefix like raw-purchases/raw-purchases/...
+            url: '{{ route('raw-material-purchase.search') }}',
             data: {
                 data: data
             },

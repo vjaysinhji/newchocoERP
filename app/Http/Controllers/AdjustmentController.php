@@ -36,6 +36,26 @@ class AdjustmentController extends Controller
 
     public function getProduct($id)
     {
+        // Only show products with product categories/brands/units (not raw materials)
+        $product_category_ids = DB::table('categories')
+            ->where(function($q) {
+                $q->whereNull('type')->orWhere('type', 'product');
+            })
+            ->where('is_active', true)
+            ->pluck('id');
+        $product_brand_ids = DB::table('brands')
+            ->where(function($q) {
+                $q->whereNull('type')->orWhere('type', 'product');
+            })
+            ->where('is_active', true)
+            ->pluck('id');
+        $product_unit_ids = DB::table('units')
+            ->where(function($q) {
+                $q->whereNull('type')->orWhere('type', 'product');
+            })
+            ->where('is_active', true)
+            ->pluck('id');
+
         $lims_product_warehouse_data = DB::table('products')
                                     ->join('product_warehouse', 'products.id', '=', 'product_warehouse.product_id')
                                     ->whereNull('products.is_variant')
@@ -43,6 +63,20 @@ class AdjustmentController extends Controller
                                         ['products.is_active', true],
                                         ['product_warehouse.warehouse_id', $id]
                                     ])
+                                    ->where(function($query) use ($product_category_ids, $product_brand_ids, $product_unit_ids) {
+                                        $query->where(function($q) use ($product_category_ids) {
+                                            $q->whereIn('products.category_id', $product_category_ids)
+                                              ->orWhereNull('products.category_id');
+                                        })
+                                        ->where(function($q) use ($product_brand_ids) {
+                                            $q->whereIn('products.brand_id', $product_brand_ids)
+                                              ->orWhereNull('products.brand_id');
+                                        })
+                                        ->where(function($q) use ($product_unit_ids) {
+                                            $q->whereIn('products.unit_id', $product_unit_ids)
+                                              ->orWhereNull('products.unit_id');
+                                        });
+                                    })
                                     ->select('product_warehouse.qty', 'products.code', 'products.name', 'product_warehouse.product_id', 'products.cost')
                                     ->get();
         $lims_product_withVariant_warehouse_data = DB::table('products')
@@ -52,6 +86,20 @@ class AdjustmentController extends Controller
                                         ['products.is_active', true],
                                         ['product_warehouse.warehouse_id', $id]
                                     ])
+                                    ->where(function($query) use ($product_category_ids, $product_brand_ids, $product_unit_ids) {
+                                        $query->where(function($q) use ($product_category_ids) {
+                                            $q->whereIn('products.category_id', $product_category_ids)
+                                              ->orWhereNull('products.category_id');
+                                        })
+                                        ->where(function($q) use ($product_brand_ids) {
+                                            $q->whereIn('products.brand_id', $product_brand_ids)
+                                              ->orWhereNull('products.brand_id');
+                                        })
+                                        ->where(function($q) use ($product_unit_ids) {
+                                            $q->whereIn('products.unit_id', $product_unit_ids)
+                                              ->orWhereNull('products.unit_id');
+                                        });
+                                    })
                                     ->select('products.name', 'product_warehouse.qty', 'product_warehouse.product_id', 'product_warehouse.variant_id', 'products.cost')
                                     ->get();
         $product_code = [];
@@ -119,17 +167,68 @@ class AdjustmentController extends Controller
         $product_code[0] = rtrim($product_code[0], " ");
 
         //return $product_info;
+        // Only show products with product categories/brands/units (not raw materials)
         $lims_product_data = Product::where([
             ['code', $product_code[0]],
             ['is_active', true]
-        ])->first();
+        ])
+        ->where(function($query) {
+            $query->whereHas('category', function($q) {
+                $q->where(function($q2) {
+                    $q2->whereNull('type')->orWhere('type', 'product');
+                });
+            })
+            ->orWhereDoesntHave('category');
+        })
+        ->where(function($query) {
+            $query->whereHas('brand', function($q) {
+                $q->where(function($q2) {
+                    $q2->whereNull('type')->orWhere('type', 'product');
+                });
+            })
+            ->orWhereNull('brand_id');
+        })
+        ->where(function($query) {
+            $query->whereHas('unit', function($q) {
+                $q->where(function($q2) {
+                    $q2->whereNull('type')->orWhere('type', 'product');
+                });
+            })
+            ->orWhereNull('unit_id');
+        })
+        ->first();
         if(!$lims_product_data) {
             $lims_product_data = Product::join('product_variants', 'products.id', 'product_variants.product_id')
                 ->select('products.id', 'products.name', 'products.is_variant', 'product_variants.id as product_variant_id', 'product_variants.item_code')
                 ->where([
                     ['product_variants.item_code', $product_code[0]],
                     ['products.is_active', true]
-                ])->first();
+                ])
+                ->where(function($query) {
+                    $query->whereHas('category', function($q) {
+                        $q->where(function($q2) {
+                            $q2->whereNull('type')->orWhere('type', 'product');
+                        });
+                    })
+                    ->orWhereDoesntHave('category');
+                })
+                ->where(function($query) {
+                    $query->whereHas('brand', function($q) {
+                        $q->where(function($q2) {
+                            $q2->whereNull('type')->orWhere('type', 'product');
+                        });
+                    })
+                    ->orWhereNull('brand_id');
+                })
+                ->where(function($query) {
+                    $query->whereHas('unit', function($q) {
+                        $q->where(function($q2) {
+                            $q2->whereNull('type')->orWhere('type', 'product');
+                        });
+                    })
+                    ->orWhereNull('unit_id');
+                })
+                ->first();
         }
 
         $product[] = $lims_product_data->name;
@@ -234,15 +333,67 @@ class AdjustmentController extends Controller
 
     public function productWithoutVariant()
     {
-        return Product::ActiveStandard()->select('id', 'name', 'code')
-                ->whereNull('is_variant')->get();
+        // Only show products with product categories/brands/units (not raw materials)
+        return Product::ActiveStandard()
+            ->whereNull('is_variant')
+            ->where(function($query) {
+                $query->whereHas('category', function($q) {
+                    $q->where(function($q2) {
+                        $q2->whereNull('type')->orWhere('type', 'product');
+                    });
+                })
+                ->orWhereDoesntHave('category');
+            })
+            ->where(function($query) {
+                $query->whereHas('brand', function($q) {
+                    $q->where(function($q2) {
+                        $q2->whereNull('type')->orWhere('type', 'product');
+                    });
+                })
+                ->orWhereNull('brand_id');
+            })
+            ->where(function($query) {
+                $query->whereHas('unit', function($q) {
+                    $q->where(function($q2) {
+                        $q2->whereNull('type')->orWhere('type', 'product');
+                    });
+                })
+                ->orWhereNull('unit_id');
+            })
+            ->select('id', 'name', 'code')
+            ->get();
     }
 
     public function productWithVariant()
     {
+        // Only show products with product categories/brands/units (not raw materials)
         return Product::join('product_variants', 'products.id', 'product_variants.product_id')
             ->ActiveStandard()
             ->whereNotNull('is_variant')
+            ->where(function($query) {
+                $query->whereHas('category', function($q) {
+                    $q->where(function($q2) {
+                        $q2->whereNull('type')->orWhere('type', 'product');
+                    });
+                })
+                ->orWhereDoesntHave('category');
+            })
+            ->where(function($query) {
+                $query->whereHas('brand', function($q) {
+                    $q->where(function($q2) {
+                        $q2->whereNull('type')->orWhere('type', 'product');
+                    });
+                })
+                ->orWhereNull('brand_id');
+            })
+            ->where(function($query) {
+                $query->whereHas('unit', function($q) {
+                    $q->where(function($q2) {
+                        $q2->whereNull('type')->orWhere('type', 'product');
+                    });
+                })
+                ->orWhereNull('unit_id');
+            })
             ->select('products.id', 'products.name', 'product_variants.item_code')
             ->orderBy('position')
             ->get();

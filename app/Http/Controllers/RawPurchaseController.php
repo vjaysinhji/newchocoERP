@@ -95,6 +95,7 @@ class RawPurchaseController extends Controller
                 $lims_warehouse_list = Warehouse::where('is_active', true)->get();
             }
             $lims_tax_list = Tax::where('is_active', true)->get();
+            // Only load active raw materials - regular products are not allowed
             $lims_raw_material_list = RawMaterial::where('is_active', true)->get();
             $currency_list = Currency::where('is_active', true)->get();
             $custom_fields = CustomField::where('belongs_to', 'purchase')->get();
@@ -195,6 +196,19 @@ class RawPurchaseController extends Controller
             $total = $data['subtotal'];
             $log_data['item_description'] = '';
 
+            // Validate that all items are raw materials and active
+            $valid_raw_material_ids = RawMaterial::where('is_active', true)
+                ->whereIn('id', $raw_material_id)
+                ->pluck('id')
+                ->toArray();
+            
+            foreach ($raw_material_id as $id) {
+                if (!in_array($id, $valid_raw_material_ids)) {
+                    DB::rollback();
+                    return redirect()->back()->with('not_permitted', 'Invalid raw material selected. Only active raw materials can be purchased.');
+                }
+            }
+
             foreach ($raw_material_id as $i => $id) {
                 $lims_purchase_unit_data  = Unit::where('unit_name', $purchase_unit[$i])->first();
 
@@ -204,7 +218,14 @@ class RawPurchaseController extends Controller
                     $quantity = $recieved[$i] / $lims_purchase_unit_data->operation_value;
                 }
                 
-                $lims_raw_material_data = RawMaterial::find($id);
+                $lims_raw_material_data = RawMaterial::where('id', $id)
+                    ->where('is_active', true)
+                    ->first();
+                
+                if (!$lims_raw_material_data) {
+                    DB::rollback();
+                    return redirect()->back()->with('not_permitted', 'Raw material not found or inactive. Only active raw materials can be purchased.');
+                }
                 
                 // Update Raw Material quantity directly (no warehouse qty for raw materials)
                 $lims_raw_material_data->qty = ($lims_raw_material_data->qty ?? 0) + $quantity;
@@ -281,6 +302,7 @@ class RawPurchaseController extends Controller
 
     public function limsRawMaterialSearch(Request $request)
     {
+        // Only search for active raw materials - ensure no regular products can be added
         $raw_material_code = explode("|", $request['data']);
         $raw_material_code[0] = rtrim($raw_material_code[0], " ");
         $lims_raw_material_data = RawMaterial::where([
@@ -296,7 +318,7 @@ class RawPurchaseController extends Controller
         }
         
         if(!$lims_raw_material_data) {
-            return response()->json(['error' => 'Raw Material not found'], 404);
+            return response()->json(['error' => 'Raw Material not found. Only active raw materials can be purchased.'], 404);
         }
         
         $raw_material[] = $lims_raw_material_data->name;
@@ -1135,6 +1157,19 @@ class RawPurchaseController extends Controller
             $tax = $data['tax'];
             $total = $data['subtotal'];
 
+            // Validate that all items are raw materials and active
+            $valid_raw_material_ids = RawMaterial::where('is_active', true)
+                ->whereIn('id', $raw_material_id)
+                ->pluck('id')
+                ->toArray();
+            
+            foreach ($raw_material_id as $rm_id) {
+                if (!in_array($rm_id, $valid_raw_material_ids)) {
+                    DB::rollback();
+                    return redirect()->back()->with('not_permitted', 'Invalid raw material selected. Only active raw materials can be purchased.');
+                }
+            }
+
             // First, deduct old quantities
             foreach ($lims_raw_material_purchase_data as $i => $rm_purchase_data) {
                 $old_recieved_value = $rm_purchase_data->recieved;
@@ -1146,9 +1181,14 @@ class RawPurchaseController extends Controller
                     $old_recieved_value = $old_recieved_value / $lims_purchase_unit_data->operation_value;
                 }
                 
-                $lims_raw_material_data = RawMaterial::find($rm_purchase_data->raw_material_id);
-                $lims_raw_material_data->qty = max(0, ($lims_raw_material_data->qty ?? 0) - $old_recieved_value);
-                $lims_raw_material_data->save();
+                $lims_raw_material_data = RawMaterial::where('id', $rm_purchase_data->raw_material_id)
+                    ->where('is_active', true)
+                    ->first();
+                
+                if ($lims_raw_material_data) {
+                    $lims_raw_material_data->qty = max(0, ($lims_raw_material_data->qty ?? 0) - $old_recieved_value);
+                    $lims_raw_material_data->save();
+                }
             }
             
             // Delete old raw material purchases
@@ -1164,7 +1204,14 @@ class RawPurchaseController extends Controller
                     $new_recieved_value = $recieved[$key] / $lims_purchase_unit_data->operation_value;
                 }
 
-                $lims_raw_material_data = RawMaterial::find($rm_id);
+                $lims_raw_material_data = RawMaterial::where('id', $rm_id)
+                    ->where('is_active', true)
+                    ->first();
+                
+                if (!$lims_raw_material_data) {
+                    DB::rollback();
+                    return redirect()->back()->with('not_permitted', 'Raw material not found or inactive. Only active raw materials can be purchased.');
+                }
                 $lims_raw_material_data->qty = ($lims_raw_material_data->qty ?? 0) + $new_recieved_value;
                 $lims_raw_material_data->cost = $unit_cost[$key];
                 $lims_raw_material_data->price = $net_unit_price[$key];

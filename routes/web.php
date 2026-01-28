@@ -62,6 +62,8 @@ use App\Http\Controllers\AdjustmentController;
 use App\Http\Controllers\AttendanceController;
 use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\StockCountController;
+use App\Http\Controllers\RawMaterialAdjustmentController;
+use App\Http\Controllers\RawMaterialStockCountController;
 use App\Http\Controllers\CustomFieldController;
 use App\Http\Controllers\PackingSlipController;
 use App\Http\Controllers\SmsTemplateController;
@@ -221,7 +223,48 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::get('rawmaterials/gencode', 'generateCode')->name('rawmaterial.gencode');
         Route::post('rawmaterials/deletebyselection', 'deleteBySelection')->name('rawmaterials.deletebyselection');
         Route::post('rawmaterials/update', 'update')->name('rawmaterials.update');
+        
+        // Raw Material Category Routes
+        Route::get('rawmaterials/category', 'indexCategory')->name('rawmaterials.category.index');
+        Route::post('rawmaterials/category/category-data', 'categoryData')->name('rawmaterials.category.data');
+        Route::post('rawmaterials/category', 'storeCategory')->name('rawmaterials.category.store');
+        Route::post('rawmaterials/category/deletebyselection', 'deleteCategoryBySelection')->name('rawmaterials.category.deletebyselection');
+        Route::get('rawmaterials/category/{id}/edit', 'editCategory')->name('rawmaterials.category.edit');
+        Route::put('rawmaterials/category/{id}', 'updateCategory')->name('rawmaterials.category.update');
+        Route::delete('rawmaterials/category/{id}', 'destroyCategory')->name('rawmaterials.category.destroy');
+        
+        // Raw Material Brand Routes
+        Route::get('rawmaterials/brand', 'indexBrand')->name('rawmaterials.brand.index');
+        Route::post('rawmaterials/brand', 'storeBrand')->name('rawmaterials.brand.store');
+        Route::post('rawmaterials/brand/deletebyselection', 'deleteBrandBySelection')->name('rawmaterials.brand.deletebyselection');
+        Route::get('rawmaterials/brand/{id}/edit', 'editBrand')->name('rawmaterials.brand.edit');
+        Route::put('rawmaterials/brand/{id}', 'updateBrand')->name('rawmaterials.brand.update');
+        Route::delete('rawmaterials/brand/{id}', 'destroyBrand')->name('rawmaterials.brand.destroy');
+        
+        // Raw Material Unit Routes
+        Route::get('rawmaterials/unit', 'indexUnit')->name('rawmaterials.unit.index');
+        Route::post('rawmaterials/unit', 'storeUnit')->name('rawmaterials.unit.store');
+        Route::post('rawmaterials/unit/deletebyselection', 'deleteUnitBySelection')->name('rawmaterials.unit.deletebyselection');
+        Route::get('rawmaterials/unit/{id}/edit', 'editUnit')->name('rawmaterials.unit.edit');
+        Route::put('rawmaterials/unit/{id}', 'updateUnit')->name('rawmaterials.unit.update');
+        Route::delete('rawmaterials/unit/{id}', 'destroyUnit')->name('rawmaterials.unit.destroy');
      });
+     
+    // Raw Material Adjustment Routes
+    Route::controller(RawMaterialAdjustmentController::class)->group(function () {
+        Route::get('rawmaterial-adjustment/getrawmaterial/{id}', 'getRawMaterial')->name('rawmaterial.adjustment.getrawmaterial');
+        Route::get('rawmaterial-adjustment/lims_rawmaterial_search', 'limsRawMaterialSearch')->name('rawmaterial_adjustment.search');
+        Route::post('rawmaterial-adjustment/deletebyselection', 'deleteBySelection');
+    });
+    Route::resource('rawmaterial-adjustment', RawMaterialAdjustmentController::class);
+    
+    // Raw Material Stock Count Routes
+    Route::controller(RawMaterialStockCountController::class)->group(function () {
+        Route::post('rawmaterial-stock-count/finalize', 'finalize')->name('rawmaterial-stock-count.finalize');
+        Route::get('rawmaterial-stock-count/stockdif/{id}', 'stockDif');
+        Route::get('rawmaterial-stock-count/{id}/qty_adjustment', 'qtyAdjustment')->name('rawmaterial-stock-count.adjustment');
+    });
+    Route::resource('rawmaterial-stock-count', RawMaterialStockCountController::class);
 
     // Cold Storages Routes
     Route::resource('coldstorages',ColdStorageController::class)->except([ 'show']);

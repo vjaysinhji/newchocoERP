@@ -16,7 +16,12 @@ class BrandController extends Controller
 
     public function index()
     {
-        $lims_brand_all = Brand::where('is_active',true)->get();
+        // Only get product brands (not raw materials)
+        $lims_brand_all = Brand::where('is_active', true)
+            ->where(function($query) {
+                $query->whereNull('type')->orWhere('type', 'product');
+            })
+            ->get();
         return view('backend.brand.create', compact('lims_brand_all'));
     }
 
@@ -37,6 +42,7 @@ class BrandController extends Controller
 
         $input = $request->except('image');
         $input['is_active'] = true;
+        $input['type'] = 'product'; // Set type for product brand
         if(in_array('ecommerce', explode(',',config('addons'))))
             $input['slug'] = Str::slug($request->title, '-');
         $image = $request->image;
@@ -64,7 +70,17 @@ class BrandController extends Controller
 
     public function edit($id)
     {
-        $lims_brand_data = Brand::findOrFail($id);
+        // Only get product brands (not raw materials)
+        $lims_brand_data = Brand::where('id', $id)
+            ->where(function($query) {
+                $query->whereNull('type')->orWhere('type', 'product');
+            })
+            ->first();
+            
+        if(!$lims_brand_data) {
+            return response()->json(['error' => 'Brand not found'], 404);
+        }
+        
         return $lims_brand_data;
     }
 
@@ -80,8 +96,19 @@ class BrandController extends Controller
 
             'image' => 'image|mimes:jpg,jpeg,png,gif|max:100000',
         ]);
-        $lims_brand_data = Brand::findOrFail($request->brand_id);
+        // Only get product brands (not raw materials)
+        $lims_brand_data = Brand::where('id', $request->brand_id)
+            ->where(function($query) {
+                $query->whereNull('type')->orWhere('type', 'product');
+            })
+            ->first();
+            
+        if(!$lims_brand_data) {
+            return redirect()->back()->with('not_permitted', __('db.Brand not found'));
+        }
+        
         $lims_brand_data->title = $request->title;
+        $lims_brand_data->type = 'product'; // Ensure type is set to product
         if(in_array('ecommerce', explode(',',config('addons')))) {
             $lims_brand_data->page_title = $request->page_title;
             $lims_brand_data->short_description = $request->short_description;
@@ -138,6 +165,7 @@ class BrandController extends Controller
            $brand->title = $data['title'];
            $brand->image = $data['image'];
            $brand->is_active = true;
+           $brand->type = 'product'; // Set type for product brand
            $brand->save();
         }
         $this->cacheForget('brand_list');
@@ -148,15 +176,23 @@ class BrandController extends Controller
     {
         $brand_id = $request['brandIdArray'];
         foreach ($brand_id as $id) {
-            $lims_brand_data = Brand::findOrFail($id);
-            if($lims_brand_data->image && !config('database.connections.saleprosaas_landlord') && file_exists('images/brand/'.$lims_brand_data->image)) {
-                unlink('images/brand/'.$lims_brand_data->image);
+            // Only process product brands (not raw materials)
+            $lims_brand_data = Brand::where('id', $id)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'product');
+                })
+                ->first();
+                
+            if($lims_brand_data) {
+                if($lims_brand_data->image && !config('database.connections.saleprosaas_landlord') && file_exists('images/brand/'.$lims_brand_data->image)) {
+                    unlink('images/brand/'.$lims_brand_data->image);
+                }
+                elseif($lims_brand_data->image && file_exists('images/brand/'.$lims_brand_data->image)) {
+                    unlink('images/brand/'.$lims_brand_data->image);
+                }
+                $lims_brand_data->is_active = false;
+                $lims_brand_data->save();
             }
-            elseif($lims_brand_data->image && file_exists('images/brand/'.$lims_brand_data->image)) {
-                unlink('images/brand/'.$lims_brand_data->image);
-            }
-            $lims_brand_data->is_active = false;
-            $lims_brand_data->save();
         }
         $this->cacheForget('brand_list');
         return 'Brand deleted successfully!';
@@ -164,7 +200,17 @@ class BrandController extends Controller
 
     public function destroy($id)
     {
-        $lims_brand_data = Brand::findOrFail($id);
+        // Only get product brands (not raw materials)
+        $lims_brand_data = Brand::where('id', $id)
+            ->where(function($query) {
+                $query->whereNull('type')->orWhere('type', 'product');
+            })
+            ->first();
+            
+        if(!$lims_brand_data) {
+            return redirect()->back()->with('not_permitted', __('db.Brand not found'));
+        }
+        
         $lims_brand_data->is_active = false;
         if($lims_brand_data->image && !config('database.connections.saleprosaas_landlord') && file_exists('images/brand/'.$lims_brand_data->image)) {
             unlink('images/brand/'.$lims_brand_data->image);

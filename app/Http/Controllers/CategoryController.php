@@ -27,7 +27,13 @@ class CategoryController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('category')) {
-            return view('backend.category.create');
+            // Get only product categories for parent dropdown
+            $categories_list = Category::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'product');
+                })
+                ->get();
+            return view('backend.category.create', compact('categories_list'));
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
@@ -42,7 +48,12 @@ class CategoryController extends Controller
             4=> 'is_active',
         );
 
-        $totalData = DB::table('categories')->where('is_active', true)->count();
+        // Only get product categories (not raw materials)
+        $totalData = Category::where('is_active', true)
+            ->where(function($query) {
+                $query->whereNull('type')->orWhere('type', 'product');
+            })
+            ->count();
         $totalFiltered = $totalData;
 
         if($request->input('length') != -1)
@@ -55,6 +66,9 @@ class CategoryController extends Controller
         if(empty($request->input('search.value')))
             $categories = Category::offset($start)
                         ->where('is_active', true)
+                        ->where(function($query) {
+                            $query->whereNull('type')->orWhere('type', 'product');
+                        })
                         ->limit($limit)
                         ->orderBy($order,$dir)
                         ->get();
@@ -64,14 +78,22 @@ class CategoryController extends Controller
             $categories =  Category::where([
                             ['name', 'LIKE', "%{$search}%"],
                             ['is_active', true]
-                        ])->offset($start)
+                        ])
+                        ->where(function($query) {
+                            $query->whereNull('type')->orWhere('type', 'product');
+                        })
+                        ->offset($start)
                         ->limit($limit)
                         ->orderBy($order,$dir)->get();
 
             $totalFiltered = Category::where([
                             ['name','LIKE',"%{$search}%"],
                             ['is_active', true]
-                        ])->count();
+                        ])
+                        ->where(function($query) {
+                            $query->whereNull('type')->orWhere('type', 'product');
+                        })
+                        ->count();
         }
         $data = array();
         if(!empty($categories))
@@ -179,6 +201,7 @@ class CategoryController extends Controller
         $lims_category_data['name'] = preg_replace('/\s+/', ' ', $request->name);
         $lims_category_data['parent_id'] = $request->parent_id;
         $lims_category_data['is_active'] = true;
+        $lims_category_data['type'] = 'product'; // Set type for product category
         if(isset($request->ajax))
             $lims_category_data['ajax'] = $request->ajax;
         else
@@ -208,10 +231,22 @@ class CategoryController extends Controller
 
     public function edit($id)
     {
-        $lims_category_data = DB::table('categories')->where('id', $id)->first();
-        $lims_parent_data = DB::table('categories')->where('id', $lims_category_data->parent_id)->first();
-        if($lims_parent_data){
-            $lims_category_data->parent = $lims_parent_data->name;
+        // Only get product categories (not raw materials)
+        $lims_category_data = Category::where('id', $id)
+            ->where(function($query) {
+                $query->whereNull('type')->orWhere('type', 'product');
+            })
+            ->first();
+            
+        if(!$lims_category_data) {
+            return response()->json(['error' => 'Category not found'], 404);
+        }
+        
+        if($lims_category_data->parent_id) {
+            $lims_parent_data = Category::find($lims_category_data->parent_id);
+            if($lims_parent_data){
+                $lims_category_data->parent = $lims_parent_data->name;
+            }
         }
         return $lims_category_data;
     }
@@ -221,9 +256,19 @@ class CategoryController extends Controller
         if(!env('USER_VERIFIED'))
             return redirect()->back()->with('not_permitted', __('db.This feature is disable for demo!'));
 
-        $lims_category_data = DB::table('categories')->where('id', $request->category_id)->first();
+        // Only get product categories (not raw materials)
+        $lims_category_data = Category::where('id', $request->category_id)
+            ->where(function($query) {
+                $query->whereNull('type')->orWhere('type', 'product');
+            })
+            ->first();
+            
+        if(!$lims_category_data) {
+            return redirect()->back()->with('not_permitted', __('db.Category not found'));
+        }
 
         $input = $request->except('image','icon','_method','_token','category_id');
+        $input['type'] = 'product'; // Ensure type is set to product
 
         $image = $request->image;
         if ($image) {
@@ -291,7 +336,8 @@ class CategoryController extends Controller
             $input['short_description'] = $request->short_description;
         }
 
-        DB::table('categories')->where('id', $request->category_id)->update($input);
+        Category::where('id', $request->category_id)->update($input);
+        $this->cacheForget('category_list');
         
         return redirect('category')->with('message', __('db.Category updated successfully'));
     }
@@ -328,15 +374,23 @@ class CategoryController extends Controller
             }
             $data= array_combine($escapedHeader, $columns);
             $category = Category::firstOrNew(['name' => $data['name'], 'is_active' => true ]);
+            $category->type = 'product'; // Set type for product category
+            
             if($data['parentcategory']){
-                $parent_category = Category::firstOrNew(['name' => $data['parentcategory'], 'is_active' => true ]);
+                $parent_category = Category::firstOrNew(
+                    ['name' => $data['parentcategory'], 'is_active' => true],
+                    ['type' => 'product']
+                );
+                if(!$parent_category->type) {
+                    $parent_category->type = 'product';
+                }
                 $parent_id = $parent_category->id;
             }
             else
                 $parent_id = null;
 
             if(in_array('ecommerce', explode(',',config('addons')))) {
-                $input['slug'] = Str::slug($data['name'], '-');
+                $category->slug = Str::slug($data['name'], '-');
             }
 
             $category->parent_id = $parent_id;
@@ -351,17 +405,25 @@ class CategoryController extends Controller
     {
         $category_id = $request['categoryIdArray'];
         foreach ($category_id as $id) {
-            $lims_product_data = Product::where('category_id', $id)->get();
-            foreach ($lims_product_data as $product_data) {
-                $product_data->is_active = false;
-                $product_data->save();
-            }
-            $lims_category_data = Category::findOrFail($id);
-            $lims_category_data->is_active = false;
-            $lims_category_data->save();
+            // Only process product categories (not raw materials)
+            $lims_category_data = Category::where('id', $id)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'product');
+                })
+                ->first();
+                
+            if($lims_category_data) {
+                $lims_product_data = Product::where('category_id', $id)->get();
+                foreach ($lims_product_data as $product_data) {
+                    $product_data->is_active = false;
+                    $product_data->save();
+                }
+                $lims_category_data->is_active = false;
+                $lims_category_data->save();
 
-            $this->fileDelete(public_path('images/category/'),$lims_category_data->image);
-            $this->fileDelete(public_path('images/category/icons/'),$lims_category_data->icon);
+                $this->fileDelete(public_path('images/category/'),$lims_category_data->image);
+                $this->fileDelete(public_path('images/category/icons/'),$lims_category_data->icon);
+            }
         }
         $this->cacheForget('category_list');
         return 'Category deleted successfully!';
@@ -369,7 +431,17 @@ class CategoryController extends Controller
 
     public function destroy($id)
     {
-        $lims_category_data = Category::findOrFail($id);
+        // Only get product categories (not raw materials)
+        $lims_category_data = Category::where('id', $id)
+            ->where(function($query) {
+                $query->whereNull('type')->orWhere('type', 'product');
+            })
+            ->first();
+            
+        if(!$lims_category_data) {
+            return redirect()->back()->with('not_permitted', __('db.Category not found'));
+        }
+        
         $lims_category_data->is_active = false;
         $lims_product_data = Product::where('category_id', $id)->get();
         foreach ($lims_product_data as $product_data) {

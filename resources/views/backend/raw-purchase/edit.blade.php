@@ -2,7 +2,7 @@
 
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
-<x-validation-error fieldName="product_code" />
+<x-validation-error fieldName="raw_material_code" />
 <x-validation-error fieldName="qty" />
 
 <section class="forms">
@@ -15,7 +15,7 @@
                     </div>
                     <div class="card-body">
                         <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
-                        {!! Form::open(['route' => ['purchases.update', $lims_purchase_data->id], 'method' => 'put', 'files' => true, 'id' => 'purchase-form']) !!}
+                        {!! Form::open(['route' => ['raw-purchases.update', $lims_purchase_data->id], 'method' => 'put', 'files' => true, 'id' => 'purchase-form']) !!}
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="row">
@@ -166,10 +166,10 @@
                                         @endif
                                     @endforeach
                                     <div class="col-md-12 mt-3">
-                                        <label>{{__('db.Select Product')}}</label>
+                                        <label>{{__('db.Select Raw Material')}} <small class="text-muted">({{__('db.Only raw materials can be purchased here')}})</small></label>
                                         <div class="search-box input-group">
                                             <button type="button" class="btn btn-secondary"><i class="fa fa-barcode"></i></button>
-                                            <input type="text" name="product_code_name" id="lims_productcodeSearch" placeholder="{{__('db.Please type product code and select')}}" class="form-control" />
+                                            <input type="text" name="raw_material_code_name" id="lims_rawmaterialcodeSearch" placeholder="{{__('db.Please type raw material code and select')}}" class="form-control" />
                                         </div>
                                     </div>
                                 </div>
@@ -180,12 +180,9 @@
                                             <table id="myTable" class="table table-hover order-list">
                                                 <thead>
                                                     <tr>
-                                                        <th>{{__('db.name')}}</th>
-                                                        <th>{{__('db.Code')}}</th>
+                                                        <th style="min-width: 30%">{{__('db.product')}}</th>
                                                         <th>{{__('db.Quantity')}}</th>
                                                         <th class="recieved-product-qty d-none">{{__('db.Recieved')}}</th>
-                                                        <th>{{__('db.Batch No')}}</th>
-                                                        <th>{{__('db.Expired Date')}}</th>
                                                         <th>{{__('db.Net Unit Cost')}}</th>
                                                         <th>{{__('db.Profit Margin')}}</th>
                                                         <th>{{__('db.Profit Margin Type')}}</th>
@@ -202,26 +199,19 @@
                                                     $temp_unit_operator = [];
                                                     $temp_unit_operation_value = [];
                                                     ?>
-                                                    @foreach($lims_product_purchase_data as $product_purchase)
+                                                    @foreach($lims_raw_material_purchase_data as $rm_purchase)
                                                     <tr>
                                                     <?php
-                                                        $product_data = DB::table('products')->find($product_purchase->product_id);
-                                                        if($product_purchase->variant_id) {
-                                                            $product_variant_data = \App\Models\ProductVariant::FindExactProduct($product_data->id, $product_purchase->variant_id)->select('item_code')->first();
-                                                            if($product_variant_data)
-                                                                $product_data->code = $product_variant_data->item_code;
-                                                        }
-
-                                                        $tax = DB::table('taxes')->where('rate', $product_purchase->tax_rate)->first();
-
-                                                        $units = DB::table('units')->where('base_unit', $product_data->unit_id)->orWhere('id', $product_data->unit_id)->get();
+                                                        $raw_material_data = \App\Models\RawMaterial::find($rm_purchase->raw_material_id);
+                                                        $tax = DB::table('taxes')->where('rate', $rm_purchase->tax_rate)->first();
+                                                        $units = DB::table('units')->where('base_unit', $raw_material_data->unit_id)->orWhere('id', $raw_material_data->unit_id)->get();
 
                                                         $unit_name = array();
                                                         $unit_operator = array();
                                                         $unit_operation_value = array();
 
                                                         foreach($units as $unit) {
-                                                            if($product_purchase->purchase_unit_id == $unit->id) {
+                                                            if($rm_purchase->purchase_unit_id == $unit->id) {
                                                                 array_unshift($unit_name, $unit->unit_name);
                                                                 array_unshift($unit_operator, $unit->operator);
                                                                 array_unshift($unit_operation_value, $unit->operation_value);
@@ -232,111 +222,83 @@
                                                                 $unit_operation_value[] = $unit->operation_value;
                                                             }
                                                         }
-                                                        if($product_data->tax_method == 1){
-                                                            $product_cost = ($product_purchase->net_unit_cost + ($product_purchase->discount / $product_purchase->qty)) / $unit_operation_value[0];
+                                                        
+                                                        if($raw_material_data->tax_method == 1){
+                                                            $raw_material_cost = ($rm_purchase->net_unit_cost + ($rm_purchase->discount / $rm_purchase->qty)) / $unit_operation_value[0];
                                                         }
                                                         else{
-                                                            $product_cost = (($product_purchase->total + ($product_purchase->discount / $product_purchase->qty)) / $product_purchase->qty) / $unit_operation_value[0];
+                                                            $raw_material_cost = (($rm_purchase->total + ($rm_purchase->discount / $rm_purchase->qty)) / $rm_purchase->qty) / $unit_operation_value[0];
                                                         }
 
-
                                                         $temp_unit_name = $unit_name = implode(",",$unit_name) . ',';
-
                                                         $temp_unit_operator = $unit_operator = implode(",",$unit_operator) .',';
-
                                                         $temp_unit_operation_value = $unit_operation_value =  implode(",",$unit_operation_value) . ',';
-
-                                                        $product_batch_data = \App\Models\ProductBatch::select('batch_no', 'expired_date')->find($product_purchase->product_batch_id);
                                                     ?>
-                                                        <td>{{$product_data->name}} <button type="button" class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal"> <i class="dripicons-document-edit"></i></button> </td>
-                                                        <td>{{$product_data->code}}</td>
-                                                        <td><input type="text" class="form-control qty" name="qty[]" value="{{$product_purchase->qty}}" required /></td>
-                                                        <td class="recieved-product-qty d-none"><input type="number" class="form-control recieved" name="recieved[]" value="{{$product_purchase->recieved}}" step="any"/></td>
-                                                        @if($product_purchase->product_batch_id)
-                                                        <td>
-                                                            <input type="hidden" name="product_batch_id[]" value="{{$product_purchase->product_batch_id}}">
-                                                            <input type="text" class="form-control batch-no" name="batch_no[]" value="{{$product_batch_data->batch_no}}" required/>
-                                                        </td>
-                                                        <td>
-                                                            <input type="text" class="form-control expired-date" name="expired_date[]" value="{{$product_batch_data->expired_date}}" required/>
-                                                        </td>
-                                                        @else
-                                                        <td>
-                                                            <input type="hidden" name="product_batch_id[]">
-                                                            <input type="text" class="form-control batch-no" name="batch_no[]" disabled />
-                                                        </td>
-                                                        <td>
-                                                            <input type="text" class="form-control expired-date" name="expired_date[]" disabled />
-                                                        </td>
-                                                        @endif
-                                                        <td class="net_unit_cost">{{ number_format((float)$product_purchase->net_unit_cost, $general_setting->decimal, '.', '')}} </td>
+                                                        <td>{{$raw_material_data->name}} ({{$raw_material_data->code}}) <button type="button" class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal"> <i class="dripicons-document-edit"></i></button> </td>
+                                                        <td><input type="text" class="form-control qty" name="qty[]" value="{{$rm_purchase->qty}}" required /></td>
+                                                        <td class="recieved-product-qty d-none"><input type="number" class="form-control recieved" name="recieved[]" value="{{$rm_purchase->recieved}}" step="any"/></td>
+                                                        <td class="net_unit_cost">{{ number_format((float)$rm_purchase->net_unit_cost, $general_setting->decimal, '.', '')}} </td>
                                                         <td class="net_unit_margin">{{ number_format(
-                                                            (float)($product_purchase->net_unit_margin > 0 
-                                                                ? $product_purchase->net_unit_margin 
-                                                                : $product_data->profit_margin),
+                                                            (float)($rm_purchase->net_unit_margin > 0 
+                                                                ? $rm_purchase->net_unit_margin 
+                                                                : 0),
                                                             $general_setting->decimal, '.', ''
                                                         ) }} </td>
-                                                        <td class="net_unit_margin_type">{{$product_purchase->net_unit_margin_type}}</td>
+                                                        <td class="net_unit_margin_type">{{$rm_purchase->net_unit_margin_type ?? 'percentage'}}</td>
                                                         <td class="net_unit_price">{{ number_format(
-                                                            (float)($product_purchase->net_unit_price > 0 
-                                                                ? $product_purchase->net_unit_price 
-                                                                : $product_data->price),
+                                                            (float)($rm_purchase->net_unit_price > 0 
+                                                                ? $rm_purchase->net_unit_price 
+                                                                : $raw_material_data->price),
                                                             $general_setting->decimal, '.', ''
                                                         ) }} </td>
-                                                        <td class="discount">{{ number_format((float)$product_purchase->discount, $general_setting->decimal, '.', '')}}</td>
-                                                        <td class="tax">{{ number_format((float)$product_purchase->tax, $general_setting->decimal, '.', '')}}</td>
-                                                        <td class="sub-total">{{ number_format((float)$product_purchase->total, $general_setting->decimal, '.', '')}}</td>
+                                                        <td class="discount">{{ number_format((float)$rm_purchase->discount, $general_setting->decimal, '.', '')}}</td>
+                                                        <td class="tax">{{ number_format((float)$rm_purchase->tax, $general_setting->decimal, '.', '')}}</td>
+                                                        <td class="sub-total">{{ number_format((float)$rm_purchase->total, $general_setting->decimal, '.', '')}}</td>
                                                         <td><button type="button" class="ibtnDel btn btn-md btn-danger"><i class="dripicons-trash"></i></button></td>
-                                                        <input type="hidden" class="product-id" name="product_id[]" value="{{$product_data->id}}"/>
-                                                        <input type="hidden" class="product-code" name="product_code[]" value="{{$product_data->code}}"/>
-                                                        <input type="hidden" class="product-cost" name="product_cost[]" value="{{ $product_cost}}"/>
-                                                        <input type="hidden" class="profit-margin" name="profit_margin[]" value="{{         $product_purchase->net_unit_margin > 0 
-                                                                ? $product_purchase->net_unit_margin 
-                                                                : $product_data->profit_margin }}"/>
+                                                        <input type="hidden" class="raw-material-id" name="raw_material_id[]" value="{{$raw_material_data->id}}"/>
+                                                        <input type="hidden" class="raw-material-code" name="raw_material_code[]" value="{{$raw_material_data->code}}"/>
+                                                        <input type="hidden" class="product-cost" name="product_cost[]" value="{{ $raw_material_cost}}"/>
+                                                        <input type="hidden" class="profit-margin" name="profit_margin[]" value="{{$rm_purchase->net_unit_margin ?? 0}}"/>
                                                         <input type="hidden"
                                                             class="profit-margin-type"
                                                             name="profit_margin_type[]"
-                                                            value="{{ $product_purchase->net_unit_margin_type ?? 'percentage' }}">
-                                                        <input type="hidden" class="product-price" name="product_price[]" value="{{         $product_purchase->net_unit_price > 0 
-                                                                    ? $product_purchase->net_unit_price 
-                                                                    : $product_data->price }}"/>
+                                                            value="{{ $rm_purchase->net_unit_margin_type ?? 'percentage' }}">
+                                                        <input type="hidden" class="product-price" name="product_price[]" value="{{$rm_purchase->net_unit_price > 0 ? $rm_purchase->net_unit_price : $raw_material_data->price}}"/>
                                                         <input type="hidden" class="purchase-unit" name="purchase_unit[]" value="{{$unit_name}}"/>
                                                         <input type="hidden" class="purchase-unit-operator" value="{{$unit_operator}}"/>
                                                         <input type="hidden" class="purchase-unit-operation-value" value="{{$unit_operation_value}}"/>
-                                                        <input type="hidden" class="unit_cost" name="unit_cost[]" value="{{ $product_cost}}" />
-                                                        <input type="hidden" class="net_unit_cost" name="net_unit_cost[]" value="{{$product_purchase->net_unit_cost}}" />
-                                                        <input type="hidden" class="net_unit_margin" name="net_unit_margin[]" value="{{$product_purchase->net_unit_margin}}" />
-                                                        <input type="hidden" class="net_unit_margin_type" name="net_unit_margin_type[]" value="{{$product_purchase->net_unit_margin_type}}" />
-                                                        <input type="hidden" class="net_unit_price" name="net_unit_price[]" value="{{$product_purchase->net_unit_price}}" />
-                                                        <input type="hidden" class="discount-value" name="discount[]" value="{{$product_purchase->discount}}" />
-                                                        <input type="hidden" class="tax-rate" name="tax_rate[]" value="{{$product_purchase->tax_rate}}"/>
+                                                        <input type="hidden" class="unit_cost" name="unit_cost[]" value="{{ $raw_material_cost}}" />
+                                                        <input type="hidden" class="net_unit_cost" name="net_unit_cost[]" value="{{$rm_purchase->net_unit_cost}}" />
+                                                        <input type="hidden" class="net_unit_margin" name="net_unit_margin[]" value="{{$rm_purchase->net_unit_margin ?? 0}}" />
+                                                        <input type="hidden" class="net_unit_margin_type" name="net_unit_margin_type[]" value="{{$rm_purchase->net_unit_margin_type ?? 'percentage'}}" />
+                                                        <input type="hidden" class="net_unit_price" name="net_unit_price[]" value="{{$rm_purchase->net_unit_price}}" />
+                                                        <input type="hidden" class="discount-value" name="discount[]" value="{{$rm_purchase->discount}}" />
+                                                        <input type="hidden" class="tax-rate" name="tax_rate[]" value="{{$rm_purchase->tax_rate}}"/>
                                                         @if($tax)
                                                         <input type="hidden" class="tax-name" value="{{$tax->name}}" />
                                                         @else
                                                         <input type="hidden" class="tax-name" value="No Tax" />
                                                         @endif
-                                                        <input type="hidden" class="tax-method" value="{{$product_data->tax_method}}"/>
-                                                        <input type="hidden" class="tax-value" name="tax[]" value="{{$product_purchase->tax}}" />
-                                                        <input type="hidden" class="subtotal-value" name="subtotal[]" value="{{$product_purchase->total}}" />
-                                                        <input type="hidden" class="is-imei" value="{{$product_data->is_imei}}" />
-                                                        <input type="hidden" class="imei-number" name="imei_number[]"  value="{{$product_purchase->imei_number}}" />
-                                                        <input type="hidden" class="original-cost"  value="{{$product_data->cost}}" />
-                                                        <input type="hidden" class="original-profit-margin"  value="{{$product_data->profit_margin}}" />
-                                                        <input type="hidden" class="original-profit-margin-type"  value="{{$product_data->profit_margin_type}}" />
-                                                        <input type="hidden" class="original-price"  value="{{$product_data->price}}" />
+                                                        <input type="hidden" class="tax-method" value="{{$raw_material_data->tax_method ?? 1}}"/>
+                                                        <input type="hidden" class="tax-value" name="tax[]" value="{{$rm_purchase->tax}}" />
+                                                        <input type="hidden" class="subtotal-value" name="subtotal[]" value="{{$rm_purchase->total}}" />
+                                                        <input type="hidden" class="is-imei" value="0" />
+                                                        <input type="hidden" class="imei-number" name="imei_number[]" value="" />
+                                                        <input type="hidden" class="original-cost"  value="{{$raw_material_data->cost}}" />
+                                                        <input type="hidden" class="original-profit-margin"  value="0" />
+                                                        <input type="hidden" class="original-profit-margin-type"  value="percentage" />
+                                                        <input type="hidden" class="original-price"  value="{{$raw_material_data->price}}" />
                                                     </tr>
                                                     @endforeach
                                                 </tbody>
                                                 <tfoot class="tfoot active">
-                                                    <th colspan="2">{{__('db.Total')}}</th>
+                                                    <th>{{__('db.Total')}}</th>
                                                     <th id="total-qty">{{$lims_purchase_data->total_qty}}</th>
-                                                    <th></th>
-                                                    <th></th>
-                                                    <th></th>
-                                                    <th></th>
-                                                    <th></th>
-                                                    <th></th>
                                                     <th class="recieved-product-qty d-none"></th>
+                                                    <th></th>
+                                                    <th></th>
+                                                    <th></th>
+                                                    <th></th>
                                                     <th id="total-discount">{{ number_format((float)$lims_purchase_data->total_discount, $general_setting->decimal, '.', '')}}</th>
                                                     <th id="total-tax">{{ number_format((float)$lims_purchase_data->total_tax, $general_setting->decimal, '.', '')}}</th>
                                                     <th id="total">{{ number_format((float)$lims_purchase_data->total_cost, $general_setting->decimal, '.', '')}}</th>
@@ -524,8 +486,9 @@
 @push('scripts')
 <script type="text/javascript">
 
-    $("ul#purchase").siblings('a').addClass("active");
-    $("ul#purchase").addClass("show");
+    $("ul#rawmaterial").siblings('a').attr('aria-expanded','true');
+    $("ul#rawmaterial").addClass("show");
+    $("ul#rawmaterial #raw-purchase-edit-menu").addClass("active");
 
 // array data depend on warehouse
 var lims_product_array = [];
@@ -651,28 +614,25 @@ $('select[name="status"]').on('change', function() {
 });
 
 
-var lims_product_code = [
-    @foreach($lims_product_list_without_variant as $product)
+<?php $rawMaterialArray = []; ?>
+var lims_raw_material_code = [
+    @foreach($lims_raw_material_list as $raw_material)
         <?php
-            $productArray[] = htmlspecialchars($product->code) . '|' . preg_replace('/[\n\r]/', "<br>", htmlspecialchars($product->name));
+            $rawMaterialArray[] = htmlspecialchars($raw_material->code) . '|' . preg_replace('/[\n\r]/', "<br>", htmlspecialchars($raw_material->name));
         ?>
     @endforeach
-    @foreach($lims_product_list_with_variant as $product)
-        <?php
-            $productArray[] = htmlspecialchars($product->item_code) . '|' . preg_replace('/[\n\r]/', "<br>", htmlspecialchars($product->name));
-        ?>
-    @endforeach
+
     <?php
-        echo  '"'.implode('","', $productArray).'"';
+        echo  '"'.implode('","', $rawMaterialArray).'"';
     ?>
 ];
 
-    var lims_productcodeSearch = $('#lims_productcodeSearch');
+var lims_rawmaterialcodeSearch = $('#lims_rawmaterialcodeSearch');
 
-    lims_productcodeSearch.autocomplete({
+lims_rawmaterialcodeSearch.autocomplete({
     source: function(request, response) {
         var matcher = new RegExp(".?" + $.ui.autocomplete.escapeRegex(request.term), "i");
-        response($.grep(lims_product_code, function(item) {
+        response($.grep(lims_raw_material_code, function(item) {
             return matcher.test(item);
         }));
     },
@@ -680,12 +640,12 @@ var lims_product_code = [
         if (ui.content.length == 1) {
             var data = ui.content[0].value;
             $(this).autocomplete( "close" );
-            productSearch(data);
+            rawMaterialSearch(data);
         };
     },
     select: function(event, ui) {
         var data = ui.item.value;
-        productSearch(data);
+        rawMaterialSearch(data);
     }
 });
 
@@ -781,8 +741,8 @@ $("table.order-list").on("click", ".edit-product", function() {
         $("#editModal .modal-element").append(htmlText);
     }
     var row_product_name = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('td:nth-child(1)').text();
-    var row_product_code = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('td:nth-child(2)').text();
-    $('#modal_header').text(row_product_name + '(' + row_product_code + ')');
+    var row_raw_material_code = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.raw-material-code').val();
+    $('#modal_header').text(row_product_name + ' (' + row_raw_material_code + ')');
 
     var qty = $(this).closest('tr').find('.qty').val();
     $('input[name="edit_qty"]').val(qty);
@@ -986,16 +946,16 @@ $('button[name="update_btn"]').on("click", function() {
     checkQuantity(edit_qty, false);
 });
 
-function productSearch(data) {
+function rawMaterialSearch(data) {
     $.ajax({
         type: 'GET',
-        url: '../lims_product_search',
+        url: '{{ route('raw-material-purchase.search') }}',
         data: {
             data: data
         },
         success: function(data) {
             var flag = 1;
-            $(".product-code").each(function(i) {
+            $(".raw-material-code").each(function(i) {
                 if ($(this).val() == data[1]) {
                     rowindex = i;
                     var qty = parseFloat($('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .qty').val()) + 1;
@@ -1007,28 +967,21 @@ function productSearch(data) {
                     flag = 0;
                 }
             });
-            $("input[name='product_code_name']").val('');
+            $("input[name='raw_material_code_name']").val('');
             if(flag){
                 var newRow = $("<tr>");
                 var cols = '';
                 temp_unit_name = (data[6]).split(',');
-                cols += '<td>' + data[0] + '<button type="button" class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal"> <i class="dripicons-document-edit"></i></button></td>';
-                cols += '<td>' + data[1] + '</td>';
-                cols += '<td><input type="text" class="form-control qty" name="qty[]" value="1" required /></td>';
+
+                cols += '<td>' + data[0] + ' (' + data[1] + ') <button type="button" class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal"> <i class="dripicons-document-edit"></i></button><br></td>';
+                cols += '<td><input type="text" class="form-control qty" name="qty[]" step="any" value="1" required style="font-size:13px;max-width:50px;padding: 0 0;text-align:center"/></td>';
                 if($('select[name="status"]').val() == 1)
-                    cols += '<td class="recieved-product-qty d-none"><input type="text" class="form-control recieved" name="recieved[]" value="1"  /></td>';
+                    cols += '<td class="recieved-product-qty d-none"><input type="text" class="form-control recieved" name="recieved[]" value="1" /></td>';
                 else if($('select[name="status"]').val() == 2)
                     cols += '<td class="recieved-product-qty"><input type="text" class="form-control recieved" name="recieved[]" value="1" /></td>';
                 else
                     cols += '<td class="recieved-product-qty d-none"><input type="text" class="form-control recieved" name="recieved[]" value="0" /></td>';
-                if(data[10]) {
-                    cols += '<td><input type="text" class="form-control batch-no" name="batch_no[]" required/></td>';
-                    cols += '<td><input type="text" class="form-control expired-date" name="expired_date[]" required/></td>';
-                }
-                else {
-                    cols += '<td><input type="text" class="form-control batch-no" name="batch_no[]" disabled/></td>';
-                    cols += '<td><input type="text" class="form-control expired-date" name="expired_date[]" disabled/></td>';
-                }
+
                 cols += '<td class="net_unit_cost"></td>';
                 cols += '<td class="net_unit_margin"></td>';
                 cols += '<td class="net_unit_margin_type"></td>';
@@ -1037,8 +990,8 @@ function productSearch(data) {
                 cols += '<td class="tax"></td>';
                 cols += '<td class="sub-total"></td>';
                 cols += '<td><button type="button" class="ibtnDel btn btn-md btn-danger"><i class="dripicons-trash"></i></button></td>';
-                cols += '<input type="hidden" class="product-code" name="product_code[]" value="' + data[1] + '"/>';
-                cols += '<input type="hidden" class="product-id" name="product_id[]" value="' + data[9] + '"/>';
+                cols += '<input type="hidden" class="raw-material-code" name="raw_material_code[]" value="' + data[1] + '"/>';
+                cols += '<input type="hidden" class="raw-material-id" name="raw_material_id[]" value="' + data[9] + '"/>';
                 cols += '<input type="hidden" class="purchase-unit" name="purchase_unit[]" value="' + temp_unit_name[0] + '"/>';
                 cols += '<input type="hidden" class="unit_cost" name="unit_cost[]" />';
                 cols += '<input type="hidden" class="net_unit_cost" name="net_unit_cost[]" />';
@@ -1052,26 +1005,28 @@ function productSearch(data) {
                 cols += '<input type="hidden" class="imei-number" name="imei_number[]" />';
                 cols += '<input type="hidden" class="original-cost" value="'+data[2]+'" />';
                 cols += '<input type="hidden" class="original-profit-margin" value="'+data['profit_margin']+'" />';
-                cols += '<input type="hidden" class="original-profit-margin-type" value="'+data['profit_margin_type']+'" />';
+                cols += `<input type="hidden"
+                                    class="original-profit-margin-type"
+                                    value="${data['profit_margin_type'] || 'percentage'}">`
                 cols += '<input type="hidden" class="original-price" value="'+data['product_price']+'" />';
 
                 newRow.append(cols);
                 $("table.order-list tbody").prepend(newRow);
 
                 rowindex = newRow.index();
-                product_cost.splice(rowindex, 0, parseFloat(data[2]));
+                product_cost.splice(rowindex,0, parseFloat(data[2]));
                 profit_margin.splice(rowindex,0, parseFloat(data['profit_margin']));
-                profit_margin_type.splice(rowindex, 0, data['profit_margin_type'] ?? 'percentage');
+                profit_margin_type.splice(rowindex,0, data['profit_margin_type'] || 'percentage');
                 product_price.splice(rowindex,0, parseFloat(data['product_price']));
-                product_discount.splice(rowindex, 0, '{{number_format(0, $general_setting->decimal, '.', '')}}');
-                tax_rate.splice(rowindex, 0, parseFloat(data[3]));
-                tax_name.splice(rowindex, 0, data[4]);
-                tax_method.splice(rowindex, 0, data[5]);
-                unit_name.splice(rowindex, 0, data[6]);
-                unit_operator.splice(rowindex, 0, data[7]);
-                unit_operation_value.splice(rowindex, 0, data[8]);
+                product_discount.splice(rowindex,0, "{{number_format(0, $general_setting->decimal, '.', '')}}");
+                tax_rate.splice(rowindex,0, parseFloat(data[3]));
+                tax_name.splice(rowindex,0, data[4]);
+                tax_method.splice(rowindex,0, data[5]);
+                unit_name.splice(rowindex,0, data[6]);
+                unit_operator.splice(rowindex,0, data[7]);
+                unit_operation_value.splice(rowindex,0, data[8]);
                 is_imei.splice(rowindex, 0, data[11]);
-                calculateRowProductData(1);
+                checkQuantity(1, true);
                 if(data[11]) {
                     $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.edit-product').click();
                 }
@@ -1080,8 +1035,6 @@ function productSearch(data) {
     });
 }
 function checkQuantity(purchase_qty, flag) {
-    var row_product_code = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('td:nth-child(2)').text();
-    var pos = product_code.indexOf(row_product_code);
     var operator = unit_operator[rowindex].split(',');
     var operation_value = unit_operation_value[rowindex].split(',');
     if(operator[0] == '*')

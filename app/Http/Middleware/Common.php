@@ -114,8 +114,14 @@ class Common
         });
         View::share('role_has_permissions_list', $role_has_permissions_list);
 
+        // Only load product categories for general use (not raw materials)
         $categories_list = Cache::remember('category_list', 60*60*24*365, function () {
-            return DB::table('categories')->where('is_active', true)->get();
+            return DB::table('categories')
+                ->where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'product');
+                })
+                ->get();
         });
         View::share('categories_list', $categories_list);
 

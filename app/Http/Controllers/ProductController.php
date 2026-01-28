@@ -49,9 +49,19 @@ class ProductController extends Controller
         $role = Role::find(Auth::user()->role_id);
         if ($role->hasPermissionTo('products-index')) {
             $lims_warehouse_list = Warehouse::where('is_active', true)->get();
-            $lims_brand_list = Brand::where('is_active', true)->get();
-            $lims_category_list = Category::where('is_active', true)->get();
-            $lims_unit_list = Unit::where('is_active', true)->get();
+            // Only load categories, brands, and units for products (not raw materials)
+            $lims_brand_list = Brand::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'product');
+                })->get();
+            $lims_category_list = Category::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'product');
+                })->get();
+            $lims_unit_list = Unit::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'product');
+                })->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
 
             $warehouse_id = 0;
@@ -216,10 +226,17 @@ class ProductController extends Controller
             $imeiIds = ProductPurchase::where('imei_number', 'LIKE', "%{$search}%")
                 ->pluck('product_id');
 
+            // Only search in product brands and categories (not raw materials)
             $brandIds = Brand::where('title', 'LIKE', "%{$search}%")
+                ->where(function($q) {
+                    $q->whereNull('type')->orWhere('type', 'product');
+                })
                 ->pluck('id');
 
             $categoryIds = Category::where('name', 'LIKE', "%{$search}%")
+                ->where(function($q) {
+                    $q->whereNull('type')->orWhere('type', 'product');
+                })
                 ->pluck('id');
 
             $query->where(function ($q) use ($productIds, $variantIds, $imeiIds, $brandIds, $categoryIds, $field_names, $search) {
@@ -467,9 +484,19 @@ class ProductController extends Controller
         if ($role->hasPermissionTo('products-add')) {
             $lims_product_list_without_variant = $this->productWithoutVariant();
             $lims_product_list_with_variant = $this->productWithVariant();
-            $lims_brand_list = Brand::where('is_active', true)->get();
-            $lims_category_list = Category::where('is_active', true)->get();
-            $lims_unit_list = Unit::where('is_active', true)->get();
+            // Only load categories, brands, and units for products (not raw materials)
+            $lims_brand_list = Brand::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'product');
+                })->get();
+            $lims_category_list = Category::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'product');
+                })->get();
+            $lims_unit_list = Unit::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'product');
+                })->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
             $lims_warehouse_list = Warehouse::where('is_active', true)->get();
             $numberOfProduct = Product::where('is_active', true)->count();
@@ -1194,9 +1221,19 @@ class ProductController extends Controller
         if ($role->hasPermissionTo('products-edit')) {
             $lims_product_list_without_variant = $this->productWithoutVariant();
             $lims_product_list_with_variant = $this->productWithVariant();
-            $lims_brand_list = Brand::where('is_active', true)->get();
-            $lims_category_list = Category::where('is_active', true)->get();
-            $lims_unit_list = Unit::where('is_active', true)->get();
+            // Only load categories, brands, and units for products (not raw materials)
+            $lims_brand_list = Brand::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'product');
+                })->get();
+            $lims_category_list = Category::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'product');
+                })->get();
+            $lims_unit_list = Unit::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'product');
+                })->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
             $lims_product_data = Product::where('id', $id)->first();
 
@@ -1690,15 +1727,67 @@ class ProductController extends Controller
 
     public function productWithoutVariant()
     {
-        return Product::ActiveStandard()->select('id', 'name', 'code')
-            ->whereNull('is_variant')->get();
+        // Only show products with product categories/brands/units (not raw materials)
+        return Product::ActiveStandard()
+            ->whereNull('is_variant')
+            ->where(function($query) {
+                $query->whereHas('category', function($q) {
+                    $q->where(function($q2) {
+                        $q2->whereNull('type')->orWhere('type', 'product');
+                    });
+                })
+                ->orWhereDoesntHave('category');
+            })
+            ->where(function($query) {
+                $query->whereHas('brand', function($q) {
+                    $q->where(function($q2) {
+                        $q2->whereNull('type')->orWhere('type', 'product');
+                    });
+                })
+                ->orWhereNull('brand_id');
+            })
+            ->where(function($query) {
+                $query->whereHas('unit', function($q) {
+                    $q->where(function($q2) {
+                        $q2->whereNull('type')->orWhere('type', 'product');
+                    });
+                })
+                ->orWhereNull('unit_id');
+            })
+            ->select('id', 'name', 'code')
+            ->get();
     }
 
     public function productWithVariant()
     {
+        // Only show products with product categories/brands/units (not raw materials)
         return Product::join('product_variants', 'products.id', 'product_variants.product_id')
             ->ActiveStandard()
             ->whereNotNull('is_variant')
+            ->where(function($query) {
+                $query->whereHas('category', function($q) {
+                    $q->where(function($q2) {
+                        $q2->whereNull('type')->orWhere('type', 'product');
+                    });
+                })
+                ->orWhereDoesntHave('category');
+            })
+            ->where(function($query) {
+                $query->whereHas('brand', function($q) {
+                    $q->where(function($q2) {
+                        $q2->whereNull('type')->orWhere('type', 'product');
+                    });
+                })
+                ->orWhereNull('brand_id');
+            })
+            ->where(function($query) {
+                $query->whereHas('unit', function($q) {
+                    $q->where(function($q2) {
+                        $q2->whereNull('type')->orWhere('type', 'product');
+                    });
+                })
+                ->orWhereNull('unit_id');
+            })
             ->select('products.id', 'products.name', 'product_variants.item_code', 'product_variants.qty')
             ->orderBy('position')->get();
     }
@@ -1710,19 +1799,95 @@ class ProductController extends Controller
 
         $product_code = explode("(", $request['data']);
         $product_code[0] = rtrim($product_code[0], " ");
+        // Only show products with product categories/brands/units (not raw materials)
         $lims_product_list = Product::where([
             ['code', $product_code[0]],
             ['is_active', true]
-        ])->get();
+        ])
+        ->where(function($query) {
+            $query->whereHas('category', function($q) {
+                $q->where(function($q2) {
+                    $q2->whereNull('type')->orWhere('type', 'product');
+                });
+            })
+            ->orWhereDoesntHave('category');
+        })
+        ->where(function($query) {
+            $query->whereHas('brand', function($q) {
+                $q->where(function($q2) {
+                    $q2->whereNull('type')->orWhere('type', 'product');
+                });
+            })
+            ->orWhereNull('brand_id');
+        })
+        ->where(function($query) {
+            $query->whereHas('unit', function($q) {
+                $q->where(function($q2) {
+                    $q2->whereNull('type')->orWhere('type', 'product');
+                });
+            })
+            ->orWhereNull('unit_id');
+        })
+        ->get();
         if (count($lims_product_list) == 0) {
             $lims_product_list = Product::join('product_variants', 'products.id', 'product_variants.product_id')
                 ->select('products.*', 'product_variants.item_code', 'product_variants.variant_id', 'product_variants.additional_price')
                 ->where('product_variants.item_code', $product_code[0])
+                ->where('products.is_active', true)
+                ->where(function($query) {
+                    $query->whereHas('category', function($q) {
+                        $q->where(function($q2) {
+                            $q2->whereNull('type')->orWhere('type', 'product');
+                        });
+                    })
+                    ->orWhereDoesntHave('category');
+                })
+                ->where(function($query) {
+                    $query->whereHas('brand', function($q) {
+                        $q->where(function($q2) {
+                            $q2->whereNull('type')->orWhere('type', 'product');
+                        });
+                    })
+                    ->orWhereNull('brand_id');
+                })
+                ->where(function($query) {
+                    $query->whereHas('unit', function($q) {
+                        $q->where(function($q2) {
+                            $q2->whereNull('type')->orWhere('type', 'product');
+                        });
+                    })
+                    ->orWhereNull('unit_id');
+                })
                 ->get();
         } elseif ($lims_product_list[0]->is_variant) {
             $lims_product_list = Product::join('product_variants', 'products.id', 'product_variants.product_id')
                 ->select('products.*', 'product_variants.item_code', 'product_variants.variant_id', 'product_variants.additional_price')
                 ->where('product_variants.product_id', $lims_product_list[0]->id)
+                ->where('products.is_active', true)
+                ->where(function($query) {
+                    $query->whereHas('category', function($q) {
+                        $q->where(function($q2) {
+                            $q2->whereNull('type')->orWhere('type', 'product');
+                        });
+                    })
+                    ->orWhereDoesntHave('category');
+                })
+                ->where(function($query) {
+                    $query->whereHas('brand', function($q) {
+                        $q->where(function($q2) {
+                            $q2->whereNull('type')->orWhere('type', 'product');
+                        });
+                    })
+                    ->orWhereNull('brand_id');
+                })
+                ->where(function($query) {
+                    $query->whereHas('unit', function($q) {
+                        $q->where(function($q2) {
+                            $q2->whereNull('type')->orWhere('type', 'product');
+                        });
+                    })
+                    ->orWhereNull('unit_id');
+                })
                 ->get();
         }
         foreach ($lims_product_list as $lims_product_data) {
@@ -1889,12 +2054,28 @@ class ProductController extends Controller
                 // Handle brand
                 $brand_id = null;
                 if (isset($data['brand']) && $data['brand'] !== 'N/A' && $data['brand'] !== '') {
-                    $lims_brand_data = Brand::firstOrCreate(['title' => $data['brand'], 'is_active' => true]);
+                    $lims_brand_data = Brand::firstOrCreate(
+                        ['title' => $data['brand'], 'is_active' => true],
+                        ['type' => 'product']
+                    );
+                    // Update type if it was null (for existing records)
+                    if (!$lims_brand_data->type) {
+                        $lims_brand_data->type = 'product';
+                        $lims_brand_data->save();
+                    }
                     $brand_id = $lims_brand_data->id;
                 }
 
                 // Handle category
-                $lims_category_data = Category::firstOrCreate(['name' => $data['category'], 'is_active' => true]);
+                $lims_category_data = Category::firstOrCreate(
+                    ['name' => $data['category'], 'is_active' => true],
+                    ['type' => 'product']
+                );
+                // Update type if it was null (for existing records)
+                if (!$lims_category_data->type) {
+                    $lims_category_data->type = 'product';
+                    $lims_category_data->save();
+                }
 
                 // Handle unit
                 $lims_unit_data = Unit::where('unit_code', $data['unitcode'])->first();

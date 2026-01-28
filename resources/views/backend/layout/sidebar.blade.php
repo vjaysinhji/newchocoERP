@@ -50,12 +50,24 @@
 
                     <ul id="rawmaterial" class="collapse list-unstyled ">
                         @can('rawmaterials-index')
+                            <li id="rawmaterial-category-menu"><a href="{{ route('rawmaterials.category.index') }}">{{ __('db.category') }}</a></li>
+                            <li id="rawmaterial-brand-menu"><a href="{{ route('rawmaterials.brand.index') }}">{{ __('db.Brand') }}</a></li>
+                            <li id="rawmaterial-unit-menu"><a href="{{ route('rawmaterials.unit.index') }}">{{ __('db.Unit') }}</a></li>
                             <li id="rawmaterial-list-menu"><a href="{{ route('rawmaterials.index') }}">{{ __('db.Raw Material List') }}</a>
                             </li>
                         @endcan
                         @can('rawmaterials-add')
                             <li id="rawmaterial-create-menu"><a
                                     href="{{ route('rawmaterials.create') }}">{{ __('db.add_raw_material') }}</a></li>
+                        @endcan
+                        @can('rawmaterials-index')
+                            <li id="rawmaterial-adjustment-menu"><a href="{{ route('rawmaterial-adjustment.index') }}">{{ __('db.Adjustment List') }}</a></li>
+                        @endcan
+                        @can('rawmaterials-index')
+                            <li id="rawmaterial-adjustment-create-menu"><a href="{{ route('rawmaterial-adjustment.create') }}">{{ __('db.Add Adjustment') }}</a></li>
+                        @endcan
+                        @can('rawmaterials-index')
+                            <li id="rawmaterial-stock-count-menu"><a href="{{ route('rawmaterial-stock-count.index') }}">{{ __('db.Stock Count') }}</a></li>
                         @endcan
                         @can('raw-purchases-index')
                             <li id="raw-purchase-list-menu"><a

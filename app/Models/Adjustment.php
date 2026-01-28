@@ -12,11 +12,17 @@ class Adjustment extends Model
         "document", 
         "total_qty", 
         "item",
-        "note"
+        "note",
+        "type"
     ];
 
     public function warehouse()
     {
         return $this->belongsTo(Warehouse::class);
+    }
+    
+    public function productAdjustments()
+    {
+        return $this->hasMany(ProductAdjustment::class);
     }
 }

@@ -8,7 +8,7 @@ class Category extends Model
 {
     protected $fillable =[
 
-        "name", 'image', "parent_id", "is_active", "is_sync_disable", "woocommerce_category_id","slug","featured","page_title","short_description"
+        "name", 'image', "parent_id", "is_active", "type", "is_sync_disable", "woocommerce_category_id","slug","featured","page_title","short_description"
     ];
 
     public function product()

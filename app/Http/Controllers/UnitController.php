@@ -15,7 +15,12 @@ class UnitController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if($role->hasPermissionTo('unit')) {
-            $lims_unit_list = Unit::where('is_active', true)->get();
+            // Only get product units (not raw materials)
+            $lims_unit_list = Unit::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'product');
+                })
+                ->get();
             return view('backend.unit.create', compact('lims_unit_list'));
         }
         else
@@ -42,6 +47,7 @@ class UnitController extends Controller
         ]);
         $input = $request->all();
         $input['is_active'] = true;
+        $input['type'] = 'product'; // Set type for product unit
         if(!$input['base_unit']){
             $input['operator'] = '*';
             $input['operation_value'] = 1;
@@ -62,14 +68,33 @@ class UnitController extends Controller
     public function limsUnitSearch()
     {
         $lims_unit_name = $_GET['lims_unitNameSearch'];
-        $lims_unit_all = Unit::where('unit_name', $lims_unit_name)->paginate(5);
-        $lims_unit_list = Unit::all();
+        // Only get product units (not raw materials)
+        $lims_unit_all = Unit::where('unit_name', $lims_unit_name)
+            ->where(function($query) {
+                $query->whereNull('type')->orWhere('type', 'product');
+            })
+            ->paginate(5);
+        $lims_unit_list = Unit::where('is_active', true)
+            ->where(function($query) {
+                $query->whereNull('type')->orWhere('type', 'product');
+            })
+            ->get();
         return view('backend.unit.create', compact('lims_unit_all','lims_unit_list'));
     }
 
     public function edit($id)
     {
-        $lims_unit_data = Unit::findOrFail($id);
+        // Only get product units (not raw materials)
+        $lims_unit_data = Unit::where('id', $id)
+            ->where(function($query) {
+                $query->whereNull('type')->orWhere('type', 'product');
+            })
+            ->first();
+            
+        if(!$lims_unit_data) {
+            return response()->json(['error' => 'Unit not found'], 404);
+        }
+        
         return $lims_unit_data;
     }
 
@@ -91,11 +116,23 @@ class UnitController extends Controller
         ]);
 
         $input = $request->all();
+        $input['type'] = 'product'; // Ensure type is set to product
         if(!$input['base_unit']){
             $input['operator'] = '*';
             $input['operation_value'] = 1;
         }
-        $lims_unit_data = Unit::where('id',$input['unit_id'])->first();
+        
+        // Only get product units (not raw materials)
+        $lims_unit_data = Unit::where('id', $input['unit_id'])
+            ->where(function($query) {
+                $query->whereNull('type')->orWhere('type', 'product');
+            })
+            ->first();
+            
+        if(!$lims_unit_data) {
+            return redirect()->back()->with('not_permitted', __('db.Unit not found'));
+        }
+        
         $lims_unit_data->update($input);
         return redirect('unit');
     }
@@ -130,11 +167,18 @@ class UnitController extends Controller
             $unit = Unit::firstOrNew(['unit_code' => $data['code'],'is_active' => true ]);
             $unit->unit_code = $data['code'];
             $unit->unit_name = $data['name'];
+            $unit->type = 'product'; // Set type for product unit
             if($data['baseunit']==null)
                 $unit->base_unit = null;
             else{
-                $base_unit = Unit::where('unit_code', $data['baseunit'])->first();
-                $unit->base_unit = $base_unit->id;
+                $base_unit = Unit::where('unit_code', $data['baseunit'])
+                    ->where(function($query) {
+                        $query->whereNull('type')->orWhere('type', 'product');
+                    })
+                    ->first();
+                if($base_unit) {
+                    $unit->base_unit = $base_unit->id;
+                }
             }
             if($data['operator'] == null)
                 $unit->operator = '*';
@@ -154,18 +198,36 @@ class UnitController extends Controller
     {
         $unit_id = $request['unitIdArray'];
         foreach ($unit_id as $id) {
-            $lims_unit_data = Unit::findOrFail($id);
-            $lims_unit_data->is_active = false;
-            $lims_unit_data->save();
+            // Only process product units (not raw materials)
+            $lims_unit_data = Unit::where('id', $id)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'product');
+                })
+                ->first();
+                
+            if($lims_unit_data) {
+                $lims_unit_data->is_active = false;
+                $lims_unit_data->save();
+            }
         }
         return 'Unit deleted successfully!';
     }
 
     public function destroy($id)
     {
-        $lims_unit_data = Unit::findOrFail($id);
+        // Only get product units (not raw materials)
+        $lims_unit_data = Unit::where('id', $id)
+            ->where(function($query) {
+                $query->whereNull('type')->orWhere('type', 'product');
+            })
+            ->first();
+            
+        if(!$lims_unit_data) {
+            return redirect()->back()->with('not_permitted', __('db.Unit not found'));
+        }
+        
         $lims_unit_data->is_active = false;
         $lims_unit_data->save();
-        return redirect('unit');
+        return redirect('unit')->with('not_permitted', __('db.Unit deleted successfully'));
     }
 }
