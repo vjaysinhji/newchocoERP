@@ -463,11 +463,20 @@ class WarehouseStorePurchaseController extends Controller
                 if (!$purchase->exchange_rate || $purchase->exchange_rate == 0)
                     $purchase->exchange_rate = 1;
 
-                $nestedData['grand_total'] = number_format($purchase->grand_total / $purchase->exchange_rate, config('decimal'));
-                $returned_amount = DB::table('return_purchases')->where('purchase_id', $purchase->id)->sum('grand_total');
-                $nestedData['returned_amount'] = number_format($returned_amount / $purchase->exchange_rate, config('decimal'));
-                $nestedData['paid_amount'] = number_format($purchase->paid_amount / $purchase->exchange_rate, config('decimal'));
-                $nestedData['due'] = number_format(max(0, ($purchase->grand_total - $returned_amount - $purchase->paid_amount) / $purchase->exchange_rate), config('decimal'));
+                $show_price = in_array('warehouse-store-purchases-show-price', $request['all_permission'] ?? []);
+                if ($show_price) {
+                    $nestedData['grand_total'] = number_format($purchase->grand_total / $purchase->exchange_rate, config('decimal'));
+                    $returned_amount = DB::table('return_purchases')->where('purchase_id', $purchase->id)->sum('grand_total');
+                    $nestedData['returned_amount'] = number_format($returned_amount / $purchase->exchange_rate, config('decimal'));
+                    $nestedData['paid_amount'] = number_format($purchase->paid_amount / $purchase->exchange_rate, config('decimal'));
+                    $nestedData['due'] = number_format(max(0, ($purchase->grand_total - $returned_amount - $purchase->paid_amount) / $purchase->exchange_rate), config('decimal'));
+                } else {
+                    $nestedData['grand_total'] = '-';
+                    $nestedData['returned_amount'] = '-';
+                    $nestedData['paid_amount'] = '-';
+                    $nestedData['due'] = '-';
+                    $nestedData['payment_status'] = '-';
+                }
                 foreach ($field_names as $field_name) {
                     $nestedData[$field_name] = $purchase->$field_name ?? '';
                 }
@@ -480,9 +489,9 @@ class WarehouseStorePurchaseController extends Controller
                         <li><button type="button" class="btn btn-link view"><i class="fa fa-eye"></i> ' . __('db.View') . '</button></li>';
                 if (in_array("warehouse-store-purchases-edit", $request['all_permission']))
                     $nestedData['options'] .= '<li><a href="' . route('warehouse-store-purchases.edit', $purchase->id) . '" class="btn btn-link"><i class="dripicons-document-edit"></i> ' . __('db.edit') . '</a></li>';
-                if (in_array("purchase-payment-index", $request['all_permission']))
+                if ($show_price && in_array("purchase-payment-index", $request['all_permission']))
                     $nestedData['options'] .= '<li><button type="button" class="get-payment btn btn-link" data-id="' . $purchase->id . '"><i class="fa fa-money"></i> ' . __('db.View Payment') . '</button></li>';
-                if (in_array("purchase-payment-add", $request['all_permission'])) {
+                if ($show_price && in_array("purchase-payment-add", $request['all_permission'])) {
                     $currency_code_name = $purchase->currency->code ?? 'USD';
                     $nestedData['options'] .= '<li><button type="button" class="add-payment btn btn-link" data-id="' . $purchase->id . '" data-currency_id="' . $purchase->currency_id . '" data-currency_name="' . $currency_code_name . '" data-exchange_rate="' . $purchase->exchange_rate . '" data-toggle="modal" data-target="#add-payment"><i class="fa fa-plus"></i> ' . __('db.Add Payment') . '</button></li>';
                 }

@@ -183,6 +183,7 @@
                                                         <th style="min-width: 30%">{{__('db.product')}}</th>
                                                         <th>{{__('db.Quantity')}}</th>
                                                         <th class="recieved-product-qty d-none">{{__('db.Recieved')}}</th>
+                                                        @can('raw-purchases-show-price')
                                                         <th>{{__('db.Net Unit Cost')}}</th>
                                                         <th>{{__('db.Profit Margin')}}</th>
                                                         <th>{{__('db.Profit Margin Type')}}</th>
@@ -190,6 +191,7 @@
                                                         <th>{{__('db.Discount')}}</th>
                                                         <th>{{__('db.Tax')}}</th>
                                                         <th>{{__('db.Subtotal')}}</th>
+                                                        @endcan
                                                         <th><i class="dripicons-trash"></i></th>
                                                     </tr>
                                                 </thead>
@@ -234,9 +236,10 @@
                                                         $temp_unit_operator = $unit_operator = implode(",",$unit_operator) .',';
                                                         $temp_unit_operation_value = $unit_operation_value =  implode(",",$unit_operation_value) . ',';
                                                     ?>
-                                                        <td>{{$raw_material_data->name}} ({{$raw_material_data->code}}) <button type="button" class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal"> <i class="dripicons-document-edit"></i></button> </td>
+                                                        <td>{{$raw_material_data->name}} ({{$raw_material_data->code}}) @can('raw-purchases-show-price')<button type="button" class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal"> <i class="dripicons-document-edit"></i></button>@endcan </td>
                                                         <td><input type="text" class="form-control qty" name="qty[]" value="{{$rm_purchase->qty}}" required /></td>
                                                         <td class="recieved-product-qty d-none"><input type="number" class="form-control recieved" name="recieved[]" value="{{$rm_purchase->recieved}}" step="any"/></td>
+                                                        @can('raw-purchases-show-price')
                                                         <td class="net_unit_cost">{{ number_format((float)$rm_purchase->net_unit_cost, $general_setting->decimal, '.', '')}} </td>
                                                         <td class="net_unit_margin">{{ number_format(
                                                             (float)($rm_purchase->net_unit_margin > 0 
@@ -254,6 +257,7 @@
                                                         <td class="discount">{{ number_format((float)$rm_purchase->discount, $general_setting->decimal, '.', '')}}</td>
                                                         <td class="tax">{{ number_format((float)$rm_purchase->tax, $general_setting->decimal, '.', '')}}</td>
                                                         <td class="sub-total">{{ number_format((float)$rm_purchase->total, $general_setting->decimal, '.', '')}}</td>
+                                                        @endcan
                                                         <td><button type="button" class="ibtnDel btn btn-md btn-danger"><i class="dripicons-trash"></i></button></td>
                                                         <input type="hidden" class="raw-material-id" name="raw_material_id[]" value="{{$raw_material_data->id}}"/>
                                                         <input type="hidden" class="raw-material-code" name="raw_material_code[]" value="{{$raw_material_data->code}}"/>
@@ -295,6 +299,7 @@
                                                     <th>{{__('db.Total')}}</th>
                                                     <th id="total-qty">{{$lims_purchase_data->total_qty}}</th>
                                                     <th class="recieved-product-qty d-none"></th>
+                                                    @can('raw-purchases-show-price')
                                                     <th></th>
                                                     <th></th>
                                                     <th></th>
@@ -302,6 +307,7 @@
                                                     <th id="total-discount">{{ number_format((float)$lims_purchase_data->total_discount, $general_setting->decimal, '.', '')}}</th>
                                                     <th id="total-tax">{{ number_format((float)$lims_purchase_data->total_tax, $general_setting->decimal, '.', '')}}</th>
                                                     <th id="total">{{ number_format((float)$lims_purchase_data->total_cost, $general_setting->decimal, '.', '')}}</th>
+                                                    @endcan
                                                     <th><i class="dripicons-trash"></i></th>
                                                 </tfoot>
                                             </table>
@@ -342,6 +348,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                @can('raw-purchases-show-price')
                                 <div class="row mt-5">
                                     <div class="col-md-4">
                                         <div class="form-group">
@@ -372,6 +379,7 @@
                                         </div>
                                     </div>
                                 </div>
+                                @endcan
                                 <div class="row">
                                     <div class="col-md-12">
                                         <div class="form-group">
@@ -391,6 +399,7 @@
             </div>
         </div>
     </div>
+    @can('raw-purchases-show-price')
     <div class="container-fluid">
         <table class="table table-bordered table-condensed totals">
             <td><strong>{{__('db.Items')}}</strong>
@@ -413,6 +422,7 @@
             </td>
         </table>
     </div>
+    @endcan
     <div id="editModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
         <div role="document" class="modal-dialog">
             <div class="modal-content">
@@ -567,27 +577,30 @@ $('#currency-id').change(function(){
 
 $('[data-toggle="tooltip"]').tooltip();
 
-//assigning value
+var raw_purchases_show_price = @json(auth()->user()->can('raw-purchases-show-price'));
+
 $('select[name="supplier_id"]').val($('input[name="supplier_id_hidden"]').val());
 $('select[name="warehouse_id"]').val($('input[name="warehouse_id_hidden"]').val());
 $('select[name="status"]').val($('input[name="status_hidden"]').val());
-$('select[name="order_tax_rate"]').val($('input[name="order_tax_rate_hidden"]').val());
 $('.selectpicker').selectpicker('refresh');
 
-$('#item').text($('input[name="item"]').val() + '(' + $('input[name="total_qty"]').val() + ')');
-$('#subtotal').text(parseFloat($('input[name="total_cost"]').val()).toFixed({{$general_setting->decimal}}));
-$('#order_tax').text(parseFloat($('input[name="order_tax"]').val()).toFixed({{$general_setting->decimal}}));
+if (raw_purchases_show_price) {
+    $('select[name="order_tax_rate"]').val($('input[name="order_tax_rate_hidden"]').val());
+    $('#item').text($('input[name="item"]').val() + '(' + $('input[name="total_qty"]').val() + ')');
+    $('#subtotal').text(parseFloat($('input[name="total_cost"]').val()).toFixed({{$general_setting->decimal}}));
+    $('#order_tax').text(parseFloat($('input[name="order_tax"]').val()).toFixed({{$general_setting->decimal}}));
+    if(!$('input[name="order_discount"]').val())
+        $('input[name="order_discount"]').val('{{number_format(0, $general_setting->decimal, '.', '')}}');
+    $('#order_discount').text(parseFloat($('input[name="order_discount"]').val()).toFixed({{$general_setting->decimal}}));
+    if(!$('input[name="shipping_cost"]').val())
+        $('input[name="shipping_cost"]').val('{{number_format(0, $general_setting->decimal, '.', '')}}');
+    $('#shipping_cost').text(parseFloat($('input[name="shipping_cost"]').val()).toFixed({{$general_setting->decimal}}));
+    $('#grand_total').text(parseFloat($('input[name="grand_total"]').val()).toFixed({{$general_setting->decimal}}));
+}
 if($('select[name="status"]').val() == 2){
     $(".recieved-product-qty").removeClass("d-none");
 
 }
-if(!$('input[name="order_discount"]').val())
-    $('input[name="order_discount"]').val('{{number_format(0, $general_setting->decimal, '.', '')}}');
-$('#order_discount').text(parseFloat($('input[name="order_discount"]').val()).toFixed({{$general_setting->decimal}}));
-if(!$('input[name="shipping_cost"]').val())
-    $('input[name="shipping_cost"]').val('{{number_format(0, $general_setting->decimal, '.', '')}}');
-$('#shipping_cost').text(parseFloat($('input[name="shipping_cost"]').val()).toFixed({{$general_setting->decimal}}));
-$('#grand_total').text(parseFloat($('input[name="grand_total"]').val()).toFixed({{$general_setting->decimal}}));
 
 $('select[name="status"]').on('change', function() {
     if($('select[name="status"]').val() == 2){
@@ -1174,6 +1187,7 @@ function calculateTotal() {
 }
 
 function calculateGrandTotal() {
+    if (!raw_purchases_show_price) return;
 
     var item = $('table.order-list tbody tr:last').index();
 
@@ -1203,17 +1217,19 @@ function calculateGrandTotal() {
     $('input[name="grand_total"]').val(grand_total.toFixed({{$general_setting->decimal}}));
 }
 
-$('input[name="order_discount"]').on("blur", function() {
-    calculateGrandTotal();
-});
+if (raw_purchases_show_price) {
+    $('input[name="order_discount"]').on("blur", function() {
+        calculateGrandTotal();
+    });
 
-$('input[name="shipping_cost"]').on("blur", function() {
-    calculateGrandTotal();
-});
+    $('input[name="shipping_cost"]').on("blur", function() {
+        calculateGrandTotal();
+    });
 
-$('select[name="order_tax_rate"]').on("change", function() {
-    calculateGrandTotal();
-});
+    $('select[name="order_tax_rate"]').on("change", function() {
+        calculateGrandTotal();
+    });
+}
 
 $(window).keydown(function(e){
     if (e.which == 13) {

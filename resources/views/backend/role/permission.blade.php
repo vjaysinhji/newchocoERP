@@ -76,6 +76,86 @@
 										@endforeach
 									</tr>
 
+									<tr class="rawmaterial-row">
+										<td>{{ __('db.Raw Material') }}</td>
+										@foreach ($permissions as $perm)
+											@php $key = "rawmaterials-{$perm}"; @endphp
+											<td class="text-center">
+												<div class="checkbox icheckbox_square-blue">
+													<input type="checkbox"
+														value="1"
+														id="{{ $key }}"
+														name="{{ $key }}"
+														{{ in_array($key, $all_permission) ? 'checked' : '' }}>
+													<label for="{{ $key }}"></label>
+												</div>
+											</td>
+										@endforeach
+									</tr>
+
+									<tr class="raw-purchase-row">
+										<td>{{ __('db.Raw Purchase') }}</td>
+										@foreach ($permissions as $perm)
+											@php $key = "raw-purchases-{$perm}"; @endphp
+											<td class="text-center">
+												<div class="checkbox icheckbox_square-blue">
+													<input type="checkbox"
+														value="1"
+														id="{{ $key }}"
+														name="{{ $key }}"
+														{{ in_array($key, $all_permission) ? 'checked' : '' }}>
+													<label for="{{ $key }}"></label>
+												</div>
+												@if($perm == 'index')
+												<div class="checkbox icheckbox_square-blue" style="margin-top:8px;">
+													<input type="checkbox" value="1" id="raw-purchases-show-price" name="raw-purchases-show-price" {{ in_array('raw-purchases-show-price', $all_permission) ? 'checked' : '' }}>
+													<label for="raw-purchases-show-price" class="padding05">{{ __('db.Show Price') }}</label>
+												</div>
+												@endif
+											</td>
+										@endforeach
+									</tr>
+
+									<tr class="warehouse-store-row">
+										<td>{{ __('db.Warehouse Stores') }}</td>
+										@foreach ($permissions as $perm)
+											@php $key = "warehouse-stores-{$perm}"; @endphp
+											<td class="text-center">
+												<div class="checkbox icheckbox_square-blue">
+													<input type="checkbox"
+														value="1"
+														id="{{ $key }}"
+														name="{{ $key }}"
+														{{ in_array($key, $all_permission) ? 'checked' : '' }}>
+													<label for="{{ $key }}"></label>
+												</div>
+											</td>
+										@endforeach
+									</tr>
+
+									<tr class="warehouse-store-purchase-row">
+										<td>{{ __('db.Warehouse Store Purchase') }}</td>
+										@foreach ($permissions as $perm)
+											@php $key = "warehouse-store-purchases-{$perm}"; @endphp
+											<td class="text-center">
+												<div class="checkbox icheckbox_square-blue">
+													<input type="checkbox"
+														value="1"
+														id="{{ $key }}"
+														name="{{ $key }}"
+														{{ in_array($key, $all_permission) ? 'checked' : '' }}>
+													<label for="{{ $key }}"></label>
+												</div>
+												@if($perm == 'index')
+												<div class="checkbox icheckbox_square-blue" style="margin-top:8px;">
+													<input type="checkbox" value="1" id="warehouse-store-purchases-show-price" name="warehouse-store-purchases-show-price" {{ in_array('warehouse-store-purchases-show-price', $all_permission) ? 'checked' : '' }}>
+													<label for="warehouse-store-purchases-show-price" class="padding05">{{ __('db.Show Price') }}</label>
+												</div>
+												@endif
+											</td>
+										@endforeach
+									</tr>
+
 									<tr>
 										<td>{{ __('db.Purchase') }}</td>
 										@foreach ($permissions as $perm)
@@ -89,6 +169,12 @@
 														{{ in_array($key, $all_permission) ? 'checked' : '' }}>
 													<label for="{{ $key }}"></label>
 												</div>
+												@if($perm == 'index')
+												<div class="checkbox icheckbox_square-blue" style="margin-top:8px;">
+													<input type="checkbox" value="1" id="purchases-show-price" name="purchases-show-price" {{ in_array('purchases-show-price', $all_permission) ? 'checked' : '' }}>
+													<label for="purchases-show-price" class="padding05">{{ __('db.Show Price') }}</label>
+												</div>
+												@endif
 											</td>
 										@endforeach
 									</tr>
@@ -679,7 +765,7 @@
 											</div>
 										</td>
 									@endforeach
-								</tr>
+								</tr>								
 
 								{{-- import sidebar permissions data --}}
 								@php

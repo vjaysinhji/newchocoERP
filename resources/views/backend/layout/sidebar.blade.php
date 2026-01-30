@@ -43,7 +43,7 @@
                 </li>
             @endcan
 
-            @can('sidebar_product')
+            @can('sidebar_rawmaterial')
                 <li>
                     <a href="#rawmaterial" aria-expanded="false" data-toggle="collapse"> <i
                             class="dripicons-box"></i><span>{{ __('db.Raw Material') }}</span><span></a>
@@ -99,7 +99,7 @@
                 </li>
             @endcan
 
-            @can('warehouse-stores-index')
+            @can('sidebar_warehouse_stores')
                 <li>
                     <a href="#basement" aria-expanded="false" data-toggle="collapse"> <i
                             class="dripicons-box"></i><span>{{ __('db.Warehouse Stores') }}</span><span></a>

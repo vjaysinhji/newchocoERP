@@ -112,11 +112,13 @@
                             <th>{{ __('db.Quantity') }}</th>
                         @endif
                         <th>{{ __('db.Purchase Status') }}</th>
+                        @can('warehouse-store-purchases-show-price')
                         <th>{{ __('db.grand total') }}</th>
                         <th>{{ __('db.Returned Amount') }}</th>
                         <th>{{ __('db.Paid') }}</th>
                         <th>{{ __('db.Due') }}</th>
                         <th>{{ __('db.Payment Status') }}</th>
+                        @endcan
                         @foreach ($custom_fields as $fieldName)
                             <th>{{ $fieldName }}</th>
                         @endforeach
@@ -135,11 +137,13 @@
                         <th></th>
                     @endif
                     <th></th>
+                    @can('warehouse-store-purchases-show-price')
                     <th></th>
                     <th></th>
                     <th></th>
                     <th></th>
                     <th></th>
+                    @endcan
                     @foreach ($custom_fields as $fieldName)
                         <th></th>
                     @endforeach
@@ -459,82 +463,17 @@
         var payment_status = <?php echo json_encode($payment_status); ?>;
 
         var show_purchase_product_details = <?php echo json_encode($general_setting->show_products_details_in_purchase_table); ?>;
+        var warehouse_store_purchases_show_price = <?php echo json_encode(in_array('warehouse-store-purchases-show-price', $all_permission ?? [])); ?>;
         if (show_purchase_product_details == 1) {
-            var columns = [{
-                    "data": "key"
-                },
-                {
-                    "data": "date"
-                },
-                {
-                    "data": "reference_no"
-                },
-                {
-                    "data": "created_by"
-                },
-                {
-                    "data": "supplier"
-                },
-                {
-                    "data": "products"
-                },
-                {
-                    "data": "products_qty"
-                },
-                {
-                    "data": "purchase_status"
-                },
-                {
-                    "data": "grand_total"
-                },
-                {
-                    "data": "returned_amount"
-                },
-                {
-                    "data": "paid_amount"
-                },
-                {
-                    "data": "due"
-                },
-                {
-                    "data": "payment_status"
-                }
-            ];
+            var columns = [{"data": "key"}, {"data": "date"}, {"data": "reference_no"}, {"data": "created_by"}, {"data": "supplier"}, {"data": "products"}, {"data": "products_qty"}, {"data": "purchase_status"}];
+            if (warehouse_store_purchases_show_price) {
+                columns.push({"data": "grand_total"}, {"data": "returned_amount"}, {"data": "paid_amount"}, {"data": "due"}, {"data": "payment_status"});
+            }
         } else {
-            var columns = [{
-                    "data": "key"
-                },
-                {
-                    "data": "date"
-                },
-                {
-                    "data": "reference_no"
-                },
-                {
-                    "data": "created_by"
-                },
-                {
-                    "data": "supplier"
-                },
-                {
-                    "data": "purchase_status"
-                },
-                {
-                    "data": "grand_total"
-                },
-                {
-                    "data": "returned_amount"
-                },
-                {
-                    "data": "paid_amount"
-                },
-                {
-                    "data": "due"
-                },
-                {
-                    "data": "payment_status"
-                }
-            ];
+            var columns = [{"data": "key"}, {"data": "date"}, {"data": "reference_no"}, {"data": "created_by"}, {"data": "supplier"}, {"data": "purchase_status"}];
+            if (warehouse_store_purchases_show_price) {
+                columns.push({"data": "grand_total"}, {"data": "returned_amount"}, {"data": "paid_amount"}, {"data": "due"}, {"data": "payment_status"});
+            }
         }
 
         var field_name = <?php echo json_encode($field_name); ?>;
@@ -802,11 +741,10 @@
         // Removed edit_paying_amount input handler since it's now readonly (shows due amount)
 
         let targets = [];
-
         if (show_purchase_product_details == 1) {
-            targets = [0, 3, 4, 5, 6, 7, 9, 11, 12];
+            targets = warehouse_store_purchases_show_price ? [0, 3, 4, 5, 6, 7, 9, 11, 12] : [0, 3, 4, 5, 6, 7];
         } else {
-            targets = [0, 3, 4, 5, 7, 9, 10];
+            targets = warehouse_store_purchases_show_price ? [0, 3, 4, 5, 7, 9, 10] : [0, 3, 4, 5];
         }
 
         let buttons = [];
@@ -1014,67 +952,36 @@
         });
 
         function datatable_sum(dt_selector, is_calling_first) {
-
+            if (!warehouse_store_purchases_show_price) return;
             if (show_purchase_product_details == 1) {
+                var colBase = 8;
                 if (dt_selector.rows('.selected').any() && is_calling_first) {
                     var rows = dt_selector.rows('.selected').indexes();
-                    $(dt_selector.column(8).footer()).html(dt_selector.cells(rows, 8, {
-                        page: 'current'
-                    }).data().sum().toFixed({{ $general_setting->decimal }}));
-                    $(dt_selector.column(9).footer()).html(dt_selector.cells(rows, 9, {
-                        page: 'current'
-                    }).data().sum().toFixed({{ $general_setting->decimal }}));
-                    $(dt_selector.column(10).footer()).html(dt_selector.cells(rows, 10, {
-                        page: 'current'
-                    }).data().sum().toFixed({{ $general_setting->decimal }}));
-                    $(dt_selector.column(11).footer()).html(dt_selector.cells(rows, 11, {
-                        page: 'current'
-                    }).data().sum().toFixed({{ $general_setting->decimal }}));
+                    $(dt_selector.column(colBase).footer()).html(dt_selector.cells(rows, colBase, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+                    $(dt_selector.column(colBase+1).footer()).html(dt_selector.cells(rows, colBase+1, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+                    $(dt_selector.column(colBase+2).footer()).html(dt_selector.cells(rows, colBase+2, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+                    $(dt_selector.column(colBase+3).footer()).html(dt_selector.cells(rows, colBase+3, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
                 } else {
-                    $(dt_selector.column(8).footer()).html(dt_selector.column(8, {
-                        page: 'current'
-                    }).data().sum().toFixed({{ $general_setting->decimal }}));
-                    $(dt_selector.column(9).footer()).html(dt_selector.column(9, {
-                        page: 'current'
-                    }).data().sum().toFixed({{ $general_setting->decimal }}));
-                    $(dt_selector.column(10).footer()).html(dt_selector.column(10, {
-                        page: 'current'
-                    }).data().sum().toFixed({{ $general_setting->decimal }}));
-                    $(dt_selector.column(11).footer()).html(dt_selector.column(11, {
-                        page: 'current'
-                    }).data().sum().toFixed({{ $general_setting->decimal }}));
+                    $(dt_selector.column(colBase).footer()).html(dt_selector.column(colBase, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+                    $(dt_selector.column(colBase+1).footer()).html(dt_selector.column(colBase+1, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+                    $(dt_selector.column(colBase+2).footer()).html(dt_selector.column(colBase+2, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+                    $(dt_selector.column(colBase+3).footer()).html(dt_selector.column(colBase+3, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
                 }
             } else {
+                var colBase = 6;
                 if (dt_selector.rows('.selected').any() && is_calling_first) {
                     var rows = dt_selector.rows('.selected').indexes();
-                    $(dt_selector.column(6).footer()).html(dt_selector.cells(rows, 6, {
-                        page: 'current'
-                    }).data().sum().toFixed({{ $general_setting->decimal }}));
-                    $(dt_selector.column(7).footer()).html(dt_selector.cells(rows, 7, {
-                        page: 'current'
-                    }).data().sum().toFixed({{ $general_setting->decimal }}));
-                    $(dt_selector.column(8).footer()).html(dt_selector.cells(rows, 8, {
-                        page: 'current'
-                    }).data().sum().toFixed({{ $general_setting->decimal }}));
-                    $(dt_selector.column(9).footer()).html(dt_selector.cells(rows, 9, {
-                        page: 'current'
-                    }).data().sum().toFixed({{ $general_setting->decimal }}));
+                    $(dt_selector.column(colBase).footer()).html(dt_selector.cells(rows, colBase, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+                    $(dt_selector.column(colBase+1).footer()).html(dt_selector.cells(rows, colBase+1, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+                    $(dt_selector.column(colBase+2).footer()).html(dt_selector.cells(rows, colBase+2, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+                    $(dt_selector.column(colBase+3).footer()).html(dt_selector.cells(rows, colBase+3, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
                 } else {
-                    $(dt_selector.column(6).footer()).html(dt_selector.column(6, {
-                        page: 'current'
-                    }).data().sum().toFixed({{ $general_setting->decimal }}));
-                    $(dt_selector.column(7).footer()).html(dt_selector.column(7, {
-                        page: 'current'
-                    }).data().sum().toFixed({{ $general_setting->decimal }}));
-                    $(dt_selector.column(8).footer()).html(dt_selector.column(8, {
-                        page: 'current'
-                    }).data().sum().toFixed({{ $general_setting->decimal }}));
-                    $(dt_selector.column(9).footer()).html(dt_selector.column(9, {
-                        page: 'current'
-                    }).data().sum().toFixed({{ $general_setting->decimal }}));
+                    $(dt_selector.column(colBase).footer()).html(dt_selector.column(colBase, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+                    $(dt_selector.column(colBase+1).footer()).html(dt_selector.column(colBase+1, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+                    $(dt_selector.column(colBase+2).footer()).html(dt_selector.column(colBase+2, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
+                    $(dt_selector.column(colBase+3).footer()).html(dt_selector.column(colBase+3, { page: 'current' }).data().sum().toFixed({{ $general_setting->decimal }}));
                 }
             }
-
         }
 
         $('#warehouse_id, #purchase-status, #payment-status').on('change', function() {
@@ -1142,65 +1049,72 @@
                         cols += '<td>' + batch_no[index] + '</td>';
                         cols += '<td>' + qty[index] + ' ' + unit_code[index] + '</td>';
                         cols += '<td>' + returned[index] + '</td>';
-                        cols += '<td>' + (parseFloat(subtotal[index] / qty[index]).toFixed(
-                            {{ $general_setting->decimal }})) + '</td>';
-                        cols += '<td>' + tax[index] + '(' + tax_rate[index] + '%)' + '</td>';
-                        cols += '<td>' + discount[index] + '</td>';
-                        cols += '<td>' + subtotal[index] + '</td>';
+                        if (warehouse_store_purchases_show_price) {
+                            cols += '<td>' + (parseFloat(subtotal[index] / qty[index]).toFixed(
+                                {{ $general_setting->decimal }})) + '</td>';
+                            cols += '<td>' + tax[index] + '(' + tax_rate[index] + '%)' + '</td>';
+                            cols += '<td>' + discount[index] + '</td>';
+                            cols += '<td>' + subtotal[index] + '</td>';
+                        } else {
+                            cols += '<td>-</td><td>-</td><td>-</td><td>-</td>';
+                        }
                         newRow.append(cols);
                         newBody.append(newRow);
                     });
 
-                    var newRow = $("<tr>");
-                    cols = '';
-                    cols += '<td colspan=6>{{ __('db.Total') }}:</td>';
-                    cols += '<td>' + purchase[13] + '</td>';
-                    cols += '<td>' + purchase[14] + '</td>';
-                    cols += '<td>' + purchase[15] + '</td>';
-                    newRow.append(cols);
-                    newBody.append(newRow);
+                    if (warehouse_store_purchases_show_price) {
+                        var newRow = $("<tr>");
+                        cols = '';
+                        cols += '<td colspan=6>{{ __('db.Total') }}:</td>';
+                        cols += '<td>' + (purchase[13] != null ? purchase[13] : '-') + '</td>';
+                        cols += '<td>' + (purchase[14] != null ? purchase[14] : '-') + '</td>';
+                        cols += '<td>' + (purchase[15] != null ? purchase[15] : '-') + '</td>';
+                        newRow.append(cols);
+                        newBody.append(newRow);
 
-                    var newRow = $("<tr>");
-                    cols = '';
-                    cols += '<td colspan=8>{{ __('db.Order Tax') }}:</td>';
-                    cols += '<td>' + purchase[16] + '(' + purchase[17] + '%)' + '</td>';
-                    newRow.append(cols);
-                    newBody.append(newRow);
+                        var newRow = $("<tr>");
+                        cols = '';
+                        cols += '<td colspan=8>{{ __('db.Order Tax') }}:</td>';
+                        cols += '<td>' + (purchase[16] != null ? purchase[16] : '-') + '(' + (purchase[17] != null ? purchase[17] : '-') + '%)' + '</td>';
+                        newRow.append(cols);
+                        newBody.append(newRow);
 
-                    var newRow = $("<tr>");
-                    cols = '';
-                    cols += '<td colspan=8>{{ __('db.Order Discount') }}:</td>';
-                    cols += '<td>' + purchase[18] + '</td>';
-                    newRow.append(cols);
-                    newBody.append(newRow);
+                        var newRow = $("<tr>");
+                        cols = '';
+                        cols += '<td colspan=8>{{ __('db.Order Discount') }}:</td>';
+                        cols += '<td>' + (purchase[18] != null ? purchase[18] : '-') + '</td>';
+                        newRow.append(cols);
+                        newBody.append(newRow);
 
-                    var newRow = $("<tr>");
-                    cols = '';
-                    cols += '<td colspan=8>{{ __('db.Shipping Cost') }}:</td>';
-                    cols += '<td>' + purchase[19] + '</td>';
-                    newRow.append(cols);
-                    newBody.append(newRow);
+                        var newRow = $("<tr>");
+                        cols = '';
+                        cols += '<td colspan=8>{{ __('db.Shipping Cost') }}:</td>';
+                        cols += '<td>' + (purchase[19] != null ? purchase[19] : '-') + '</td>';
+                        newRow.append(cols);
+                        newBody.append(newRow);
 
-                    var newRow = $("<tr>");
-                    cols = '';
-                    cols += '<td colspan=8>{{ __('db.grand total') }}:</td>';
-                    cols += '<td>' + purchase[20] + '</td>';
-                    newRow.append(cols);
-                    newBody.append(newRow);
+                        var newRow = $("<tr>");
+                        cols = '';
+                        cols += '<td colspan=8>{{ __('db.grand total') }}:</td>';
+                        cols += '<td>' + (purchase[20] != null ? purchase[20] : '-') + '</td>';
+                        newRow.append(cols);
+                        newBody.append(newRow);
 
-                    var newRow = $("<tr>");
-                    cols = '';
-                    cols += '<td colspan=8>{{ __('db.Paid Amount') }}:</td>';
-                    cols += '<td>' + purchase[21] + '</td>';
-                    newRow.append(cols);
-                    newBody.append(newRow);
+                        var newRow = $("<tr>");
+                        cols = '';
+                        cols += '<td colspan=8>{{ __('db.Paid Amount') }}:</td>';
+                        cols += '<td>' + (purchase[21] != null ? purchase[21] : '-') + '</td>';
+                        newRow.append(cols);
+                        newBody.append(newRow);
 
-                    var newRow = $("<tr>");
-                    cols = '';
-                    cols += '<td colspan=8>{{ __('db.Due') }}:</td>';
-                    cols += '<td>' + (purchase[20] - purchase[21]) + '</td>';
-                    newRow.append(cols);
-                    newBody.append(newRow);
+                        var newRow = $("<tr>");
+                        cols = '';
+                        cols += '<td colspan=8>{{ __('db.Due') }}:</td>';
+                        var dueVal = (purchase[20] != null && purchase[21] != null && !isNaN(parseFloat(purchase[20])) && !isNaN(parseFloat(purchase[21]))) ? (parseFloat(purchase[20]) - parseFloat(purchase[21])) : '-';
+                        cols += '<td>' + dueVal + '</td>';
+                        newRow.append(cols);
+                        newBody.append(newRow);
+                    }
 
                     $("table.product-purchase-list").append(newBody);
                 }
