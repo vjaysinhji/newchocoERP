@@ -43,7 +43,7 @@
                 </li>
             @endcan
 
-            @can('sidebar_product')
+            @can('sidebar_rawmaterial')
                 <li>
                     <a href="#rawmaterial" aria-expanded="false" data-toggle="collapse"> <i
                             class="dripicons-box"></i><span>{{ __('db.Raw Material') }}</span><span></a>
@@ -99,12 +99,17 @@
                 </li>
             @endcan
 
-            @can('warehouse-stores-index')
+            @can('sidebar_warehouse_stores')
                 <li>
                     <a href="#basement" aria-expanded="false" data-toggle="collapse"> <i
                             class="dripicons-box"></i><span>{{ __('db.Warehouse Stores') }}</span><span></a>
 
                     <ul id="basement" class="collapse list-unstyled ">
+                        @can('warehouse-stores-index')
+                        <li id="warehouse-store-category-menu"><a href="{{ route('warehouse-stores.category.index') }}">{{ __('db.category') }}</a></li>
+                        <li id="warehouse-store-brand-menu"><a href="{{ route('warehouse-stores.brand.index') }}">{{ __('db.Brand') }}</a></li>
+                        <li id="warehouse-store-unit-menu"><a href="{{ route('warehouse-stores.unit.index') }}">{{ __('db.Unit') }}</a></li>
+                        @endcan
                         @can('warehouse-stores-index')
                             <li id="basement-list-menu"><a href="{{ route('warehouse-stores.index') }}">{{ __('db.Warehouse Stores List') }}</a>
                             </li>
@@ -112,6 +117,21 @@
                         @can('warehouse-stores-add')
                             <li id="basement-create-menu"><a
                                     href="{{ route('warehouse-stores.create') }}">{{ __('db.add_warehouse_store') }}</a></li>
+                        @endcan
+                        @can('warehouse-stores-index')
+                            <li id="warehouse-store-adjustment-menu"><a href="{{ route('warehouse-store-adjustment.index') }}">{{ __('db.Adjustment List') }}</a></li>
+                        @endcan
+                        @can('warehouse-stores-add')
+                            <li id="warehouse-store-adjustment-create-menu"><a href="{{ route('warehouse-store-adjustment.create') }}">{{ __('db.Add Adjustment') }}</a></li>
+                        @endcan
+                        @can('warehouse-stores-index')
+                            <li id="warehouse-store-stock-count-menu"><a href="{{ route('warehouse-store-stock-count.index') }}">{{ __('db.Stock Count') }}</a></li>
+                        @endcan
+                        @can('warehouse-store-purchases-index')
+                            <li id="warehouse-store-purchase-list-menu"><a href="{{ route('warehouse-store-purchases.index') }}">{{ __('db.Warehouse Store Purchase List') }}</a></li>
+                        @endcan
+                        @can('warehouse-store-purchases-add')
+                            <li id="warehouse-store-purchase-create-menu"><a href="{{ route('warehouse-store-purchases.create') }}">{{ __('db.Add Warehouse Store Purchase') }}</a></li>
                         @endcan
                     </ul>
                 </li>

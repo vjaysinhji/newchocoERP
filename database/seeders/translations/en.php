@@ -10055,6 +10055,30 @@ return array(
         'key' => 'Add Raw Purchase',
         'value' => 'Add Raw Purchase',
     ),
+    '1699a' =>
+    array(
+        'locale' => 'en',
+        'key' => 'Raw Purchase',
+        'value' => 'Raw Purchase',
+    ),
+    '1699b' =>
+    array(
+        'locale' => 'en',
+        'key' => 'Warehouse Store Purchase',
+        'value' => 'Warehouse Store Purchase',
+    ),
+    '1699c' =>
+    array(
+        'locale' => 'en',
+        'key' => 'Warehouse Store Purchase List',
+        'value' => 'Warehouse Store Purchase List',
+    ),
+    '1699d' =>
+    array(
+        'locale' => 'en',
+        'key' => 'Show Price',
+        'value' => 'Show Price',
+    ),
     1700 =>
     array(
         'locale' => 'en',

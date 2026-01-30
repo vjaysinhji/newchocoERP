@@ -33,13 +33,13 @@
 
     <section>
         <div class="container-fluid">
-            @can('raw-purchases-add')
-                <a href="{{ route('raw-purchases.create') }}" class="btn btn-info btn-icon"><i class="dripicons-plus"></i>
-                    {{ __('db.Add Raw Purchase') }}</a>&nbsp;
+            @can('warehouse-store-purchases-add')
+                <a href="{{ route('warehouse-store-purchases.create') }}" class="btn btn-info btn-icon"><i class="dripicons-plus"></i>
+                    {{ __('db.Add Warehouse Store Purchase') }}</a>&nbsp;
             @endcan
             @if (auth()->user()->role_id <= 2)
-                <a href="{{ url('raw-purchases/deleted_data') }}" class="btn btn-secondary btn-icon"><i
-                        class="dripicons-trash"></i> {{ __('Deleted Raw Purchases') }}</a>
+                <a href="{{ url('warehouse-store-purchases/deleted_data') }}" class="btn btn-secondary btn-icon"><i
+                        class="dripicons-trash"></i> {{ __('Deleted Warehouse Store Purchases') }}</a>
             @endif
             <button type="button" class="btn btn-warning btn-icon" id="toggle-filter">
                 <i class="dripicons-experiment"></i> {{ __('db.Filter Purchases') }}
@@ -112,7 +112,7 @@
                             <th>{{ __('db.Quantity') }}</th>
                         @endif
                         <th>{{ __('db.Purchase Status') }}</th>
-                        @can('raw-purchases-show-price')
+                        @can('warehouse-store-purchases-show-price')
                         <th>{{ __('db.grand total') }}</th>
                         <th>{{ __('db.Returned Amount') }}</th>
                         <th>{{ __('db.Paid') }}</th>
@@ -137,7 +137,7 @@
                         <th></th>
                     @endif
                     <th></th>
-                    @can('raw-purchases-show-price')
+                    @can('warehouse-store-purchases-show-price')
                     <th></th>
                     <th></th>
                     <th></th>
@@ -238,7 +238,7 @@
                             aria-hidden="true"><i class="dripicons-cross"></i></span></button>
                 </div>
                 <div class="modal-body">
-                    {!! Form::open(['route' => 'raw-purchase.add-payment', 'method' => 'post', 'class' => 'payment-form']) !!}
+                    {!! Form::open(['route' => 'warehouse-store-purchase.add-payment', 'method' => 'post', 'class' => 'payment-form']) !!}
                     <div class="row">
                         <input type="hidden" name="balance">
                         <div class="col-md-6">
@@ -332,7 +332,7 @@
                             aria-hidden="true"><i class="dripicons-cross"></i></span></button>
                 </div>
                 <div class="modal-body">
-                    {!! Form::open(['route' => 'raw-purchase.update-payment', 'method' => 'post', 'class' => 'payment-form']) !!}
+                    {!! Form::open(['route' => 'warehouse-store-purchase.update-payment', 'method' => 'post', 'class' => 'payment-form']) !!}
                     <div class="row">
                         <div class="col-md-6">
                             <label>{{ __('db.Due') }} *</label>
@@ -445,9 +445,9 @@
             purchaseTable.ajax.reload();
         });
 
-        $("ul#rawmaterial").siblings('a').attr('aria-expanded', 'true');
-        $("ul#rawmaterial").addClass("show");
-        $("ul#rawmaterial #raw-purchase-list-menu").addClass("active");
+        $("ul#basement").siblings('a').attr('aria-expanded', 'true');
+        $("ul#basement").addClass("show");
+        $("ul#basement #warehouse-store-purchase-list-menu").addClass("active");
 
         @if ($lims_pos_setting_data)
             var public_key = <?php echo json_encode($lims_pos_setting_data->stripe_public_key); ?>;
@@ -463,15 +463,15 @@
         var payment_status = <?php echo json_encode($payment_status); ?>;
 
         var show_purchase_product_details = <?php echo json_encode($general_setting->show_products_details_in_purchase_table); ?>;
-        var raw_purchases_show_price = <?php echo json_encode(in_array('raw-purchases-show-price', $all_permission ?? [])); ?>;
+        var warehouse_store_purchases_show_price = <?php echo json_encode(in_array('warehouse-store-purchases-show-price', $all_permission ?? [])); ?>;
         if (show_purchase_product_details == 1) {
             var columns = [{"data": "key"}, {"data": "date"}, {"data": "reference_no"}, {"data": "created_by"}, {"data": "supplier"}, {"data": "products"}, {"data": "products_qty"}, {"data": "purchase_status"}];
-            if (raw_purchases_show_price) {
+            if (warehouse_store_purchases_show_price) {
                 columns.push({"data": "grand_total"}, {"data": "returned_amount"}, {"data": "paid_amount"}, {"data": "due"}, {"data": "payment_status"});
             }
         } else {
             var columns = [{"data": "key"}, {"data": "date"}, {"data": "reference_no"}, {"data": "created_by"}, {"data": "supplier"}, {"data": "purchase_status"}];
-            if (raw_purchases_show_price) {
+            if (warehouse_store_purchases_show_price) {
                 columns.push({"data": "grand_total"}, {"data": "returned_amount"}, {"data": "paid_amount"}, {"data": "due"}, {"data": "payment_status"});
             }
         }
@@ -581,7 +581,7 @@
 
         $(document).on("click", "table.purchase-list tbody .get-payment", function(event) {
             var id = $(this).data('id').toString();
-            $.get('raw-purchases/getpayment/' + id, function(data) {
+            $.get('warehouse-store-purchases/getpayment/' + id, function(data) {
                 $(".payment-list tbody").remove();
                 var newBody = $("<tbody>");
                 payment_date = data[0];
@@ -616,7 +616,7 @@
                         '" data-clicked=false data-toggle="modal" data-target="#edit-payment"><i class="dripicons-document-edit"></i> Edit</button></li><li class="divider"></li>';
                     if (all_permission.indexOf("purchase-payment-delete") != -1)
                         cols +=
-                        '{{ Form::open(['route' => 'raw-purchase.delete-payment', 'method' => 'post']) }}<li><input type="hidden" name="id" value="' +
+                        '{{ Form::open(['route' => 'warehouse-store-purchase.delete-payment', 'method' => 'post']) }}<li><input type="hidden" name="id" value="' +
                         payment_id[index] +
                         '" /> <button type="submit" class="btn btn-link" onclick="return confirmDeletePayment()"><i class="dripicons-trash"></i> Delete</button></li>{{ Form::close() }}';
                     cols += '</ul></div></td>';
@@ -742,9 +742,9 @@
 
         let targets = [];
         if (show_purchase_product_details == 1) {
-            targets = raw_purchases_show_price ? [0, 3, 4, 5, 6, 7, 9, 11, 12] : [0, 3, 4, 5, 6, 7];
+            targets = warehouse_store_purchases_show_price ? [0, 3, 4, 5, 6, 7, 9, 11, 12] : [0, 3, 4, 5, 6, 7];
         } else {
-            targets = raw_purchases_show_price ? [0, 3, 4, 5, 7, 9, 10] : [0, 3, 4, 5];
+            targets = warehouse_store_purchases_show_price ? [0, 3, 4, 5, 7, 9, 10] : [0, 3, 4, 5];
         }
 
         let buttons = [];
@@ -882,7 +882,7 @@
             "processing": true,
             "serverSide": true,
             "ajax": {
-                url: "raw-purchases/purchase-data",
+                url: "warehouse-store-purchases/purchase-data",
                 data: function(d) {
                     d.all_permission = all_permission;
                     d.starting_date = $('input[name=starting_date]').val();
@@ -952,7 +952,7 @@
         });
 
         function datatable_sum(dt_selector, is_calling_first) {
-            if (!raw_purchases_show_price) return;
+            if (!warehouse_store_purchases_show_price) return;
             if (show_purchase_product_details == 1) {
                 var colBase = 8;
                 if (dt_selector.rows('.selected').any() && is_calling_first) {
@@ -1022,7 +1022,7 @@
                 '</div><div class="col-md-6"><div class="float-right">{{ __('db.To') }}:<br>' + purchase[4] + '<br>' +
                 purchase[5] + '<br>' + purchase[6] + '</div></div></div>';
             $(".product-purchase-list tbody").remove();
-            $.get('raw-purchases/raw-material-purchase/' + purchase[3], function(data) {
+            $.get('warehouse-store-purchases/basement-purchase/' + purchase[3], function(data) {
                 // console.log(data);
                 if (data == 'Something is wrong!') {
                     var newBody = $("<tbody>");
@@ -1049,7 +1049,7 @@
                         cols += '<td>' + batch_no[index] + '</td>';
                         cols += '<td>' + qty[index] + ' ' + unit_code[index] + '</td>';
                         cols += '<td>' + returned[index] + '</td>';
-                        if (raw_purchases_show_price) {
+                        if (warehouse_store_purchases_show_price) {
                             cols += '<td>' + (parseFloat(subtotal[index] / qty[index]).toFixed(
                                 {{ $general_setting->decimal }})) + '</td>';
                             cols += '<td>' + tax[index] + '(' + tax_rate[index] + '%)' + '</td>';
@@ -1062,7 +1062,7 @@
                         newBody.append(newRow);
                     });
 
-                    if (raw_purchases_show_price) {
+                    if (warehouse_store_purchases_show_price) {
                         var newRow = $("<tr>");
                         cols = '';
                         cols += '<td colspan=6>{{ __('db.Total') }}:</td>';
@@ -1158,7 +1158,7 @@
             $('#edit-payment select[name="edit_paid_by_id"]').prop('disabled', false);
         });
 
-        if (all_permission.indexOf("purchases-delete") == -1)
+        if (all_permission.indexOf("warehouse-store-purchases-delete") == -1)
             $('.buttons-delete').addClass('d-none');
     </script>
     <script type="text/javascript" src="https://js.stripe.com/v3/"></script>

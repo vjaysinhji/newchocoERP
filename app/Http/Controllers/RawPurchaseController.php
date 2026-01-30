@@ -578,14 +578,23 @@ class RawPurchaseController extends Controller
                 if(!$purchase->exchange_rate || $purchase->exchange_rate == 0)
                     $purchase->exchange_rate = 1;
 
-                $nestedData['grand_total'] = number_format($purchase->grand_total / $purchase->exchange_rate, config('decimal'));
-                $returned_amount = DB::table('return_purchases')->where('purchase_id', $purchase->id)->sum('grand_total');
-                $nestedData['returned_amount'] = number_format($returned_amount / $purchase->exchange_rate, config('decimal'));
-                $nestedData['paid_amount'] = number_format($purchase->paid_amount / $purchase->exchange_rate, config('decimal'));
-                $nestedData['due'] = number_format(
-                    max(0, ($purchase->grand_total - $returned_amount - $purchase->paid_amount) / $purchase->exchange_rate),
-                    config('decimal')
-                );
+                $show_price = in_array('raw-purchases-show-price', $request['all_permission'] ?? []);
+                if ($show_price) {
+                    $nestedData['grand_total'] = number_format($purchase->grand_total / $purchase->exchange_rate, config('decimal'));
+                    $returned_amount = DB::table('return_purchases')->where('purchase_id', $purchase->id)->sum('grand_total');
+                    $nestedData['returned_amount'] = number_format($returned_amount / $purchase->exchange_rate, config('decimal'));
+                    $nestedData['paid_amount'] = number_format($purchase->paid_amount / $purchase->exchange_rate, config('decimal'));
+                    $nestedData['due'] = number_format(
+                        max(0, ($purchase->grand_total - $returned_amount - $purchase->paid_amount) / $purchase->exchange_rate),
+                        config('decimal')
+                    );
+                } else {
+                    $nestedData['grand_total'] = '-';
+                    $nestedData['returned_amount'] = '-';
+                    $nestedData['paid_amount'] = '-';
+                    $nestedData['due'] = '-';
+                    $nestedData['payment_status'] = '-';
+                }
                 //fetching custom fields data
                 foreach($field_names as $field_name) {
                     $nestedData[$field_name] = $purchase->$field_name ?? '';
@@ -603,13 +612,13 @@ class RawPurchaseController extends Controller
                     $nestedData['options'] .= '<li>
                         <a href="'.route('raw-purchases.edit', $purchase->id).'" class="btn btn-link"><i class="dripicons-document-edit"></i> '.__('db.edit').'</a>
                         </li>';
-                if(in_array("purchase-payment-index", $request['all_permission']))
+                if($show_price && in_array("purchase-payment-index", $request['all_permission']))
                     $nestedData['options'] .=
                         '<li>
                             <button type="button" class="get-payment btn btn-link" data-id = "'.$purchase->id.'"><i class="fa fa-money"></i> '.__('db.View Payment').'</button>
                         </li>';
 
-                if(in_array("purchase-payment-add", $request['all_permission'])) {
+                if($show_price && in_array("purchase-payment-add", $request['all_permission'])) {
                     $currency_code_name = $purchase->currency->code ?? 'USD';
                     $nestedData['options'] .=
                         '<li>

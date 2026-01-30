@@ -2,7 +2,7 @@
 
 <x-success-message key="message" />
 <x-error-message key="not_permitted" />
-<x-validation-error fieldName="raw_material_code" />
+<x-validation-error fieldName="basement_code" />
 <x-validation-error fieldName="qty" />
 
 <section class="forms">
@@ -15,7 +15,7 @@
                     </div>
                     <div class="card-body">
                         <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
-                        {!! Form::open(['route' => ['raw-purchases.update', $lims_purchase_data->id], 'method' => 'put', 'files' => true, 'id' => 'purchase-form']) !!}
+                        {!! Form::open(['route' => ['warehouse-store-purchases.update', $lims_purchase_data->id], 'method' => 'put', 'files' => true, 'id' => 'purchase-form']) !!}
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="row">
@@ -169,7 +169,7 @@
                                         <label>{{__('db.Select Raw Material')}} <small class="text-muted">({{__('db.Only raw materials can be purchased here')}})</small></label>
                                         <div class="search-box input-group">
                                             <button type="button" class="btn btn-secondary"><i class="fa fa-barcode"></i></button>
-                                            <input type="text" name="raw_material_code_name" id="lims_rawmaterialcodeSearch" placeholder="{{__('db.Please type raw material code and select')}}" class="form-control" />
+                                            <input type="text" name="basement_code_name" id="lims_basementcodeSearch" placeholder="{{__('db.Please type warehouse store item code and select')}}" class="form-control" />
                                         </div>
                                     </div>
                                 </div>
@@ -183,7 +183,7 @@
                                                         <th style="min-width: 30%">{{__('db.product')}}</th>
                                                         <th>{{__('db.Quantity')}}</th>
                                                         <th class="recieved-product-qty d-none">{{__('db.Recieved')}}</th>
-                                                        @can('raw-purchases-show-price')
+                                                        @can('warehouse-store-purchases-show-price')
                                                         <th>{{__('db.Net Unit Cost')}}</th>
                                                         <th>{{__('db.Profit Margin')}}</th>
                                                         <th>{{__('db.Profit Margin Type')}}</th>
@@ -201,19 +201,19 @@
                                                     $temp_unit_operator = [];
                                                     $temp_unit_operation_value = [];
                                                     ?>
-                                                    @foreach($lims_raw_material_purchase_data as $rm_purchase)
+                                                    @foreach($lims_basement_purchase_data as $bm_purchase)
                                                     <tr>
                                                     <?php
-                                                        $raw_material_data = \App\Models\RawMaterial::find($rm_purchase->raw_material_id);
-                                                        $tax = DB::table('taxes')->where('rate', $rm_purchase->tax_rate)->first();
-                                                        $units = DB::table('units')->where('base_unit', $raw_material_data->unit_id)->orWhere('id', $raw_material_data->unit_id)->get();
+                                                        $basement_data = \App\Models\Basement::find($bm_purchase->basement_id);
+                                                        $tax = DB::table('taxes')->where('rate', $bm_purchase->tax_rate)->first();
+                                                        $units = DB::table('units')->where('base_unit', $basement_data->unit_id)->orWhere('id', $basement_data->unit_id)->get();
 
                                                         $unit_name = array();
                                                         $unit_operator = array();
                                                         $unit_operation_value = array();
 
                                                         foreach($units as $unit) {
-                                                            if($rm_purchase->purchase_unit_id == $unit->id) {
+                                                            if($bm_purchase->purchase_unit_id == $unit->id) {
                                                                 array_unshift($unit_name, $unit->unit_name);
                                                                 array_unshift($unit_operator, $unit->operator);
                                                                 array_unshift($unit_operation_value, $unit->operation_value);
@@ -225,73 +225,73 @@
                                                             }
                                                         }
                                                         
-                                                        if($raw_material_data->tax_method == 1){
-                                                            $raw_material_cost = ($rm_purchase->net_unit_cost + ($rm_purchase->discount / $rm_purchase->qty)) / $unit_operation_value[0];
+                                                        if($basement_data->tax_method == 1){
+                                                            $basement_cost = ($bm_purchase->net_unit_cost + ($bm_purchase->discount / $bm_purchase->qty)) / $unit_operation_value[0];
                                                         }
                                                         else{
-                                                            $raw_material_cost = (($rm_purchase->total + ($rm_purchase->discount / $rm_purchase->qty)) / $rm_purchase->qty) / $unit_operation_value[0];
+                                                            $basement_cost = (($bm_purchase->total + ($bm_purchase->discount / $bm_purchase->qty)) / $bm_purchase->qty) / $unit_operation_value[0];
                                                         }
 
                                                         $temp_unit_name = $unit_name = implode(",",$unit_name) . ',';
                                                         $temp_unit_operator = $unit_operator = implode(",",$unit_operator) .',';
                                                         $temp_unit_operation_value = $unit_operation_value =  implode(",",$unit_operation_value) . ',';
                                                     ?>
-                                                        <td>{{$raw_material_data->name}} ({{$raw_material_data->code}}) @can('raw-purchases-show-price')<button type="button" class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal"> <i class="dripicons-document-edit"></i></button>@endcan </td>
-                                                        <td><input type="text" class="form-control qty" name="qty[]" value="{{$rm_purchase->qty}}" required /></td>
-                                                        <td class="recieved-product-qty d-none"><input type="number" class="form-control recieved" name="recieved[]" value="{{$rm_purchase->recieved}}" step="any"/></td>
-                                                        @can('raw-purchases-show-price')
-                                                        <td class="net_unit_cost">{{ number_format((float)$rm_purchase->net_unit_cost, $general_setting->decimal, '.', '')}} </td>
+                                                        <td>{{$basement_data->name}} ({{$basement_data->code}}) @can('warehouse-store-purchases-show-price')<button type="button" class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal"> <i class="dripicons-document-edit"></i></button>@endcan </td>
+                                                        <td><input type="text" class="form-control qty" name="qty[]" value="{{$bm_purchase->qty}}" required /></td>
+                                                        <td class="recieved-product-qty d-none"><input type="number" class="form-control recieved" name="recieved[]" value="{{$bm_purchase->recieved}}" step="any"/></td>
+                                                        @can('warehouse-store-purchases-show-price')
+                                                        <td class="net_unit_cost">{{ number_format((float)$bm_purchase->net_unit_cost, $general_setting->decimal, '.', '')}} </td>
                                                         <td class="net_unit_margin">{{ number_format(
-                                                            (float)($rm_purchase->net_unit_margin > 0 
-                                                                ? $rm_purchase->net_unit_margin 
+                                                            (float)($bm_purchase->net_unit_margin > 0 
+                                                                ? $bm_purchase->net_unit_margin 
                                                                 : 0),
                                                             $general_setting->decimal, '.', ''
                                                         ) }} </td>
-                                                        <td class="net_unit_margin_type">{{$rm_purchase->net_unit_margin_type ?? 'percentage'}}</td>
+                                                        <td class="net_unit_margin_type">{{$bm_purchase->net_unit_margin_type ?? 'percentage'}}</td>
                                                         <td class="net_unit_price">{{ number_format(
-                                                            (float)($rm_purchase->net_unit_price > 0 
-                                                                ? $rm_purchase->net_unit_price 
-                                                                : $raw_material_data->price),
+                                                            (float)($bm_purchase->net_unit_price > 0 
+                                                                ? $bm_purchase->net_unit_price 
+                                                                : $basement_data->price),
                                                             $general_setting->decimal, '.', ''
                                                         ) }} </td>
-                                                        <td class="discount">{{ number_format((float)$rm_purchase->discount, $general_setting->decimal, '.', '')}}</td>
-                                                        <td class="tax">{{ number_format((float)$rm_purchase->tax, $general_setting->decimal, '.', '')}}</td>
-                                                        <td class="sub-total">{{ number_format((float)$rm_purchase->total, $general_setting->decimal, '.', '')}}</td>
+                                                        <td class="discount">{{ number_format((float)$bm_purchase->discount, $general_setting->decimal, '.', '')}}</td>
+                                                        <td class="tax">{{ number_format((float)$bm_purchase->tax, $general_setting->decimal, '.', '')}}</td>
+                                                        <td class="sub-total">{{ number_format((float)$bm_purchase->total, $general_setting->decimal, '.', '')}}</td>
                                                         @endcan
                                                         <td><button type="button" class="ibtnDel btn btn-md btn-danger"><i class="dripicons-trash"></i></button></td>
-                                                        <input type="hidden" class="raw-material-id" name="raw_material_id[]" value="{{$raw_material_data->id}}"/>
-                                                        <input type="hidden" class="raw-material-code" name="raw_material_code[]" value="{{$raw_material_data->code}}"/>
-                                                        <input type="hidden" class="product-cost" name="product_cost[]" value="{{ $raw_material_cost}}"/>
-                                                        <input type="hidden" class="profit-margin" name="profit_margin[]" value="{{$rm_purchase->net_unit_margin ?? 0}}"/>
+                                                        <input type="hidden" class="basement-id" name="basement_id[]" value="{{$basement_data->id}}"/>
+                                                        <input type="hidden" class="basement-code" name="basement_code[]" value="{{$basement_data->code}}"/>
+                                                        <input type="hidden" class="product-cost" name="product_cost[]" value="{{ $basement_cost}}"/>
+                                                        <input type="hidden" class="profit-margin" name="profit_margin[]" value="{{$bm_purchase->net_unit_margin ?? 0}}"/>
                                                         <input type="hidden"
                                                             class="profit-margin-type"
                                                             name="profit_margin_type[]"
-                                                            value="{{ $rm_purchase->net_unit_margin_type ?? 'percentage' }}">
-                                                        <input type="hidden" class="product-price" name="product_price[]" value="{{$rm_purchase->net_unit_price > 0 ? $rm_purchase->net_unit_price : $raw_material_data->price}}"/>
+                                                            value="{{ $bm_purchase->net_unit_margin_type ?? 'percentage' }}">
+                                                        <input type="hidden" class="product-price" name="product_price[]" value="{{$bm_purchase->net_unit_price > 0 ? $bm_purchase->net_unit_price : $basement_data->price}}"/>
                                                         <input type="hidden" class="purchase-unit" name="purchase_unit[]" value="{{$unit_name}}"/>
                                                         <input type="hidden" class="purchase-unit-operator" value="{{$unit_operator}}"/>
                                                         <input type="hidden" class="purchase-unit-operation-value" value="{{$unit_operation_value}}"/>
-                                                        <input type="hidden" class="unit_cost" name="unit_cost[]" value="{{ $raw_material_cost}}" />
-                                                        <input type="hidden" class="net_unit_cost" name="net_unit_cost[]" value="{{$rm_purchase->net_unit_cost}}" />
-                                                        <input type="hidden" class="net_unit_margin" name="net_unit_margin[]" value="{{$rm_purchase->net_unit_margin ?? 0}}" />
-                                                        <input type="hidden" class="net_unit_margin_type" name="net_unit_margin_type[]" value="{{$rm_purchase->net_unit_margin_type ?? 'percentage'}}" />
-                                                        <input type="hidden" class="net_unit_price" name="net_unit_price[]" value="{{$rm_purchase->net_unit_price}}" />
-                                                        <input type="hidden" class="discount-value" name="discount[]" value="{{$rm_purchase->discount}}" />
-                                                        <input type="hidden" class="tax-rate" name="tax_rate[]" value="{{$rm_purchase->tax_rate}}"/>
+                                                        <input type="hidden" class="unit_cost" name="unit_cost[]" value="{{ $basement_cost}}" />
+                                                        <input type="hidden" class="net_unit_cost" name="net_unit_cost[]" value="{{$bm_purchase->net_unit_cost}}" />
+                                                        <input type="hidden" class="net_unit_margin" name="net_unit_margin[]" value="{{$bm_purchase->net_unit_margin ?? 0}}" />
+                                                        <input type="hidden" class="net_unit_margin_type" name="net_unit_margin_type[]" value="{{$bm_purchase->net_unit_margin_type ?? 'percentage'}}" />
+                                                        <input type="hidden" class="net_unit_price" name="net_unit_price[]" value="{{$bm_purchase->net_unit_price}}" />
+                                                        <input type="hidden" class="discount-value" name="discount[]" value="{{$bm_purchase->discount}}" />
+                                                        <input type="hidden" class="tax-rate" name="tax_rate[]" value="{{$bm_purchase->tax_rate}}"/>
                                                         @if($tax)
                                                         <input type="hidden" class="tax-name" value="{{$tax->name}}" />
                                                         @else
                                                         <input type="hidden" class="tax-name" value="No Tax" />
                                                         @endif
-                                                        <input type="hidden" class="tax-method" value="{{$raw_material_data->tax_method ?? 1}}"/>
-                                                        <input type="hidden" class="tax-value" name="tax[]" value="{{$rm_purchase->tax}}" />
-                                                        <input type="hidden" class="subtotal-value" name="subtotal[]" value="{{$rm_purchase->total}}" />
+                                                        <input type="hidden" class="tax-method" value="{{$basement_data->tax_method ?? 1}}"/>
+                                                        <input type="hidden" class="tax-value" name="tax[]" value="{{$bm_purchase->tax}}" />
+                                                        <input type="hidden" class="subtotal-value" name="subtotal[]" value="{{$bm_purchase->total}}" />
                                                         <input type="hidden" class="is-imei" value="0" />
                                                         <input type="hidden" class="imei-number" name="imei_number[]" value="" />
-                                                        <input type="hidden" class="original-cost"  value="{{$raw_material_data->cost}}" />
+                                                        <input type="hidden" class="original-cost"  value="{{$basement_data->cost}}" />
                                                         <input type="hidden" class="original-profit-margin"  value="0" />
                                                         <input type="hidden" class="original-profit-margin-type"  value="percentage" />
-                                                        <input type="hidden" class="original-price"  value="{{$raw_material_data->price}}" />
+                                                        <input type="hidden" class="original-price"  value="{{$basement_data->price}}" />
                                                     </tr>
                                                     @endforeach
                                                 </tbody>
@@ -299,7 +299,7 @@
                                                     <th>{{__('db.Total')}}</th>
                                                     <th id="total-qty">{{$lims_purchase_data->total_qty}}</th>
                                                     <th class="recieved-product-qty d-none"></th>
-                                                    @can('raw-purchases-show-price')
+                                                    @can('warehouse-store-purchases-show-price')
                                                     <th></th>
                                                     <th></th>
                                                     <th></th>
@@ -348,7 +348,7 @@
                                         </div>
                                     </div>
                                 </div>
-                                @can('raw-purchases-show-price')
+                                @can('warehouse-store-purchases-show-price')
                                 <div class="row mt-5">
                                     <div class="col-md-4">
                                         <div class="form-group">
@@ -399,7 +399,7 @@
             </div>
         </div>
     </div>
-    @can('raw-purchases-show-price')
+    @can('warehouse-store-purchases-show-price')
     <div class="container-fluid">
         <table class="table table-bordered table-condensed totals">
             <td><strong>{{__('db.Items')}}</strong>
@@ -496,9 +496,9 @@
 @push('scripts')
 <script type="text/javascript">
 
-    $("ul#rawmaterial").siblings('a').attr('aria-expanded','true');
-    $("ul#rawmaterial").addClass("show");
-    $("ul#rawmaterial #raw-purchase-edit-menu").addClass("active");
+    $("ul#basement").siblings('a').attr('aria-expanded','true');
+    $("ul#basement").addClass("show");
+    $("ul#basement #warehouse-store-purchase-list-menu").addClass("active");
 
 // array data depend on warehouse
 var lims_product_array = [];
@@ -577,14 +577,14 @@ $('#currency-id').change(function(){
 
 $('[data-toggle="tooltip"]').tooltip();
 
-var raw_purchases_show_price = @json(auth()->user()->can('raw-purchases-show-price'));
+var warehouse_store_purchases_show_price = @json(auth()->user()->can('warehouse-store-purchases-show-price'));
 
 $('select[name="supplier_id"]').val($('input[name="supplier_id_hidden"]').val());
 $('select[name="warehouse_id"]').val($('input[name="warehouse_id_hidden"]').val());
 $('select[name="status"]').val($('input[name="status_hidden"]').val());
 $('.selectpicker').selectpicker('refresh');
 
-if (raw_purchases_show_price) {
+if (warehouse_store_purchases_show_price) {
     $('select[name="order_tax_rate"]').val($('input[name="order_tax_rate_hidden"]').val());
     $('#item').text($('input[name="item"]').val() + '(' + $('input[name="total_qty"]').val() + ')');
     $('#subtotal').text(parseFloat($('input[name="total_cost"]').val()).toFixed({{$general_setting->decimal}}));
@@ -627,25 +627,25 @@ $('select[name="status"]').on('change', function() {
 });
 
 
-<?php $rawMaterialArray = []; ?>
-var lims_raw_material_code = [
-    @foreach($lims_raw_material_list as $raw_material)
-        <?php
-            $rawMaterialArray[] = htmlspecialchars($raw_material->code) . '|' . preg_replace('/[\n\r]/', "<br>", htmlspecialchars($raw_material->name));
-        ?>
+<?php $basementArray = []; ?>
+var lims_basement_code = [
+    @foreach($lims_basement_list as $basement)
+            <?php
+            $basementArray[] = htmlspecialchars($basement->code) . '|' . preg_replace('/[\n\r]/', "<br>", htmlspecialchars($basement->name));
+            ?>
     @endforeach
 
-    <?php
-        echo  '"'.implode('","', $rawMaterialArray).'"';
-    ?>
-];
+        <?php
+            echo  '"'.implode('","', $basementArray).'"';
+        ?>
+    ];
 
-var lims_rawmaterialcodeSearch = $('#lims_rawmaterialcodeSearch');
+var lims_basementcodeSearch = $('#lims_basementcodeSearch');
 
-lims_rawmaterialcodeSearch.autocomplete({
-    source: function(request, response) {
-        var matcher = new RegExp(".?" + $.ui.autocomplete.escapeRegex(request.term), "i");
-        response($.grep(lims_raw_material_code, function(item) {
+lims_basementcodeSearch.autocomplete({
+        source: function(request, response) {
+            var matcher = new RegExp(".?" + $.ui.autocomplete.escapeRegex(request.term), "i");
+        response($.grep(lims_basement_code, function(item) {
             return matcher.test(item);
         }));
     },
@@ -653,12 +653,12 @@ lims_rawmaterialcodeSearch.autocomplete({
         if (ui.content.length == 1) {
             var data = ui.content[0].value;
             $(this).autocomplete( "close" );
-            rawMaterialSearch(data);
+            basementSearch(data);
         };
     },
     select: function(event, ui) {
         var data = ui.item.value;
-        rawMaterialSearch(data);
+        basementSearch(data);
     }
 });
 
@@ -754,8 +754,8 @@ $("table.order-list").on("click", ".edit-product", function() {
         $("#editModal .modal-element").append(htmlText);
     }
     var row_product_name = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('td:nth-child(1)').text();
-    var row_raw_material_code = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.raw-material-code').val();
-    $('#modal_header').text(row_product_name + ' (' + row_raw_material_code + ')');
+    var row_basement_code = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.basement-code').val();
+    $('#modal_header').text(row_product_name + ' (' + row_basement_code + ')');
 
     var qty = $(this).closest('tr').find('.qty').val();
     $('input[name="edit_qty"]').val(qty);
@@ -959,16 +959,16 @@ $('button[name="update_btn"]').on("click", function() {
     checkQuantity(edit_qty, false);
 });
 
-function rawMaterialSearch(data) {
+function basementSearch(data) {
     $.ajax({
         type: 'GET',
-        url: '{{ route('raw-material-purchase.search') }}',
+        url: '{{ route('warehouse-store-purchase.search') }}',
         data: {
             data: data
         },
         success: function(data) {
             var flag = 1;
-            $(".raw-material-code").each(function(i) {
+            $(".basement-code").each(function(i) {
                 if ($(this).val() == data[1]) {
                     rowindex = i;
                     var qty = parseFloat($('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .qty').val()) + 1;
@@ -980,7 +980,7 @@ function rawMaterialSearch(data) {
                     flag = 0;
                 }
             });
-            $("input[name='raw_material_code_name']").val('');
+            $("input[name='basement_code_name']").val('');
             if(flag){
                 var newRow = $("<tr>");
                 var cols = '';
@@ -1003,8 +1003,8 @@ function rawMaterialSearch(data) {
                 cols += '<td class="tax"></td>';
                 cols += '<td class="sub-total"></td>';
                 cols += '<td><button type="button" class="ibtnDel btn btn-md btn-danger"><i class="dripicons-trash"></i></button></td>';
-                cols += '<input type="hidden" class="raw-material-code" name="raw_material_code[]" value="' + data[1] + '"/>';
-                cols += '<input type="hidden" class="raw-material-id" name="raw_material_id[]" value="' + data[9] + '"/>';
+                cols += '<input type="hidden" class="basement-code" name="basement_code[]" value="' + data[1] + '"/>';
+                cols += '<input type="hidden" class="basement-id" name="basement_id[]" value="' + data[9] + '"/>';
                 cols += '<input type="hidden" class="purchase-unit" name="purchase_unit[]" value="' + temp_unit_name[0] + '"/>';
                 cols += '<input type="hidden" class="unit_cost" name="unit_cost[]" />';
                 cols += '<input type="hidden" class="net_unit_cost" name="net_unit_cost[]" />';
@@ -1187,7 +1187,7 @@ function calculateTotal() {
 }
 
 function calculateGrandTotal() {
-    if (!raw_purchases_show_price) return;
+    if (!warehouse_store_purchases_show_price) return;
 
     var item = $('table.order-list tbody tr:last').index();
 
@@ -1217,7 +1217,7 @@ function calculateGrandTotal() {
     $('input[name="grand_total"]').val(grand_total.toFixed({{$general_setting->decimal}}));
 }
 
-if (raw_purchases_show_price) {
+if (warehouse_store_purchases_show_price) {
     $('input[name="order_discount"]').on("blur", function() {
         calculateGrandTotal();
     });

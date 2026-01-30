@@ -29,9 +29,18 @@ class BasementController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if ($role->hasPermissionTo('warehouse-stores-index')) {
-            $lims_brand_list = Brand::where('is_active', true)->get();
-            $lims_category_list = Category::where('is_active', true)->get();
-            $lims_unit_list = Unit::where('is_active', true)->get();
+            $lims_brand_list = Brand::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'warehouse_store');
+                })->get();
+            $lims_category_list = Category::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'warehouse_store');
+                })->get();
+            $lims_unit_list = Unit::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'warehouse_store');
+                })->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
 
             $brand_id = 0;
@@ -161,9 +170,18 @@ class BasementController extends Controller
     {
         $role = Role::firstOrCreate(['id' => Auth::user()->role_id]);
         if ($role->hasPermissionTo('warehouse-stores-add')) {
-            $lims_brand_list = Brand::where('is_active', true)->get();
-            $lims_category_list = Category::where('is_active', true)->get();
-            $lims_unit_list = Unit::where('is_active', true)->get();
+            $lims_brand_list = Brand::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'warehouse_store');
+                })->get();
+            $lims_category_list = Category::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'warehouse_store');
+                })->get();
+            $lims_unit_list = Unit::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'warehouse_store');
+                })->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
             $numberOfBasement = Basement::where('is_active', true)->count();
 
@@ -279,9 +297,18 @@ class BasementController extends Controller
     {
         $role = Role::find(Auth::user()->role_id);
         if ($role->hasPermissionTo('warehouse-stores-edit')) {
-            $lims_brand_list = Brand::where('is_active', true)->get();
-            $lims_category_list = Category::where('is_active', true)->get();
-            $lims_unit_list = Unit::where('is_active', true)->get();
+            $lims_brand_list = Brand::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'warehouse_store');
+                })->get();
+            $lims_category_list = Category::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'warehouse_store');
+                })->get();
+            $lims_unit_list = Unit::where('is_active', true)
+                ->where(function($query) {
+                    $query->whereNull('type')->orWhere('type', 'warehouse_store');
+                })->get();
             $lims_tax_list = Tax::where('is_active', true)->get();
             $lims_basement_data = Basement::where('id', $id)->first();
 

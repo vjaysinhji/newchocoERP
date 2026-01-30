@@ -3,6 +3,8 @@
 return [
     "sidebar_permissions" =>  [
         "sidebar_product" => "Product",
+        "sidebar_rawmaterial" => "Raw Material",
+        "sidebar_warehouse_stores" => "Warehouse Stores",
         "sidebar_purchase" => "Purchase",
         "sidebar_sale" => "Sale",
         "sidebar_quotation" => "Quotation",

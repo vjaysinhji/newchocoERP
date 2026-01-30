@@ -41,6 +41,7 @@ use App\Http\Controllers\ProductController;
 use App\Http\Controllers\RawMaterialController;
 use App\Http\Controllers\ColdStorageController;
 use App\Http\Controllers\BasementController;
+use App\Http\Controllers\WarehouseStoreController;
 use App\Http\Controllers\SettingController;
 use App\Http\Controllers\AccountsController;
 use App\Http\Controllers\CategoryController;
@@ -53,6 +54,7 @@ use App\Http\Controllers\GiftCardController;
 use App\Http\Controllers\LanguageController;
 use App\Http\Controllers\PurchaseController;
 use App\Http\Controllers\RawPurchaseController;
+use App\Http\Controllers\WarehouseStorePurchaseController;
 use App\Http\Controllers\RazorpayController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\TransferController;
@@ -64,6 +66,8 @@ use App\Http\Controllers\DepartmentController;
 use App\Http\Controllers\StockCountController;
 use App\Http\Controllers\RawMaterialAdjustmentController;
 use App\Http\Controllers\RawMaterialStockCountController;
+use App\Http\Controllers\WarehouseStoreAdjustmentController;
+use App\Http\Controllers\WarehouseStoreStockCountController;
 use App\Http\Controllers\CustomFieldController;
 use App\Http\Controllers\PackingSlipController;
 use App\Http\Controllers\SmsTemplateController;
@@ -266,6 +270,20 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
     });
     Route::resource('rawmaterial-stock-count', RawMaterialStockCountController::class);
 
+    Route::controller(WarehouseStoreAdjustmentController::class)->group(function () {
+        Route::get('warehouse-store-adjustment/getbasement/{id}', 'getBasement')->name('warehouse-store.adjustment.getbasement');
+        Route::get('warehouse-store-adjustment/lims_basement_search', 'limsBasementSearch')->name('warehouse-store_adjustment.search');
+        Route::post('warehouse-store-adjustment/deletebyselection', 'deleteBySelection');
+    });
+    Route::resource('warehouse-store-adjustment', WarehouseStoreAdjustmentController::class);
+
+    Route::controller(WarehouseStoreStockCountController::class)->group(function () {
+        Route::post('warehouse-store-stock-count/finalize', 'finalize')->name('warehouse-store-stock-count.finalize');
+        Route::get('warehouse-store-stock-count/stockdif/{id}', 'stockDif');
+        Route::get('warehouse-store-stock-count/{id}/qty_adjustment', 'qtyAdjustment')->name('warehouse-store-stock-count.adjustment');
+    });
+    Route::resource('warehouse-store-stock-count', WarehouseStoreStockCountController::class);
+
     // Cold Storages Routes
     Route::resource('coldstorages',ColdStorageController::class)->except([ 'show']);
     Route::controller(ColdStorageController::class)->group(function () {
@@ -282,6 +300,27 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::get('warehouse-stores/gencode', 'generateCode')->name('warehouse-store.gencode');
         Route::post('warehouse-stores/deletebyselection', 'deleteBySelection')->name('warehouse-stores.deletebyselection');
         Route::post('warehouse-stores/update', 'update')->name('warehouse-stores.update');
+     });
+    Route::controller(WarehouseStoreController::class)->group(function () {
+        Route::get('warehouse-stores/category', 'indexCategory')->name('warehouse-stores.category.index');
+        Route::post('warehouse-stores/category/category-data', 'categoryData')->name('warehouse-stores.category.data');
+        Route::post('warehouse-stores/category', 'storeCategory')->name('warehouse-stores.category.store');
+        Route::post('warehouse-stores/category/deletebyselection', 'deleteCategoryBySelection')->name('warehouse-stores.category.deletebyselection');
+        Route::get('warehouse-stores/category/{id}/edit', 'editCategory')->name('warehouse-stores.category.edit');
+        Route::put('warehouse-stores/category/{id}', 'updateCategory')->name('warehouse-stores.category.update');
+        Route::delete('warehouse-stores/category/{id}', 'destroyCategory')->name('warehouse-stores.category.destroy');
+        Route::get('warehouse-stores/brand', 'indexBrand')->name('warehouse-stores.brand.index');
+        Route::post('warehouse-stores/brand', 'storeBrand')->name('warehouse-stores.brand.store');
+        Route::post('warehouse-stores/brand/deletebyselection', 'deleteBrandBySelection')->name('warehouse-stores.brand.deletebyselection');
+        Route::get('warehouse-stores/brand/{id}/edit', 'editBrand')->name('warehouse-stores.brand.edit');
+        Route::put('warehouse-stores/brand/{id}', 'updateBrand')->name('warehouse-stores.brand.update');
+        Route::delete('warehouse-stores/brand/{id}', 'destroyBrand')->name('warehouse-stores.brand.destroy');
+        Route::get('warehouse-stores/unit', 'indexUnit')->name('warehouse-stores.unit.index');
+        Route::post('warehouse-stores/unit', 'storeUnit')->name('warehouse-stores.unit.store');
+        Route::post('warehouse-stores/unit/deletebyselection', 'deleteUnitBySelection')->name('warehouse-stores.unit.deletebyselection');
+        Route::get('warehouse-stores/unit/{id}/edit', 'editUnit')->name('warehouse-stores.unit.edit');
+        Route::put('warehouse-stores/unit/{id}', 'updateUnit')->name('warehouse-stores.unit.update');
+        Route::delete('warehouse-stores/unit/{id}', 'destroyUnit')->name('warehouse-stores.unit.destroy');
      });
 
 
@@ -543,6 +582,20 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         });
     });
     Route::resource('raw-purchases', RawPurchaseController::class);
+
+    Route::controller(WarehouseStorePurchaseController::class)->group(function () {
+        Route::prefix('warehouse-store-purchases')->group(function () {
+            Route::post('purchase-data', 'purchaseData')->name('warehouse-store-purchases.data');
+            Route::get('basement-purchase/{id}', 'basementPurchaseData');
+            Route::get('lims_basement_search', 'limsBasementSearch')->name('warehouse-store-purchase.search');
+            Route::post('add_payment', 'addPayment')->name('warehouse-store-purchase.add-payment');
+            Route::get('getpayment/{id}', 'getPayment')->name('warehouse-store-purchase.get-payment');
+            Route::post('updatepayment', 'updatePayment')->name('warehouse-store-purchase.update-payment');
+            Route::post('deletepayment', 'deletePayment')->name('warehouse-store-purchase.delete-payment');
+            Route::post('deletebyselection', 'deleteBySelection');
+        });
+    });
+    Route::resource('warehouse-store-purchases', WarehouseStorePurchaseController::class);
 
 
 

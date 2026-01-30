@@ -1078,6 +1078,26 @@ class TenantDatabaseSeeder extends Seeder
                     'name' => 'raw-purchases-delete',
                     'guard_name' => 'web',
                 ],
+                [
+                    'id' => 198,
+                    'name' => 'warehouse-store-purchases-index',
+                    'guard_name' => 'web',
+                ],
+                [
+                    'id' => 199,
+                    'name' => 'warehouse-store-purchases-add',
+                    'guard_name' => 'web',
+                ],
+                [
+                    'id' => 200,
+                    'name' => 'warehouse-store-purchases-edit',
+                    'guard_name' => 'web',
+                ],
+                [
+                    'id' => 201,
+                    'name' => 'warehouse-store-purchases-delete',
+                    'guard_name' => 'web',
+                ],
         ];
 
         $insertData = [];
