@@ -9,6 +9,8 @@
 /index.php
 /public/phpver.php
 /public/storage
+/composer.lock
+/storage/.gitignore
 
 /storage/*.key
 /vendor
