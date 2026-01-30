@@ -4,6 +4,12 @@
 /public/invoices/*
 /public/frontend/images/*
 
+/bootstrap/cache/*.php
+/bootstrap/cache/*.tmp
+/index.php
+/public/phpver.php
+/public/storage
+
 /storage/*.key
 /vendor
 *.zip
