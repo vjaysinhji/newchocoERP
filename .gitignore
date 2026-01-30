@@ -11,6 +11,7 @@
 /public/storage
 /composer.lock
 /storage/.gitignore
+/storage/*
 
 /storage/*.key
 /vendor
