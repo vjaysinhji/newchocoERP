@@ -197,7 +197,6 @@
 
     // Date Range Change
     $('.daterangepicker-field').on('change', function () {
-        alert()
         let dateRange = $(this).val().split(" To ");
         $('input[name="starting_date"]').val(dateRange[0]);
         $('input[name="ending_date"]').val(dateRange[1]);

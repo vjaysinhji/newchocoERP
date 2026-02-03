@@ -10013,6 +10013,18 @@ return array(
         'key' => 'add_warehouse_store',
         'value' => 'Add Warehouse Store',
     ),
+    16925 =>
+    array(
+        'locale' => 'en',
+        'key' => 'add_warehouse_item',
+        'value' => 'Add Warehouse Item',
+    ),
+    16926 =>
+    array(
+        'locale' => 'en',
+        'key' => 'warehouse_item_name',
+        'value' => 'Item Name',
+    ),
     1693 =>
     array(
         'locale' => 'en',

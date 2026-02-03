@@ -29,6 +29,7 @@ use App\Models\ProductPurchase;
 use Illuminate\Validation\Rule;
 use App\Models\Product_Supplier;
 use App\Models\Product_Warehouse;
+use App\Models\Basement;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Role;
 use Illuminate\Support\Facades\Log;
@@ -102,9 +103,29 @@ class ProductController extends Controller
             foreach ($custom_fields as $fieldName) {
                 $field_name[] = str_replace(" ", "_", strtolower($fieldName));
             }
-            return view('backend.product.index', compact('warehouse_id', 'product_type', 'brand_id', 'category_id', 'unit_id', 'tax_id', 'imeiorvariant', 'stock_filter', 'all_permission', 'role_id', 'numberOfProduct', 'custom_fields', 'field_name', 'lims_warehouse_list', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list'));
+            $product_index_type = 'all';
+            if ($request->routeIs('products.single.index')) {
+                $product_index_type = 'single';
+                $product_type = 'standard';
+            } elseif ($request->routeIs('products.combo.index')) {
+                $product_index_type = 'combo';
+                $product_type = 'combo';
+            }
+            return view('backend.product.index', compact('warehouse_id', 'product_type', 'product_index_type', 'brand_id', 'category_id', 'unit_id', 'tax_id', 'imeiorvariant', 'stock_filter', 'all_permission', 'role_id', 'numberOfProduct', 'custom_fields', 'field_name', 'lims_warehouse_list', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list'));
         } else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
+    }
+
+    public function indexSingle(Request $request)
+    {
+        $request->merge(['product_type' => 'standard', 'product_index_type' => 'single']);
+        return $this->index($request);
+    }
+
+    public function indexCombo(Request $request)
+    {
+        $request->merge(['product_type' => 'combo', 'product_index_type' => 'combo']);
+        return $this->index($request);
     }
 
     public function productData(Request $request)
@@ -120,6 +141,7 @@ class ProductController extends Controller
             8 => 'cost',
         ];
 
+        $product_index_type = $request->input('product_index_type', 'all');
         $filtered_data = [
             'warehouse_id' => $request->input('warehouse_id'),
             'product_type' => $request->input('product_type'),
@@ -129,17 +151,23 @@ class ProductController extends Controller
             'tax_id'       => $request->input('tax_id'),
             'is_imei'      => $request->input('imeiorvariant') == 'imei' ? "1" : "0",
             'is_variant'   => $request->input('imeiorvariant') == 'variant' ? "1" : "0",
-            // 'stock_filter'   => $request->input('stock_filter'),
         ];
+        if ($product_index_type === 'single') {
+            $filtered_data['product_type'] = 'standard';
+        } elseif ($product_index_type === 'combo') {
+            $filtered_data['product_type'] = 'combo';
+        }
 
         $is_recipe = $request->input('is_recipe');
         $warehouse_id = $filtered_data['warehouse_id'];
 
-        // DataTables pagination/sorting
+        $stock_filter = $request->input('stock_filter') ?: 'all';
         $limit = ($request->input('length') != -1) ? $request->input('length') : null;
         $start = $request->input('start');
-        $order = 'products.' . $columns[$request->input('order.0.column')];
-        $dir   = $request->input('order.0.dir');
+        $orderCol = (int) $request->input('order.0.column', 1);
+        $orderCol = isset($columns[$orderCol]) ? $orderCol : 1;
+        $order = 'products.' . $columns[$orderCol];
+        $dir = in_array(strtolower($request->input('order.0.dir', 'asc')), ['asc', 'desc']) ? $request->input('order.0.dir') : 'asc';
 
         // Custom fields
         $custom_fields = CustomField::where([
@@ -151,30 +179,15 @@ class ProductController extends Controller
             $field_names[] = str_replace(" ", "_", strtolower($fieldName));
         }
 
-        // Base query with relation
-        if ($request->input('stock_filter') === 'all') {
-            $baseQuery = Product::with('category', 'brand', 'unit')
-                ->where('products.is_active', true);
-        }
-        if ($request->input('stock_filter') === 'with') {
-            $baseQuery = Product::with('category', 'brand', 'unit')
-                ->where('products.is_active', true)
-                ->whereIn('products.id', function ($query) {
-                    $query->select('product_id')
-                        ->from('product_warehouse')
-                        ->groupBy('product_id')
-                        ->havingRaw('SUM(qty) > 0');
-                });
-        }
-        if ($request->input('stock_filter') === 'without') {
-            $baseQuery = Product::with('category', 'brand', 'unit')
-                ->where('products.is_active', true)
-                ->whereNotIn('products.id', function ($query) {
-                    $query->select('product_id')
-                        ->from('product_warehouse')
-                        ->groupBy('product_id')
-                        ->havingRaw('SUM(qty) > 0');
-                });
+        $baseQuery = Product::with('category', 'brand', 'unit')->where('products.is_active', true);
+        if ($stock_filter === 'with') {
+            $baseQuery->whereIn('products.id', function ($query) {
+                $query->select('product_id')->from('product_warehouse')->groupBy('product_id')->havingRaw('SUM(qty) > 0');
+            });
+        } elseif ($stock_filter === 'without') {
+            $baseQuery->whereNotIn('products.id', function ($query) {
+                $query->select('product_id')->from('product_warehouse')->groupBy('product_id')->havingRaw('SUM(qty) > 0');
+            });
         }
 
         if ($is_recipe) {
@@ -299,7 +312,11 @@ class ProductController extends Controller
                                     <span style="color:#111;margin:0 10px;">' . $product->name . '</span></div>';
             $nestedData['name_arabic'] = $product->name_arabic ?? '';
             $nestedData['code'] = $product->code;
-            $nestedData['brand'] = $product->brand->title ?? "N/A";
+            $product_index_type = $request->input('product_index_type', 'all');
+            $brandForRow = $product->brand->title ?? "N/A";
+            if ($product_index_type === 'all') {
+                $nestedData['brand'] = $brandForRow;
+            }
             $nestedData['category'] = $product->category->name ?? "N/A";
 
             // Quantity (showing warehouse name and quantity)
@@ -345,6 +362,12 @@ class ProductController extends Controller
             } else {
                 $nestedData['qty'] = $product->qty;
                 $total_qty = $product->qty;
+            }
+
+            if ($product->type == 'standard') {
+                $total_qty_all_warehouses = (int) Product_Warehouse::where('product_id', $product->id)->sum('qty');
+            } else {
+                $total_qty_all_warehouses = $total_qty;
             }
 
             $nestedData['unit'] = $product->unit->unit_name ?? 'N/A';
@@ -440,13 +463,14 @@ class ProductController extends Controller
             // Extra product details
             $tax = $product->tax_id ? (Tax::find($product->tax_id)->name ?? "N/A") : "N/A";
             $tax_method = $product->tax_method == 1 ? __('db.Exclusive') : __('db.Inclusive');
+            $typeLabel = $product->type == 'standard' ? 'Single Product' : ($product->type == 'combo' ? 'Combo Product' : $product->type);
 
             $nestedData['product'] = array(
-                '[ "' . $product->type . '"',
+                '[ "' . $typeLabel . '"',
                 ' "' . $product->name . '"',
                 ' "' . ($product->name_arabic ?? '') . '"',
                 ' "' . $product->code . '"',
-                ' "' . $nestedData['brand'] . '"',
+                ' "' . $brandForRow . '"',
                 ' "' . $nestedData['category'] . '"',
                 ' "' . $nestedData['unit'] . '"',
                 ' "' . $product->cost . '"',
@@ -460,7 +484,7 @@ class ProductController extends Controller
                 ' "' . $product->variant_list . '"',
                 ' "' . $product->qty_list . '"',
                 ' "' . $product->price_list . '"',
-                ' "' . $total_qty . '"',
+                ' "' . $total_qty_all_warehouses . '"',
                 ' "' . $product->image . '"',
                 ' "' . $product->is_variant . '"',
                 '"' . @$nestedData['combo_unit'] . '"',
@@ -503,16 +527,36 @@ class ProductController extends Controller
             $custom_fields = CustomField::where('belongs_to', 'product')->get();
 
             $general_setting = DB::table('general_settings')->select('modules')->first();
+            $product_form_type = request()->routeIs('products.single.create') ? 'standard' : (request()->routeIs('products.combo.create') ? 'combo' : null);
+            $lims_basement_list = [];
+            $lims_combo_units = [];
+            if ($product_form_type === 'combo') {
+                $lims_basement_list = Basement::where('is_active', true)->with('unit')->get()->map(function ($b) {
+                    return ['id' => $b->id, 'code' => $b->code, 'name' => $b->name, 'cost' => $b->cost ?? 0, 'price' => $b->price ?? 0, 'unit_id' => $b->unit_id, 'unit_name' => $b->unit->unit_name ?? 'N/A'];
+                });
+                $lims_combo_units = Unit::where('is_active', true)->where(function($q) { $q->whereNull('type')->orWhere('type', 'product'); })->get(['id', 'unit_name', 'operation_value', 'operator', 'base_unit'])->map(function ($u) {
+                    return ['id' => $u->id, 'unit_name' => $u->unit_name, 'operation_value' => $u->operation_value ?? 1, 'operator' => $u->operator ?? '*', 'base_unit' => $u->base_unit];
+                });
+            }
             if (in_array('restaurant', explode(',', $general_setting->modules))) {
                 $kitchen_list = DB::table('kitchens')->where('is_active', 1)->get();
                 $menu_type_list = DB::table('menu_type')->where('is_active', 1)->get();
-
-                return view('backend.product.create', compact('kitchen_list', 'menu_type_list', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_warehouse_list', 'numberOfProduct', 'custom_fields'));
+                return view('backend.product.create', compact('kitchen_list', 'menu_type_list', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_warehouse_list', 'numberOfProduct', 'custom_fields', 'product_form_type', 'lims_basement_list', 'lims_combo_units'));
             }
 
-            return view('backend.product.create', compact('lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_warehouse_list', 'numberOfProduct', 'custom_fields'));
+            return view('backend.product.create', compact('lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_warehouse_list', 'numberOfProduct', 'custom_fields', 'product_form_type', 'lims_basement_list', 'lims_combo_units'));
         } else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
+    }
+
+    public function createSingle()
+    {
+        return $this->create();
+    }
+
+    public function createCombo()
+    {
+        return $this->create();
     }
 
     private function diffSizeOfImagePathExistOrCreate()
@@ -551,8 +595,8 @@ class ProductController extends Controller
         ]);
 
         $data = $request->except('image', 'file');
+        $data['brand_id'] = $data['brand_id'] ?? null;
 
-        // handle warranty and guarantee
         if (!isset($data['warranty'])) {
             unset($data['warranty']);
             unset($data['warranty_type']);
@@ -587,7 +631,14 @@ class ProductController extends Controller
 
         if ($data['type'] == 'combo' || (isset($data['is_recipe']) && $data['is_recipe'] == 1)) {
 
-            $data['product_list'] = implode(",", $data['product_id']);
+            $product_type_arr = $request->input('product_type', []);
+            $product_list_parts = [];
+            foreach ($data['product_id'] as $i => $id) {
+                $type = $product_type_arr[$i] ?? 'single';
+                $prefix = ($type === 'warehouse_store') ? 'b_' : 'p_';
+                $product_list_parts[] = $prefix . $id;
+            }
+            $data['product_list'] = implode(",", $product_list_parts);
             $data['variant_list'] = implode(",", $data['variant_id']);
             $data['qty_list'] = implode(",", $data['product_qty']);
             $data['price_list'] = implode(",", $data['unit_price']);
@@ -1258,11 +1309,22 @@ class ProductController extends Controller
             $noOfVariantValue = 0;
             $custom_fields = CustomField::where('belongs_to', 'product')->get();
 
+            $lims_basement_list = [];
+            $lims_combo_units = [];
+            if ($lims_product_data && $lims_product_data->type == 'combo') {
+                $lims_basement_list = Basement::where('is_active', true)->with('unit')->get()->map(function ($b) {
+                    return ['id' => $b->id, 'code' => $b->code, 'name' => $b->name, 'cost' => $b->cost ?? 0, 'price' => $b->price ?? 0, 'unit_id' => $b->unit_id, 'unit_name' => $b->unit->unit_name ?? 'N/A'];
+                });
+                $lims_combo_units = Unit::where('is_active', true)->where(function($q) { $q->whereNull('type')->orWhere('type', 'product'); })->get(['id', 'unit_name', 'operation_value', 'operator', 'base_unit'])->map(function ($u) {
+                    return ['id' => $u->id, 'unit_name' => $u->unit_name, 'operation_value' => $u->operation_value ?? 1, 'operator' => $u->operator ?? '*', 'base_unit' => $u->base_unit];
+                });
+            }
+
             $general_setting = DB::table('general_settings')->select('modules')->first();
             if (in_array('ecommerce', explode(',', $general_setting->modules))) {
                 $product_arr = explode(',', $lims_product_data->related_products);
                 $related_products = DB::table('products')->whereIn('id', $product_arr)->get();
-                return view('backend.product.edit', compact('related_products', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_product_data', 'lims_product_variant_data', 'lims_warehouse_list', 'noOfVariantValue', 'custom_fields'));
+                return view('backend.product.edit', compact('related_products', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_product_data', 'lims_product_variant_data', 'lims_warehouse_list', 'noOfVariantValue', 'custom_fields', 'lims_basement_list', 'lims_combo_units'));
             }
 
             $general_setting = DB::table('general_settings')->select('modules')->first();
@@ -1276,9 +1338,9 @@ class ProductController extends Controller
                 $extra_arr = explode(',', $lims_product_data->extras);
                 $extras = DB::table('products')->whereIn('id', $extra_arr)->get();
 
-                return view('backend.product.edit', compact('kitchen_list', 'menu_type_list', 'related_products', 'extras', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_product_data', 'lims_product_variant_data', 'lims_warehouse_list', 'noOfVariantValue', 'custom_fields'));
+                return view('backend.product.edit', compact('kitchen_list', 'menu_type_list', 'related_products', 'extras', 'lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_product_data', 'lims_product_variant_data', 'lims_warehouse_list', 'noOfVariantValue', 'custom_fields', 'lims_basement_list', 'lims_combo_units'));
             }
-            return view('backend.product.edit', compact('lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_product_data', 'lims_product_variant_data', 'lims_warehouse_list', 'noOfVariantValue', 'custom_fields'));
+            return view('backend.product.edit', compact('lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_product_data', 'lims_product_variant_data', 'lims_warehouse_list', 'noOfVariantValue', 'custom_fields', 'lims_basement_list', 'lims_combo_units'));
         } else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
     }
@@ -1351,7 +1413,15 @@ class ProductController extends Controller
 
 
             if ($data['type'] == 'combo') {
-                $data['product_list'] = implode(",", $data['product_id']);
+                $product_type_arr = $request->input('product_type', []);
+                $product_list_parts = [];
+                foreach ($data['product_id'] as $i => $id) {
+                    $type = $product_type_arr[$i] ?? 'single';
+                    $prefix = ($type === 'warehouse_store') ? 'b_' : 'p_';
+                    $id_val = (is_string($id) && (strpos($id, 'b_') === 0 || strpos($id, 'p_') === 0)) ? $id : ($prefix . $id);
+                    $product_list_parts[] = $id_val;
+                }
+                $data['product_list'] = implode(",", $product_list_parts);
                 $data['variant_list'] = implode(",", $data['variant_id']);
                 $data['qty_list'] = implode(",", $data['product_qty']);
                 $data['price_list'] = implode(",", $data['unit_price']);

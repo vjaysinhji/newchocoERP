@@ -34,6 +34,8 @@ class Production extends Model
         'product_id',
         'qty_list',
         'price_list',
+        'is_raw_material_list',
+        'variant_list',
     ];
 
     protected $dates = ['expiry_date'];

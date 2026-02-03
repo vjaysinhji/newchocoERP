@@ -46,8 +46,13 @@
         <div class="container-fluid">
 
             @can('products-add')
-                <a href="{{ route('products.create') }}" class="btn btn-info add-product-btn btn-icon"><i
-                        class="dripicons-plus"></i> {{ __('db.add_product') }}</a>
+                @if(isset($product_index_type) && $product_index_type == 'single')
+                    <a href="{{ route('products.single.create') }}" class="btn btn-info add-product-btn btn-icon"><i class="dripicons-plus"></i> {{ __('db.Add Single Product') }}</a>
+                @elseif(isset($product_index_type) && $product_index_type == 'combo')
+                    <a href="{{ route('products.combo.create') }}" class="btn btn-info add-product-btn btn-icon"><i class="dripicons-plus"></i> {{ __('db.Add Combo Product') }}</a>
+                @else
+                    <a href="{{ route('products.create') }}" class="btn btn-info add-product-btn btn-icon"><i class="dripicons-plus"></i> {{ __('db.add_product') }}</a>
+                @endif
             @endcan
             @can('products-import')
                 <a href="#" data-toggle="modal" data-target="#importProduct"
@@ -82,14 +87,15 @@
                                 </select>
                             </div>
                         </div>
+                        @if(!isset($product_index_type) || $product_index_type == 'all')
                         <div class="col-md-3">
                             <div class="form-group top-fields">
                                 <label>{{ __('db.Product Type') }}</label>
                                 <select name="product_type" required class="form-control selectpicker" id="product_type"
                                     data-live-search="true" data-live-search-style="begins">
                                     <option value="all" selected>All Types</option>
-                                    <option value="standard">Standard</option>
-                                    <option value="combo">Combo</option>
+                                    <option value="standard">Single Product</option>
+                                    <option value="combo">Combo Product</option>
                                     <option value="digital">Digital</option>
                                     <option value="service">Service</option>
                                 </select>
@@ -107,6 +113,7 @@
                                 </select>
                             </div>
                         </div>
+                        @endif
                         <div class="col-md-3">
                             <div class="form-group top-fields">
                                 <label>{{ __('db.category') }}</label>
@@ -143,6 +150,7 @@
                                 </select>
                             </div>
                         </div>
+                        @if(!isset($product_index_type) || $product_index_type == 'all')
                         <div class="col-md-3">
                             <div class="form-group top-fields">
                                 <label>{{ __('db.Product with') }}</label>
@@ -153,6 +161,7 @@
                                 </select>
                             </div>
                         </div>
+                        @endif
                         <div class="col-md-3">
                             <div class="form-group top-fields">
                                 <label>{{ __('db.Stock') }}</label>
@@ -180,7 +189,9 @@
                         <th>{{ __('db.product') }}</th>
                         <th>Arabic Name</th>
                         <th>{{ __('db.Code') }}</th>
+                        @if(!isset($product_index_type) || $product_index_type == 'all')
                         <th>{{ __('db.Brand') }}</th>
+                        @endif
                         <th>{{ __('db.category') }}</th>
                         <th>{{ __('db.Quantity') }}</th>
                         <th>{{ __('db.Unit') }}</th>
@@ -303,7 +314,6 @@
     <script>
         $("ul#product").siblings('a').attr('aria-expanded', 'true');
         $("ul#product").addClass("show");
-        $("ul#product #product-list-menu").addClass("active");
 
         @if (config('database.connections.saleprosaas_landlord'))
             if (localStorage.getItem("message")) {
@@ -332,25 +342,15 @@
         }
 
         var role_id = <?php echo json_encode($role_id); ?>;
-        var columns = [{
-            "data": "key"
-        }, {
-            "data": "name"
-        }, {
-            "data": "name_arabic"
-        }, {
-            "data": "code"
-        }, {
-            "data": "brand"
-        }, {
-            "data": "category"
-        }, {
-            "data": "qty"
-        }, {
-            "data": "unit"
-        }, {
-            "data": "price"
-        }];
+        var product_index_type = <?php echo json_encode($product_index_type ?? 'all'); ?>;
+        if (product_index_type === 'single') $("ul#product #product-single-list-menu").addClass("active");
+        else if (product_index_type === 'combo') $("ul#product #product-combo-list-menu").addClass("active");
+        else $("ul#product #product-single-list-menu").addClass("active");
+        var columns = [{"data": "key"}, {"data": "name"}, {"data": "name_arabic"}, {"data": "code"}];
+        if (product_index_type === 'all') {
+            columns.push({"data": "brand"});
+        }
+        columns.push({"data": "category"}, {"data": "qty"}, {"data": "unit"}, {"data": "price"});
         if (role_id <= 2) {
             columns.push({
                 "data": "cost"
@@ -438,12 +438,14 @@
             product[12] = product[12].replace(/@/g, '"');
             htmltext = slidertext = '';
 
-            htmltext = '<p>{{ __('db.Type') }}: ' + product[0] +
-                '</p><p>{{ __('db.name') }}: ' + product[1] + (product[2] && product[2].trim() ? ' / ' + product[2] : '') +
+            var typeLabel = (product[0] || '').toString().replace(/"/g, '').trim();
+            if (typeLabel === 'standard') typeLabel = 'Single Product';
+            if (typeLabel === 'combo') typeLabel = 'Combo Product';
+            htmltext = '<p>{{ __('db.Type') }}: ' + typeLabel +
+                '</p><p>{{ __('db.name') }}: ' + product[1] + (product[2] && product[2].trim ? (' / ' + product[2]) : '') +
                 '</p><p>{{ __('db.Code') }}: ' + product[3] +
-                '</p><p>{{ __('db.Brand') }}: ' + product[4] +
-                '</p><p>{{ __('db.category') }}: ' + product[5] +
-                '</p><p>{{ __('db.Quantity') }}: ' + product[17] +
+                (product_index_type === 'all' ? '</p><p>{{ __('db.Brand') }}: ' + product[4] + '</p><p>{{ __('db.category') }}: ' + product[5] : '</p><p>{{ __('db.category') }}: ' + product[5]) +
+                '</p><p>{{ __('db.Quantity') }}: ' + (product[18] != null ? String(product[18]).replace(/"/g, '').trim() : '0') +
                 '</p><p>{{ __('db.Unit') }}: ' + product[6] +
                 (role_id < 3 ? '</p><p>{{ __('db.Cost') }}: ' + product[7] : '') +
                 '</p><p>{{ __('db.Price') }}: ' + product[8] +
@@ -452,8 +454,8 @@
                 '</p><p>{{ __('db.Alert Quantity') }} : ' + product[11] +
                 '</p><p>{{ __('db.Product Details') }}: </p>' + product[12];
 
-            if (product[18]) {
-                var product_image = product[18].split(",");
+            if (product[19]) {
+                var product_image = product[19].split(",");
                 if (product_image.length > 1) {
                     slidertext =
                         '<div id="product-img-slider" class="carousel slide" data-ride="carousel"><div class="carousel-inner">';
@@ -468,7 +470,7 @@
                     slidertext +=
                         '</div><a class="carousel-control-prev" href="#product-img-slider" data-slide="prev"><span class="carousel-control-prev-icon" aria-hidden="true"></span><span class="sr-only">Previous</span></a><a class="carousel-control-next" href="#product-img-slider" data-slide="next"><span class="carousel-control-next-icon" aria-hidden="true"></span><span class="sr-only">Next</span></a></div>';
                 } else {
-                    slidertext = '<img src="images/product/' + product[18] + '" height="300" width="100%">';
+                    slidertext = '<img src="images/product/' + product[19] + '" height="300" width="100%">';
                 }
             } else {
                 slidertext = '<img src="images/product/zummXD2dvAtI.png" height="300" width="100%">';
@@ -487,13 +489,12 @@
             $("#product-variant-warehouse-section").addClass('d-none');
             if (product[0] == 'combo') {
                 $("#combo-header").text('{{ __('db.Combo Products') }}');
-                // console.log(product)
-                product_list = product[13].split(",");
-                variant_list = product[14].split(",");
-                qty_list = product[15].split(",");
-                price_list = product[16].split(",");
-                combo_unit = product[20].split(",");
-                wastage_percent = product[21].split(",");
+                product_list = (product[14] || '').toString().replace(/"/g, '').split(",");
+                variant_list = (product[15] || '').toString().replace(/"/g, '').split(",");
+                qty_list = (product[16] || '').toString().replace(/"/g, '').split(",");
+                price_list = (product[17] || '').toString().replace(/"/g, '').split(",");
+                combo_unit = (product[21] || '').toString().replace(/"/g, '').split(",");
+                wastage_percent = (product[22] || '').toString().replace(/"/g, '').split(",");
                 $(".item-list thead").remove();
                 $(".item-list tbody").remove();
                 var newHead = $("<thead>");
@@ -524,7 +525,7 @@
                 $("table.item-list").append(newBody);
             }
             if (product[0] == 'standard' || product[0] == 'combo') {
-                if (product[19]) {
+                if (product[20]) {
                     $.get('products/variant-data/' + product[13], function(variantData) {
                         if (variantData && variantData.length > 0) {
                             var newHead = $("<thead>");
@@ -836,11 +837,12 @@
     processing: true,
     serverSide: true,
     ajax: {
-        url: "products/product-data",
+        url: "{{ url('products/product-data') }}",
         data: function(d) {
             d.all_permission = all_permission;
+            d.product_index_type = product_index_type;
             d.warehouse_id = $('#warehouse_id').val();
-            d.product_type = $('#product_type').val();
+            d.product_type = (product_index_type === 'single') ? 'standard' : (product_index_type === 'combo') ? 'combo' : ($('#product_type').val() || 'all');
             d.brand_id = $('#brand_id').val();
             d.category_id = $('#category_id').val();
             d.unit_id = $('#unit_id').val();
@@ -859,13 +861,13 @@
 
     columnDefs: [
         {
-            targets: 6, // ✅ Quantity column
+            targets: product_index_type === 'all' ? 6 : 5,
             width: "130px",
             className: "text-center"
         },
         {
             orderable: false,
-            targets: role_id <= 2 ? [0, 10] : [0, 8]
+            targets: product_index_type === 'all' ? (role_id <= 2 ? [0, 10] : [0, 8]) : (role_id <= 2 ? [0, 9] : [0, 7])
         },
         {
             render: function(data, type, row, meta) {

@@ -192,7 +192,10 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::get('my-transactions/{year}/{month}', 'myTransaction');
     });
 
-    // Need to check again
+    Route::get('products/single', [ProductController::class, 'indexSingle'])->name('products.single.index');
+    Route::get('products/combo', [ProductController::class, 'indexCombo'])->name('products.combo.index');
+    Route::get('products/single/create', [ProductController::class, 'createSingle'])->name('products.single.create');
+    Route::get('products/combo/create', [ProductController::class, 'createCombo'])->name('products.combo.create');
     Route::resource('products',ProductController::class)->except([ 'show']);
     Route::controller(ProductController::class)->group(function () {
         Route::post('products/product-data', 'productData');
