@@ -572,7 +572,9 @@
             // Always fetch warehouse data for all users and all product types
             var productId = product[13]; // Product ID is at index 13
             console.log('Fetching warehouse data for product ID:', productId);
-            $.get('products/product_warehouse/' + productId, function(data) {
+            // let url = "{{ url('/products/product_warehouse') }}/" + productId;
+            let url = "{{ route('product.warehouse', ['id' => '__ID__']) }}".replace('__ID__', productId);
+            $.get(url, function(data) {
                 console.log('Warehouse Data:', data);
                 if (data && data.product_warehouse && data.product_warehouse[0] && data.product_warehouse[0]
                     .length != 0) {
@@ -583,7 +585,7 @@
                     imei_numbers = data.product_warehouse[4];
                     // console.log(imei_numbers, 'hi imei');
                     var newHead = $("<thead>");
-                    var newBody = $("<tbody>");
+                    var newBody = $("<tbody>"); 
                     var newRow = $("<tr>");
                     var productQty = 0;
                     newRow.append(
