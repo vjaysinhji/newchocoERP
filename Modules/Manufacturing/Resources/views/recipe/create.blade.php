@@ -804,7 +804,6 @@
                                     <div class="input-group" style="max-width: unset">
                                         <input type="number"
                                             class="form-control qty"
-                                            min="1"
                                             name="product_qty[]"
                                             value="1"
                                             step="any"
