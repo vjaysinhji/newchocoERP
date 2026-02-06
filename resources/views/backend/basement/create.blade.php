@@ -7,7 +7,7 @@
             <div class="col-md-12">
                 <div class="card">
                     <div class="card-header d-flex align-items-center">
-                        <h4>{{__('db.add_warehouse_store')}}</h4>
+                        <h4>{{ __('db.add_warehouse_item') }}</h4>
                     </div>
                     <div class="card-body">
                         <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
@@ -15,9 +15,24 @@
                             <div class="row">
                                 <div class="col-md-4">
                                     <div class="form-group">
-                                        <label>{{__('db.Warehouse Store Name')}} *</label>
+                                        <label>{{ __('db.warehouse_item_name') }} *</label>
                                         <input type="text" name="name" class="form-control" id="name" required>
                                         <span class="validation-msg" id="name-error"></span>
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>{{ __('db.Barcode Symbology') }} *</label>
+                                        <div class="input-group">
+                                            <select name="barcode_symbology" required class="form-control selectpicker">
+                                                <option value="C128">Code 128</option>
+                                                <option value="C39">Code 39</option>
+                                                <option value="UPCA">UPC-A</option>
+                                                <option value="UPCE" selected>UPC-E</option>
+                                                <option value="EAN8">EAN-8</option>
+                                                <option value="EAN13">EAN-13</option>
+                                            </select>
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -30,12 +45,6 @@
                                             </div>
                                         </div>
                                         <span class="validation-msg" id="code-error"></span>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{__('db.Barcode')}}</label>
-                                        <input type="text" name="barcode_symbology" class="form-control" placeholder="Barcode">
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -125,11 +134,12 @@
                 formData.append(el.name, el.value);
             });
             
-            // Get selectpicker values explicitly
             var categoryId = $('#basement-form select[name="category_id"]').val() || '';
             var unitId = $('#basement-form select[name="unit_id"]').val() || '';
+            var barcodeSymbology = $('#basement-form select[name="barcode_symbology"]').val() || 'UPCE';
             formData.set('category_id', categoryId);
             formData.set('unit_id', unitId);
+            formData.set('barcode_symbology', barcodeSymbology);
             
             var images = $('#basement-form input[name="image[]"]')[0].files;
             for (var i = 0; i < images.length; i++) {

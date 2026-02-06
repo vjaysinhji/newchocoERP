@@ -839,7 +839,7 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Months</label>
-                            <input type="number" step="1" class="form-control" name="installment_plan[months]" min="1" value="12">
+                            <input type="number" step="1" class="form-control" name="installment_plan[months]" value="12">
                         </div>
 
                         <input type="hidden" name="installment_plan[reference_type]" value="sale">
@@ -1775,7 +1775,7 @@ function addNewProduct(data){
                                     ${product.name} (${product.code}) - ${product.price}
                                 </label>
                             </div>
-                            <input type="number" name="quantity_${product.id}" id="quantity_${product.id}" class="form-control form-control-sm" style="width: 80px;" min="1" value="${qty}">
+                            <input type="number" name="quantity_${product.id}" id="quantity_${product.id}" class="form-control form-control-sm" style="width: 80px;" value="${qty}">
                         </div>`;
                 });
                 modalContent += '</form>';

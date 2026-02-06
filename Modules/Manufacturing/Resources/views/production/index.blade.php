@@ -197,7 +197,6 @@
 
     // Date Range Change
     $('.daterangepicker-field').on('change', function () {
-        alert()
         let dateRange = $(this).val().split(" To ");
         $('input[name="starting_date"]').val(dateRange[0]);
         $('input[name="ending_date"]').val(dateRange[1]);
@@ -249,7 +248,7 @@
             },
             "createdRow": function( row, data, dataIndex ) {
                 $(row).addClass('production-link');
-                $(row).attr('data-production', data['production']);
+                $(row).attr('data-production', JSON.stringify(data['production'] || []));
             },
             "columns": [
                 {"data": "key"},
@@ -378,12 +377,23 @@
         }
 
         function productionDetails(production){
-            var htmltext = '<strong>{{__("db.date")}}: </strong>'+production[0]+'<br><strong>{{__("db.reference")}}: </strong>'+production[1]+'<br><strong>{{__("db.status")}}: </strong>'+production[2]+'<br><strong>{{__("db.Warehouse")}}: </strong>'+production[4];
-            if(production[12])
-                htmltext += '<strong>{{__("db.Attach Document")}}: </strong><a href="documents/production/'+production[25]+'">Download</a><br>';
+            var productionData;
+            try {
+                productionData = typeof production === 'string' ? JSON.parse(production) : (production || []);
+            } catch (e) {
+                productionData = [];
+            }
+            if (!productionData || productionData[3] == null) return;
+            var htmltext = '<strong>{{__("db.date")}}: </strong>'+productionData[0]+'<br><strong>{{__("db.reference")}}: </strong>'+productionData[1]+'<br><strong>{{__("db.status")}}: </strong>'+productionData[2]+'<br><strong>{{__("db.Warehouse")}}: </strong>'+productionData[4];
+            if(productionData[13]) htmltext += '<br><strong>Batch/Lot:</strong> '+productionData[13];
+            if(productionData[14]) htmltext += '<br><strong>Expiry:</strong> '+productionData[14];
+            if(productionData[12]){
+                var docUrl = '{{ url("documents/production") }}/' + encodeURIComponent(productionData[12]);
+                htmltext += '<br><strong>{{__("db.Attach Document")}}: </strong><a href="'+docUrl+'" download class="btn btn-sm btn-info"><i class="dripicons-download"></i> {{__("db.Download")}}</a>';
+            }
 
             $(".product-production-list tbody").remove();
-        $.get('productions/product_production/' + production[3], function(response) {
+        $.get('{{ url("manufacturing/productions") }}/product_production/' + productionData[3], function(response) {
 
         var newBody = $("<tbody>");
 
@@ -459,7 +469,7 @@
     });
 
 
-        var htmlfooter = '<p><strong>{{__("db.Note")}}:</strong> '+production[9]+'</p><strong>{{__("db.Created By")}}:</strong><br>'+production[10]+'<br>'+production[11];
+        var htmlfooter = '<p><strong>{{__("db.Note")}}:</strong> '+productionData[9]+'</p><strong>{{__("db.Created By")}}:</strong><br>'+productionData[10]+'<br>'+productionData[11];
 
         $('#production-content').html(htmltext);
         $('#production-footer').html(htmlfooter);

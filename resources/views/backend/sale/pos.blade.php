@@ -3275,7 +3275,7 @@
                             <div class="col-md-4 mb-3">
                                 <label class="form-label">{{ __('db.Months') }}</label>
                                 <input type="number" step="1" class="form-control"
-                                    name="installment_plan[months]" min="1" value="12">
+                                    name="installment_plan[months]" value="12">
                             </div>
 
                             <input type="hidden" name="installment_plan[reference_type]" value="sale">
@@ -4346,7 +4346,7 @@
                                         ${product.name} (${product.code}) - ${product.price}
                                     </label>
                                 </div>
-                                <input type="number" name="quantity_${product.id}" id="quantity_${product.id}" class="form-control form-control-sm" style="width: 80px;" min="1" value="${qty}">
+                                <input type="number" name="quantity_${product.id}" id="quantity_${product.id}" class="form-control form-control-sm" style="width: 80px;" value="${qty}">
                             </div>`;
                         });
                         modalContent += '</form>';

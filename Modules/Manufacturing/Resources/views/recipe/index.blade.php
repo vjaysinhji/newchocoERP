@@ -190,13 +190,13 @@
     });
 
     $(document).on("click", "tr.product-link td:not(:first-child, :last-child)", function() {
-        productDetails( $(this).parent().data('product'), $(this).parent().data('imagedata') );
+        var row = $(this).parent();
+        productDetails(row.data('product'), row.data('imagedata'), row.data('ingredients-preview'));
     });
 
     $(document).on("click", ".view", function(){
-        var product = $(this).parent().parent().parent().parent().parent().data('product');
-        var imagedata = $(this).parent().parent().parent().parent().parent().data('imagedata');
-        productDetails(product, imagedata);
+        var row = $(this).closest('tr');
+        productDetails(row.data('product'), row.data('imagedata'), row.data('ingredients-preview'));
     });
 
     $("#print-btn").on("click", function() {
@@ -208,8 +208,8 @@
           setTimeout(function(){newWin.close();},10);
     });
 
-    function productDetails(product, imagedata) {
-        product[11] = product[11].replace(/@/g, '"');
+    function productDetails(product, imagedata, ingredientsPreview) {
+        if (product && product[11]) product[11] = product[11].replace(/@/g, '"');
         htmltext = slidertext = '';
 
         htmltext = '<p>{{__("db.Type")}}: Recipe'+
@@ -251,12 +251,6 @@
         $("#product-variant-section").addClass('d-none');
         $("#product-variant-warehouse-section").addClass('d-none');
             $("#recipe-header").text('{{__("db.Recipe")}}');
-            product_list = product[13].split(",");
-            variant_list = product[14].split(",");
-            qty_list = product[15].split(",");
-            price_list = product[16].split(",");
-            combo_unit = product[20].split(",");
-            wastage_percent = product[21].split(",");
             $(".item-list thead").remove();
             $(".item-list tbody").remove();
             var newHead = $("<thead>");
@@ -264,24 +258,47 @@
             var newRow = $("<tr>");
             newRow.append('<th>{{__("db.product")}}</th><th>{{__("db.Wastage Percent")}}</th><th>{{__("db.Quantity")}}</th><th>{{__("db.Price")}}</th>');
             newHead.append(newRow);
-            $(product_list).each(function(i) {
-                if(!variant_list[i])
-                    variant_list[i] = 0;
-                let url = '{{ route("products.getdata", [":product", ":variant"]) }}';
-                url = url.replace(':product', product_list[i]).replace(':variant', variant_list[i]);
-                $.get(url, function(data) {
-                    var newRow = $("<tr>");
-                    var cols = '';
-                    cols += '<td>' + data['name'] +' [' + data['code'] + ']</td>';
-                    cols += '<td>' + wastage_percent[i] +'</td>';
-                    cols += '<td>' + qty_list[i] + '('+combo_unit[i]+')</td>';
-                    cols += '<td>' + price_list[i] + '</td>';
-
-                    newRow.append(cols);
-                    newBody.append(newRow);
+            var usedPreview = false;
+            if (ingredientsPreview) {
+                try {
+                    var ingredients = typeof ingredientsPreview === 'string' ? JSON.parse(ingredientsPreview) : ingredientsPreview;
+                    if (ingredients && ingredients.length > 0) {
+                        $.each(ingredients, function(i, ing) {
+                            var newRow = $("<tr>");
+                            var cols = '<td>' + (ing.name || '') + ' [' + (ing.code || '') + ']</td>';
+                            cols += '<td>' + (ing.wastage || '') + '</td>';
+                            cols += '<td>' + (ing.qty || '') + ' (' + (ing.unit_name || 'Unit') + ')</td>';
+                            cols += '<td>' + (ing.price || '') + '</td>';
+                            newRow.append(cols);
+                            newBody.append(newRow);
+                        });
+                        usedPreview = true;
+                    }
+                } catch (e) {}
+            }
+            if (!usedPreview && product && product[13]) {
+                var product_list = (product[13] || '').toString().replace(/"/g, '').split(",");
+                var variant_list = (product[14] || '').toString().replace(/"/g, '').split(",");
+                var qty_list = (product[15] || '').toString().replace(/"/g, '').split(",");
+                var price_list = (product[16] || '').toString().replace(/"/g, '').split(",");
+                var combo_unit = (product[20] || '').toString().replace(/"/g, '').split(",");
+                var wastage_percent = (product[21] || '').toString().replace(/"/g, '').split(",");
+                $(product_list).each(function(i) {
+                    if (!product_list[i] || product_list[i].trim() === '') return;
+                    if (!variant_list[i]) variant_list[i] = 0;
+                    let url = '{{ route("products.getdata", [":product", ":variant"]) }}';
+                    url = url.replace(':product', product_list[i].trim()).replace(':variant', variant_list[i]);
+                    $.get(url, function(data) {
+                        var newRow = $("<tr>");
+                        var cols = '<td>' + (data['name'] || '') + ' [' + (data['code'] || '') + ']</td>';
+                        cols += '<td>' + (wastage_percent[i] || '') + '</td>';
+                        cols += '<td>' + (qty_list[i] || '') + ' (' + (combo_unit[i] || 'Unit') + ')</td>';
+                        cols += '<td>' + (price_list[i] || '') + '</td>';
+                        newRow.append(cols);
+                        newBody.append(newRow);
+                    });
                 });
-            });
-
+            }
             $("table.item-list").append(newHead);
             $("table.item-list").append(newBody);
             if(product[19]) {
@@ -410,6 +427,7 @@
                 $(row).addClass('product-link');
                 $(row).attr('data-product', data['product']);
                 $(row).attr('data-imagedata', data['imagedata']);
+                $(row).attr('data-ingredients-preview', data['ingredients_preview'] || '[]');
             },
             "columns": columns,
             'language': {
@@ -427,6 +445,17 @@
                 {
                     "orderable": false,
                     'targets': [0, 6]
+                },
+                {
+                    'render': function(data, type, row, meta){
+                        if (type === 'display' && (data === null || data === '' || data === undefined)) return '0.00';
+                        if (type === 'display') {
+                            var num = parseFloat(data);
+                            if (!isNaN(num)) return num.toFixed(2);
+                        }
+                        return data;
+                    },
+                    'targets': [4, 5]
                 },
                 {
                     'render': function(data, type, row, meta){

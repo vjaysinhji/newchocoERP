@@ -228,7 +228,7 @@
                                                             <button type="button" class="btn btn-default minus mr-1" style="padding:5px 8px"><i class="dripicons-minus"></i></button></span>
                                                             @endif
 
-                                                            <input type="text" class="form-control qty numkey input-number" name="qty[]" value="{{$product_sale->qty}}" style="font-size:13px;max-width:50px;padding: 0 0;text-align:center" step="any" min="1" max="{{($product_sale->qty+$product_data->qty)}}" required/><span class="input-group-btn">
+                                                            <input type="text" class="form-control qty numkey input-number" name="qty[]" value="{{$product_sale->qty}}" style="font-size:13px;max-width:50px;padding: 0 0;text-align:center" step="any" max="{{($product_sale->qty+$product_data->qty)}}" required/><span class="input-group-btn">
 
                                                             @if($product_data->is_imei != 1)
                                                             <button type="button" class="btn btn-default plus ml-1" style="padding:5px 8px"><i class="dripicons-plus"></i></button>
@@ -1510,7 +1510,7 @@ function addNewProduct(data){
                                     ${product.name} (${product.code}) - ${product.price}
                                 </label>
                             </div>
-                            <input type="number" name="quantity_${product.id}" id="quantity_${product.id}" class="form-control form-control-sm" style="width: 80px;" min="1" value="${qty}">
+                            <input type="number" name="quantity_${product.id}" id="quantity_${product.id}" class="form-control form-control-sm" style="width: 80px;" value="${qty}">
                         </div>`;
                 });
                 modalContent += '</form>';

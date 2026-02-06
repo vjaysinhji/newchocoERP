@@ -197,19 +197,43 @@
                                                         $price_list = explode(',', $lims_product_data->price_list);
                                                         ?>
                                                         @foreach ($product_list as $key => $id)
-                                                            <tr>
-                                                                <?php
-                                                                $product = App\Models\Product::find($id);
-                                                                $combo_unit = App\Models\Unit::query()->where('id', $product->unit_id)->orWhere('base_unit', $product->unit_id)->get()->unique('id');
-                                                                
-                                                                if ($lims_product_data->variant_list && $variant_list[$key]) {
-                                                                    $product_variant_data = App\Models\ProductVariant::select('item_code')->FindExactProduct($id, $variant_list[$key])->first();
-                                                                    $product->code = $product_variant_data->item_code;
+                                                            <?php
+                                                            $is_basement = (is_string($id) && strpos($id, 'b_') === 0);
+                                                            $product_id_raw = $is_basement ? substr($id, 2) : (is_string($id) && strpos($id, 'p_') === 0 ? substr($id, 2) : $id);
+                                                            if ($is_basement) {
+                                                                $item = App\Models\Basement::with('unit')->find($product_id_raw);
+                                                                $item_type = 'warehouse_store';
+                                                                $row_name = $item ? $item->name : 'N/A';
+                                                                $row_code = $item ? $item->code : '';
+                                                                $row_cost = $item ? ($item->cost ?? 0) : 0;
+                                                                $row_unit_id = $item && $item->unit_id ? $item->unit_id : null;
+                                                            } else {
+                                                                $item = App\Models\Product::find($product_id_raw);
+                                                                $item_type = 'single';
+                                                                if (!$item) {
+                                                                    continue;
+                                                                }
+                                                                $row_name = $item->name;
+                                                                $row_code = $item->code;
+                                                                $row_cost = $item->cost ?? 0;
+                                                                $row_unit_id = $item->unit_id;
+                                                                if ($lims_product_data->variant_list && !empty($variant_list[$key])) {
+                                                                    $pv = App\Models\ProductVariant::select('item_code')->FindExactProduct($product_id_raw, $variant_list[$key])->first();
+                                                                    if ($pv) {
+                                                                        $row_code = $pv->item_code;
+                                                                    }
                                                                 } else {
                                                                     $variant_list[$key] = '';
                                                                 }
-                                                                ?>
-                                                                <td>{{ $product->name }} [{{ $product->code }}]</td>
+                                                            }
+                                                            if ($is_basement && !$item) {
+                                                                continue;
+                                                            }
+                                                            $combo_unit = $row_unit_id ? App\Models\Unit::query()->where('id', $row_unit_id)->orWhere('base_unit', $row_unit_id)->get()->unique('id') : collect();
+                                                            $row_price = $price_list[$key] ?? 0;
+                                                            ?>
+                                                            <tr>
+                                                                <td>{{ $row_name }} [{{ $row_code }}] @if($is_basement)<span class="badge badge-info">Warehouse Store</span>@else<span class="badge badge-primary">Single Product</span>@endif</td>
                                                                 <td>
                                                                     <div class="input-group">
                                                                         <input type="number"
@@ -224,7 +248,7 @@
                                                                 <td>
                                                                     <div class="input-group" style="max-width: unset">
                                                                         <input type="number" class="form-control qty"
-                                                                            min="1" name="product_qty[]"
+                                                                            name="product_qty[]"
                                                                             value="{{ $qty_list[$key] ?? 1 }}"
                                                                             step="any" placeholder="Qty"
                                                                             aria-label="Quantity">
@@ -238,7 +262,7 @@
                                                                                     <option value="{{ $row->id }}"
                                                                                         data-operation_value="{{ $row->operation_value }}"
                                                                                         data-operator="{{ $row->operator }}"
-                                                                                        @if ($lims_product_data->unit_id == $row->id) 'selected' @endif>
+                                                                                        @if ($row_unit_id == $row->id) selected @endif>
                                                                                         {{ $row->unit_name }}
                                                                                     </option>
                                                                                 @endforeach
@@ -250,11 +274,11 @@
 
                                                                 <td><input type="number" class="form-control unit_cost"
                                                                         name="product_unit_cost[]"
-                                                                        value="{{ $product->cost }}" step="any" />
+                                                                        value="{{ $row_cost }}" step="any" />
                                                                 </td>
                                                                 <td><input type="number" class="form-control unit_price"
                                                                         name="unit_price[]"
-                                                                        value="{{ $price_list[$key] }}" step="any" />
+                                                                        value="{{ $row_price }}" step="any" />
                                                                 </td>
                                                                 <td><input type="number" class="form-control subtotal"
                                                                         name="subtotal[]" value="0.00"
@@ -264,13 +288,14 @@
                                                                 </td>
                                                                 <input type="hidden" class="product-id"
                                                                     name="product_id[]" value="{{ $id }}" />
+                                                                <input type="hidden" name="product_type[]" value="{{ $item_type }}" />
                                                                 <input type="hidden" class="variant-id"
                                                                     name="variant_id[]"
-                                                                    value="{{ $variant_list[$key] }}" />
+                                                                    value="{{ $variant_list[$key] ?? '' }}" />
                                                                 <input type="hidden" class="product_unit_cost"
-                                                                    name="" value="{{ $product->cost }}" />
+                                                                    name="" value="{{ $row_cost }}" />
                                                                 <input type="hidden" class="product_unit_price"
-                                                                    name="" value="{{ $price_list[$key] }}" />
+                                                                    name="" value="{{ $row_price }}" />
                                                             </tr>
                                                         @endforeach
                                                     @endif
@@ -284,22 +309,6 @@
                                                   <input type="number" name="production_cost" class="form-control" value="{{ $lims_product_data->production_cost ?? 0}}">
                                               </div>
                                         </div> --}}
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label>{{ __('db.Brand') }} </label>
-                                            <div class="input-group">
-                                                <input type="hidden" name="brand"
-                                                    value="{{ $lims_product_data->brand_id }}">
-                                                <select name="brand_id" class="selectpicker form-control"
-                                                    data-live-search="true" data-live-search-style="begins"
-                                                    title="Select Brand...">
-                                                    @foreach ($lims_brand_list as $brand)
-                                                        <option value="{{ $brand->id }}">{{ $brand->title }}</option>
-                                                    @endforeach
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
                                             <input type="hidden" name="category"
@@ -456,56 +465,6 @@
                                             </select>
                                         </div>
                                     </div>
-
-                                    <!-- Warranty and Guarantee [20-01-2025] -->
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label>{{ __('db.Warranty') }}</label>
-                                            <div class="d-flex justify-content-between">
-                                                <input type="number" name="warranty" min="1"
-                                                    class="form-control" style="width: 48%;"
-                                                    placeholder="{{ __('db.eg: 1') }}"
-                                                    value="{{ $lims_product_data->warranty }}">
-                                                <select name="warranty_type" class="form-control selectpicker"
-                                                    style="width: 48%;">
-                                                    <option value="days"
-                                                        {{ $lims_product_data->warranty_type == 'days' ? 'selected' : '' }}>
-                                                        {{ __('db.Days') }}</option>
-                                                    <option value="months"
-                                                        {{ $lims_product_data->warranty_type == 'months' ? 'selected' : '' }}>
-                                                        {{ __('db.Months') }}</option>
-                                                    <option value="years"
-                                                        {{ $lims_product_data->warranty_type == 'years' ? 'selected' : '' }}>
-                                                        {{ __('db.Years') }}</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- <div>{{ $lims_product_data->guarantee_type }}</div> -->
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label>{{ __('db.Guarantee') }}</label>
-                                            <div class="d-flex justify-content-between">
-                                                <input type="number" name="guarantee" min="1"
-                                                    class="form-control" style="width: 48%;"
-                                                    placeholder="{{ __('db.eg: 1') }}"
-                                                    value="{{ $lims_product_data->guarantee }}">
-                                                <select name="guarantee_type" class="form-control selectpicker"
-                                                    style="width: 48%;">
-                                                    <option value="days"
-                                                        {{ $lims_product_data->guarantee_type == 'days' ? 'selected' : '' }}>
-                                                        {{ __('db.Days') }}</option>
-                                                    <option value="months"
-                                                        {{ $lims_product_data->guarantee_type == 'months' ? 'selected' : '' }}>
-                                                        {{ __('db.Months') }}</option>
-                                                    <option value="years"
-                                                        {{ $lims_product_data->guarantee_type == 'years' ? 'selected' : '' }}>
-                                                        {{ __('db.Years') }}</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <!-- Warranty and Guarantee end -->
 
                                     @foreach ($custom_fields as $field)
                                         <?php $field_name = str_replace(' ', '_', strtolower($field->name)); ?>
@@ -724,17 +683,6 @@
                                             <h5><input name="is_batch" type="checkbox" id="is-batch"
                                                     value="1">&nbsp;
                                                 {{ __('db.This product has batch and expired date') }}</h5>
-                                        @endif
-                                    </div>
-                                    <div class="col-md-12 mt-3" id="imei-option">
-                                        @if ($lims_product_data->is_imei)
-                                            <h5><input name="is_imei" type="checkbox" id="is-imei" value="1"
-                                                    checked>&nbsp; {{ __('db.This product has IMEI or Serial numbers') }}
-                                            </h5>
-                                        @else
-                                            <h5><input name="is_imei" type="checkbox" id="is-imei"
-                                                    value="1">&nbsp;
-                                                {{ __('db.This product has IMEI or Serial numbers') }}</h5>
                                         @endif
                                     </div>
                                     @if ($lims_product_data->is_variant)
@@ -1076,7 +1024,7 @@
                 if (item.length >= 3) {
                     $.ajax({
                         type: "get",
-                        url: "{{ url('search') }}/" + item,
+                        url: "{{ url('products/search') }}/" + item,
                         success: function(data) {
                             $('.search_result').html('').css('height', '200px');
                             $.each(data, function(key, value) {
@@ -1123,7 +1071,7 @@
                 if (item.length >= 3) {
                     $.ajax({
                         type: "get",
-                        url: "{{ url('search') }}/" + item,
+                        url: "{{ url('products/search') }}/" + item,
                         success: function(data) {
                             $('.search_result_addon').html('').css('height', '200px');
                             $.each(data, function(key, value) {
@@ -1229,7 +1177,7 @@
         }
 
         $('#genbutton').on("click", function() {
-            $.get('../gencode', function(data) {
+            $.get('{{ url("products/gencode") }}', function(data) {
                 $("input[name='code']").val(data);
             });
         });
@@ -1769,9 +1717,6 @@
         var barcode_symbology = $("input[name='barcode_symbology_hidden']").val();
         $('select[name=barcode_symbology]').val(barcode_symbology);
 
-        var brand = $("input[name='brand']").val();
-        $('select[name=brand_id]').val(brand);
-
         var cat = $("input[name='category']").val();
         $('select[name=category_id]').val(cat);
 
@@ -1843,22 +1788,34 @@
             }
         });
 
-        <?php $productArray = []; ?>
-        var lims_product_code = [
-            @foreach ($lims_product_list_without_variant as $product)
-                <?php
+        <?php
+        $productArray = [];
+        $is_combo_edit = isset($lims_product_data) && $lims_product_data->type == 'combo';
+        $singleSuffix = $is_combo_edit ? ' [Single Product]' : '';
+        if ($is_combo_edit) {
+            foreach ($lims_product_list_without_variant as $product) {
+                $productArray[] = htmlspecialchars($product->code) . ' (' . preg_replace('/[\n\r]/', '<br>', htmlspecialchars($product->name)) . ')' . $singleSuffix;
+            }
+            foreach ($lims_product_list_with_variant as $product) {
+                $productArray[] = htmlspecialchars($product->item_code) . ' (' . preg_replace('/[\n\r]/', '<br>', htmlspecialchars($product->name)) . ')' . $singleSuffix;
+            }
+            if (isset($lims_basement_list)) {
+                foreach ($lims_basement_list as $b) {
+                    $productArray[] = htmlspecialchars($b['code']) . ' (' . htmlspecialchars($b['name']) . ') [Warehouse Store]';
+                }
+            }
+        } else {
+            foreach ($lims_product_list_without_variant as $product) {
                 $productArray[] = htmlspecialchars($product->code) . '(' . preg_replace('/[\n\r]/', '<br>', htmlspecialchars($product->name)) . ')';
-                ?>
-            @endforeach
-            @foreach ($lims_product_list_with_variant as $product)
-                <?php
+            }
+            foreach ($lims_product_list_with_variant as $product) {
                 $productArray[] = htmlspecialchars($product->item_code) . '|' . preg_replace('/[\n\r]/', '<br>', htmlspecialchars($product->name));
-                ?>
-            @endforeach
-            <?php
-            echo '"' . implode('","', $productArray) . '"';
-            ?>
-        ];
+            }
+        }
+        ?>
+        var lims_product_code = @json($productArray);
+        var lims_basement_data = @json($lims_basement_list ?? []);
+        var lims_combo_units = @json($lims_combo_units ?? []);
 
         var lims_productcodeSearch = $('#lims_productcodeSearch');
 
@@ -1870,80 +1827,94 @@
                 }));
             },
             select: function(event, ui) {
-                var data = ui.item.value;
+                var selectedValue = ui.item.value;
+                $("input[name='product_code_name']").val('');
+                if (selectedValue.indexOf('[Warehouse Store]') !== -1) {
+                    var code = selectedValue.split(' (')[0].trim();
+                    var basement = lims_basement_data.find(function(b) { return b.code === code; });
+                    if (!basement) return false;
+                    var flag = 1;
+                    $('input[name="product_type[]"]').each(function() {
+                        if ($(this).val() === 'warehouse_store') {
+                            var existingVal = $(this).closest('tr').find('.product-id').val();
+                            var existingId = (typeof existingVal === 'string' && existingVal.indexOf('b_') === 0) ? existingVal.replace('b_', '') : existingVal;
+                            if (existingId == basement.id) {
+                                alert('Duplicate input is not allowed!');
+                                flag = 0;
+                            }
+                        }
+                    });
+                    if (flag) {
+                        var unitOpts = [];
+                        var uid = basement.unit_id ? String(basement.unit_id) : '';
+                        for (var i = 0; i < (lims_combo_units || []).length; i++) {
+                            var u = lims_combo_units[i];
+                            if (String(u.id) === uid || String(u.base_unit) === uid) {
+                                var sel = (String(u.id) === uid) ? ' selected' : '';
+                                unitOpts.push('<option value="' + u.id + '" data-operation_value="' + (u.operation_value || 1) + '" data-operator="' + (u.operator || '*') + '"' + sel + '>' + (u.unit_name || '') + '</option>');
+                            }
+                        }
+                        var unitSelect = '<select name="combo_unit_id[]" style="width: 112px;" class="btn btn-outline-secondary form-control combo_unit_id" onchange="calculate_price()">' + (unitOpts.length ? unitOpts.join('') : '<option value="' + (basement.unit_id || '') + '">' + (basement.unit_name || '') + '</option>') + '</select>';
+                        var newRow = $("<tr>");
+                        var cols = '<td>' + basement.name + ' [' + basement.code + '] <span class="badge badge-info">Warehouse Store</span></td>';
+                        cols += '<td><div class="input-group"><input type="number" name="wastage_percent[]" class="form-control wastage_percent" value="0"/><div class="input-group-append"><span class="input-group-text">%</span></div></div></td>';
+                        cols += '<td><div class="input-group" style="max-width: unset"><input type="number" class="form-control qty" name="product_qty[]" value="1" step="any" placeholder="Qty"><div class="input-group-append">' + unitSelect + '</div></div></td>';
+                        cols += '<td><input type="number" class="form-control unit_cost" name="product_unit_cost[]" value="' + basement.cost + '"/></td>';
+                        cols += '<td><input type="number" class="form-control unit_price" name="unit_price[]" value="' + basement.price + '" step="any"/></td>';
+                        cols += '<td><input type="number" class="form-control subtotal" name="subtotal[]" value="' + basement.price + '" step="any"/></td>';
+                        cols += '<td><button type="button" class="ibtnDel btn btn-sm btn-danger">X</button></td>';
+                        cols += '<input type="hidden" class="product-id" name="product_id[]" value="' + basement.id + '"/>';
+                        cols += '<input type="hidden" name="product_type[]" value="warehouse_store"/>';
+                        cols += '<input type="hidden" name="variant_id[]" value=""/>';
+                        cols += '<input type="hidden" class="product_unit_cost" value="' + basement.cost + '"/>';
+                        cols += '<input type="hidden" class="product_unit_price" value="' + basement.price + '"/>';
+                        newRow.append(cols);
+                        $("table.order-list tbody").append(newRow);
+                        newRow.find('select.combo_unit_id').selectpicker();
+                        calculate_price();
+                        lims_product_code = lims_product_code.filter(function(item) { return item !== selectedValue; });
+                    }
+                    return false;
+                }
+                var dataToSend = selectedValue.replace(' [Single Product]', '');
                 $.ajax({
                     type: 'GET',
-                    url: '../lims_product_search',
-                    data: {
-                        data: data
-                    },
+                    url: "{{ url('products/lims_product_search') }}",
+                    data: { data: dataToSend },
                     success: function(responseData) {
-                        data = responseData[0];
+                        var data = responseData[0];
                         var flag = 1;
                         $(".product-id").each(function() {
-                            if ($(this).val() == data[8]) {
-                                alert('Duplicate input is not allowed!')
+                            var existingVal = $(this).val();
+                            var existingId = (typeof existingVal === 'string' && existingVal.indexOf('p_') === 0) ? existingVal.replace('p_', '') : existingVal;
+                            if (existingId == data[8]) {
+                                alert('Duplicate input is not allowed!');
                                 flag = 0;
                             }
                         });
                         $("input[name='product_code_name']").val('');
                         if (flag) {
                             var newRow = $("<tr>");
-                            var cols = '';
-                            cols += '<td>' + data[0] + ' [' + data[1] + ']</td>';
-                            cols += `<td>
-                                <div class="input-group">
-                                    <input type="number" name="wastage_percent[]" class="form-control wastage_percent" value="0"/>
-                                    <div class="input-group-append">
-                                        <span class="input-group-text">%</span>
-                                    </div>
-                                </div>
-                            </td>`;
-                            cols += `<td>
-                                    <div class="input-group" style="max-width: unset">
-                                        <input type="number"
-                                            class="form-control qty"
-                                            min="1"
-                                            name="product_qty[]"
-                                            value="1"
-                                            step="any"
-                                            placeholder="Qty"
-                                            aria-label="Quantity">
-                                        <div class="input-group-append">
-                                            ` + data[13] + `
-                                        </div>
-                                    </div>
-                                </td>`;
-
-                            cols +=
-                                '<td><input type="number" class="form-control unit_cost" name="product_unit_cost[]" value="' +
-                                data[10] + '"/></td>';
-                            cols +=
-                                '<td><input type="number" class="form-control unit_price" name="unit_price[]" value="' +
-                                data[2] + '" step="any"/></td>';
-                            cols +=
-                                '<td><input type="number" class="form-control subtotal" name="subtotal[]" value="' +
-                                data[2] + '" step="any"/></td>';
-                            cols +=
-                                '<td><button type="button" class="ibtnDel btn btn-sm btn-danger">X</button></td>';
-                            cols +=
-                                '<input type="hidden" class="product-id" name="product_id[]" value="' +
-                                data[8] + '"/>';
-                            cols += '<input type="hidden" class="" name="variant_id[]" value="' +
-                                data[9] + '"/>';
-                            cols +=
-                                '<input type="hidden" class="product_unit_cost" name="" value="' +
-                                data[10] + '"/>';
-                            cols +=
-                                '<input type="hidden" class="product_unit_price" name="" value="' +
-                                data[2] + '"/>';
-
+                            var cols = '<td>' + data[0] + ' [' + data[1] + '] <span class="badge badge-primary">Single Product</span></td>';
+                            cols += '<td><div class="input-group"><input type="number" name="wastage_percent[]" class="form-control wastage_percent" value="0"/><div class="input-group-append"><span class="input-group-text">%</span></div></div></td>';
+                            cols += '<td><div class="input-group" style="max-width: unset"><input type="number" class="form-control qty" name="product_qty[]" value="1" step="any" placeholder="Qty"><div class="input-group-append">' + (data[13] || '') + '</div></div></td>';
+                            cols += '<td><input type="number" class="form-control unit_cost" name="product_unit_cost[]" value="' + data[10] + '"/></td>';
+                            cols += '<td><input type="number" class="form-control unit_price" name="unit_price[]" value="' + data[2] + '" step="any"/></td>';
+                            cols += '<td><input type="number" class="form-control subtotal" name="subtotal[]" value="' + data[2] + '" step="any"/></td>';
+                            cols += '<td><button type="button" class="ibtnDel btn btn-sm btn-danger">X</button></td>';
+                            cols += '<input type="hidden" class="product-id" name="product_id[]" value="' + data[8] + '"/>';
+                            cols += '<input type="hidden" name="product_type[]" value="single"/>';
+                            cols += '<input type="hidden" name="variant_id[]" value="' + (data[9] || '') + '"/>';
+                            cols += '<input type="hidden" class="product_unit_cost" value="' + data[10] + '"/>';
+                            cols += '<input type="hidden" class="product_unit_price" value="' + data[2] + '"/>';
                             newRow.append(cols);
                             $("table.order-list tbody").append(newRow);
                             calculate_price();
+                            lims_product_code = lims_product_code.filter(function(item) { return item !== selectedValue; });
                         }
                     }
                 });
+                return false;
             }
         });
 
@@ -2018,7 +1989,7 @@
 
         function populate_unit(unitID) {
             $.ajax({
-                url: '../saleunit/' + unitID,
+                url: '{{ url("products/saleunit") }}/' + unitID,
                 type: "GET",
                 dataType: "json",
 
@@ -2043,7 +2014,7 @@
 
         function populate_unit_second(unitID) {
             $.ajax({
-                url: '../saleunit/' + unitID,
+                url: '{{ url("products/saleunit") }}/' + unitID,
                 type: "GET",
                 dataType: "json",
                 success: function(data) {
@@ -2280,7 +2251,7 @@
             paramName: 'image',
             clickable: true,
             method: 'POST',
-            url: '../update',
+            url: "{{ url('products/update') }}",
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
@@ -2313,7 +2284,7 @@
                                 formData.append('file', file[0]);
                             $.ajax({
                                 type: 'POST',
-                                url: '../update',
+                                url: "{{ url('products/update') }}",
                                 data: formData,
                                 contentType: false,
                                 processData: false,

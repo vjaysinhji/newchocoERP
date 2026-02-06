@@ -18,12 +18,12 @@
                             <li id="unit-menu"><a href="{{ route('unit.index') }}">{{ __('db.Unit') }}</a></li>
                         @endcan
                         @can('products-index')
-                            <li id="product-list-menu"><a href="{{ route('products.index') }}">{{ __('db.product_list') }}</a>
-                            </li>
+                            <li id="product-single-list-menu"><a href="{{ route('products.single.index') }}">{{ __('db.Single Product List') }}</a></li>
+                            <li id="product-create-single-menu"><a href="{{ route('products.single.create') }}">{{ __('db.Add Single Product') }}</a></li>
+                            <li id="product-combo-list-menu"><a href="{{ route('products.combo.index') }}">{{ __('db.Combo Product List') }}</a></li>
+                            <li id="product-create-combo-menu"><a href="{{ route('products.combo.create') }}">{{ __('db.Add Combo Product') }}</a></li>
                         @endcan
                         @can('products-add')
-                            <li id="product-create-menu"><a
-                                    href="{{ route('products.create') }}">{{ __('db.add_product') }}</a></li>
                         @endcan
                         @can('print_barcode')
                             <li id="printBarcode-menu"><a

@@ -23,10 +23,25 @@
                                 <div class="row">
                                     <div class="col-md-4">
                                         <div class="form-group">
-                                            <label>{{ __('db.Warehouse Store Name') }} * </label>
+                                            <label>{{ __('db.warehouse_item_name') }} * </label>
                                             <input type="text" name="name" value="{{ $lims_basement_data->name }}"
                                                 required class="form-control">
                                             <span class="validation-msg" id="name-error"></span>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>{{ __('db.Barcode Symbology') }} * </label>
+                                            <div class="input-group">
+                                                <select name="barcode_symbology" required class="form-control selectpicker">
+                                                    <option value="C128" {{ ($lims_basement_data->barcode_symbology ?? '') == 'C128' ? 'selected' : '' }}>Code 128</option>
+                                                    <option value="C39" {{ ($lims_basement_data->barcode_symbology ?? '') == 'C39' ? 'selected' : '' }}>Code 39</option>
+                                                    <option value="UPCA" {{ ($lims_basement_data->barcode_symbology ?? '') == 'UPCA' ? 'selected' : '' }}>UPC-A</option>
+                                                    <option value="UPCE" {{ ($lims_basement_data->barcode_symbology ?? '') == 'UPCE' ? 'selected' : '' }}>UPC-E</option>
+                                                    <option value="EAN8" {{ ($lims_basement_data->barcode_symbology ?? '') == 'EAN8' ? 'selected' : '' }}>EAN-8</option>
+                                                    <option value="EAN13" {{ ($lims_basement_data->barcode_symbology ?? '') == 'EAN13' ? 'selected' : '' }}>EAN-13</option>
+                                                </select>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="col-md-4">
@@ -42,12 +57,6 @@
                                                 </div>
                                             </div>
                                             <span class="validation-msg" id="code-error"></span>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-4">
-                                        <div class="form-group">
-                                            <label>{{ __('db.Barcode') }}</label>
-                                            <input type="text" name="barcode_symbology" value="{{ $lims_basement_data->barcode_symbology }}" class="form-control" placeholder="Barcode">
                                         </div>
                                     </div>
                                     <div class="col-md-4">
@@ -144,11 +153,12 @@
                 formData.append(el.name, el.value);
             });
             
-            // Get selectpicker values explicitly
             var categoryId = $('#basement-form select[name="category_id"]').val() || '';
             var unitId = $('#basement-form select[name="unit_id"]').val() || '';
+            var barcodeSymbology = $('#basement-form select[name="barcode_symbology"]').val() || 'UPCE';
             formData.set('category_id', categoryId);
             formData.set('unit_id', unitId);
+            formData.set('barcode_symbology', barcodeSymbology);
             
             var images = $('#basement-form input[name="image[]"]')[0].files;
             for (var i = 0; i < images.length; i++) {

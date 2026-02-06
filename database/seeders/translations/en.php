@@ -10013,6 +10013,18 @@ return array(
         'key' => 'add_warehouse_store',
         'value' => 'Add Warehouse Store',
     ),
+    16925 =>
+    array(
+        'locale' => 'en',
+        'key' => 'add_warehouse_item',
+        'value' => 'Add Warehouse Item',
+    ),
+    16926 =>
+    array(
+        'locale' => 'en',
+        'key' => 'warehouse_item_name',
+        'value' => 'Item Name',
+    ),
     1693 =>
     array(
         'locale' => 'en',
@@ -10210,5 +10222,29 @@ return array(
         'locale' => 'en',
         'key' => 'Failed to update warehouse store. Please try again',
         'value' => 'Failed to update warehouse store. Please try again',
+    ),
+    1714 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Single Product List',
+        'value' => 'Single Product List',
+    ),
+    1715 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Add Single Product',
+        'value' => 'Add Single Product',
+    ),
+    1716 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Combo Product List',
+        'value' => 'Combo Product List',
+    ),
+    1717 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Add Combo Product',
+        'value' => 'Add Combo Product',
     ),
 );

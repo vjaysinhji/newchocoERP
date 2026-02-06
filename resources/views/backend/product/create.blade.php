@@ -28,17 +28,25 @@
                         <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
                         <form id="product-form">
                             <div class="row">
-                                <div class="col-md-4">
+                                <div class="col-md-4" id="product-type-wrapper">
                                     <div class="form-group">
                                         <label>{{__('db.Product Type')}} *</strong> </label>
+                                        @if(isset($product_form_type) && $product_form_type === 'standard')
+                                            <input type="hidden" name="type" id="type" value="standard">
+                                            <div class="form-control" style="background:#e9ecef;">Single Product</div>
+                                        @elseif(isset($product_form_type) && $product_form_type === 'combo')
+                                            <input type="hidden" name="type" id="type" value="combo">
+                                            <div class="form-control" style="background:#e9ecef;">Combo Product</div>
+                                        @else
                                         <div class="input-group">
                                             <select name="type" required class="form-control selectpicker" id="type">
-                                                <option value="standard">Standard</option>
-                                                <option value="combo">Combo</option>
+                                                <option value="standard">Single Product</option>
+                                                <option value="combo">Combo Product</option>
                                                 <option value="digital">Digital</option>
                                                 <option value="service">Service</option>
                                             </select>
                                         </div>
+                                        @endif
                                     </div>
                                 </div>
                                 <div class="col-md-4">
@@ -126,19 +134,6 @@
                                       </div>
                                     </div>
                                 </div> --}}
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{__('db.Brand')}}</strong> </label>
-                                        <div class="input-group pos">
-                                          <select name="brand_id" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Brand...">
-                                            @foreach($lims_brand_list as $brand)
-                                                <option value="{{$brand->id}}">{{$brand->title}}</option>
-                                            @endforeach
-                                          </select>
-                                          <button type="button" class="btn btn-default btn-sm" data-toggle="modal" data-target="#addBrand"><i class="dripicons-plus"></i></button>
-                                      </div>
-                                    </div>
-                                </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>{{__('db.category')}} *</strong> </label>
@@ -275,35 +270,6 @@
                                         </select>
                                     </div>
                                 </div>
-
-                                <!-- Warranty and Guarantee [20-01-2025] -->
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ __('db.Warranty') }}</label>
-                                        <div class="d-flex justify-content-between">
-                                            <input type="number" name="warranty" min="1" class="form-control" style="width: 48%;" placeholder="{{ __('db.eg: 1') }}">
-                                            <select name="warranty_type" class="form-control selectpicker" style="width: 48%;">
-                                                <option value="days">{{ __('db.Days') }}</option>
-                                                <option value="months" selected>{{ __('db.Months') }}</option>
-                                                <option value="years">{{ __('db.Years') }}</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="form-group">
-                                        <label>{{ __('db.Guarantee') }}</label>
-                                        <div class="d-flex justify-content-between">
-                                            <input type="number" name="guarantee" min="1" class="form-control" style="width: 48%;" placeholder="{{ __('db.eg: 1') }}">
-                                            <select name="guarantee_type" class="form-control selectpicker" style="width: 48%;">
-                                                <option value="days">{{ __('db.Days') }}</option>
-                                                <option value="months" selected>{{ __('db.Months') }}</option>
-                                                <option value="years">{{ __('db.Years') }}</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-                                <!-- Warranty and Guarantee end -->
 
                                 @foreach($custom_fields as $field)
                                 @if(!$field->is_admin || \Auth::user()->role_id == 1)
@@ -478,9 +444,6 @@
                                 <div class="col-md-12 mt-3" id="batch-option">
                                     <h5><input name="is_batch" type="checkbox" id="is-batch" value="1">&nbsp; {{__('db.This product has batch and expired date')}}</h5>
                                 </div>
-                                <div class="col-md-12 mt-3" id="imei-option">
-                                    <h5><input name="is_imei" type="checkbox" id="is-imei" value="1">&nbsp; {{__('db.This product has IMEI or Serial numbers')}}</h5>
-                                </div>
                                 <div class="col-md-12 mt-3">
                                     <h5><input name="promotion" type="checkbox" id="promotion" value="1">&nbsp; {{__('db.Add Promotional Price')}}</h5>
                                 </div>
@@ -619,52 +582,6 @@
             </div>
         </div>
     </div>
-    <!-- Brand Create Modal Start -->
-    <div id="addBrand" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
-        <div role="document" class="modal-dialog">
-          <div class="modal-content">
-            <form id="brand-form">
-            <div class="modal-header">
-              <h5 id="exampleModalLabel" class="modal-title">{{__('db.Add Brand')}}</h5>
-              <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span aria-hidden="true"><i class="dripicons-cross"></i></span></button>
-            </div>
-            <div class="modal-body">
-              <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
-                <div class="form-group">
-                    <label>{{__('db.Title')}} *</label>
-                    <input type="text" name="title" class="form-control" placeholder="{{ __('db.Type brand title') }}" required>
-                </div>
-                <div class="form-group">
-                    <label>{{__('db.Image')}}</label>
-                    {{-- {{Form::file('image', array('class' => 'form-control'))}} --}}
-                    <input type="file" name="image" class="form-control">
-                </div>
-                @if(in_array('ecommerce',explode(',',$general_setting->modules)) || in_array('restaurant',explode(',',$general_setting->modules)))
-                <div class="row">
-                    <div class="col-md-12 mt-3">
-                        <h6><strong>{{ __('For SEO') }}</strong></h6>
-                        <hr>
-                    </div>
-                    <div class="col-md-12 form-group">
-                        <label>{{ __('Meta Title') }}</label>
-                        {{Form::text('page_title',null,array('class' => 'form-control', 'placeholder' => __('db.Meta Title')))}}
-                    </div>
-                    <div class="col-md-12 form-group">
-                        <label>{{ __('Meta Description') }}</label>
-                        {{Form::text('short_description',null,array('class' => 'form-control', 'placeholder' => __('db.Meta Description')))}}
-                    </div>
-                </div>
-                @endif
-                <div class="form-group">
-                    <input type="hidden" name="ajax" value="1">
-                    <button type="button" class="btn btn-primary brand-submit-btn">{{__('db.submit')}}</button>
-                </div>
-            </div>
-            </form>
-          </div>
-        </div>
-    </div>
-    <!-- Brand Create Modal End -->
     <!-- Tax Create Modal Start -->
     <div id="addTax" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
         <div role="document" class="modal-dialog">
@@ -700,8 +617,15 @@
 </section>
 @endsection
 @push('scripts')
+@php
+    $product_create_redirect = route('products.index');
+    if (isset($product_form_type) && $product_form_type === 'combo') {
+        $product_create_redirect = route('products.combo.index');
+    } elseif (isset($product_form_type) && $product_form_type === 'standard') {
+        $product_create_redirect = route('products.single.index');
+    }
+@endphp
 <script type="text/javascript">
-
     $.ajaxSetup({
         headers: {
             'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -724,7 +648,7 @@
         if(item.length >= 3){
             $.ajax({
                 type: "get",
-                url: "{{url('search')}}/" + item,
+                url: "{{ url('products/search') }}/" + item,
                 success: function(data) {
                     $('.search_result').html('').css('height','200px');
                     $.each(data,function(key, value){
@@ -765,7 +689,7 @@
         if(item.length >= 3){
             $.ajax({
                 type: "get",
-                url: "{{url('search')}}/" + item,
+                url: "{{ url('products/search') }}/" + item,
                 success: function(data) {
                     $('.search_result_addon').html('').css('height','200px');
                     $.each(data,function(key, value){
@@ -825,6 +749,17 @@
     $("#promotion_price").hide();
     $("#start_date").hide();
     $("#last_date").hide();
+    var product_form_type = <?php echo json_encode($product_form_type ?? null); ?>;
+    if (product_form_type === 'combo') {
+        $("input[name='cost']").prop('required', false);
+        $("select[name='unit_id']").prop('required', false);
+        $("#profit_margin").show(300);
+        $("#stock-section").hide(300);
+        $("#cost").show(300);
+        $("#unit").show(300);
+        $("#combo").show(300);
+        $("#variant-section, #variant-option, #diffPrice-option, #diffPrice-section").hide(300);
+    }
     var variantPlaceholder = <?php echo json_encode(__('db.Enter variant value seperated by comma')); ?>;
     var variantIds = [];
     var combinations = [];
@@ -837,7 +772,7 @@
     $('[data-toggle="tooltip"]').tooltip();
 
     $('#genbutton').on("click", function(){
-      $.get('gencode', function(data){
+      $.get('{{ url("products/gencode") }}', function(data){
         $("input[name='code']").val(data);
       });
     });
@@ -1366,21 +1301,24 @@
             $('select[name="purchase_unit_id"]').empty();
         }
     });
-    <?php $productArray = []; ?>
-    var lims_product_code = [
-        @foreach($lims_product_list_without_variant as $product)
-            <?php
-                $productArray[] = htmlspecialchars($product->code) . ' (' . preg_replace('/[\n\r]/', "<br>", htmlspecialchars($product->name)) . ')';
-            ?>
-        @endforeach
-        @foreach($lims_product_list_with_variant as $product)
-            <?php
-                $productArray[] = htmlspecialchars($product->item_code) . ' (' . preg_replace('/[\n\r]/', "<br>", htmlspecialchars($product->name)) . ')';
-            ?>
-        @endforeach
-            <?php
-                echo  '"'.implode('","', $productArray).'"';
-            ?> ];
+    <?php
+        $productArray = [];
+        $singleSuffix = (isset($product_form_type) && $product_form_type === 'combo') ? ' [Single Product]' : '';
+        foreach ($lims_product_list_without_variant as $product) {
+            $productArray[] = htmlspecialchars($product->code) . ' (' . preg_replace('/[\n\r]/', "<br>", htmlspecialchars($product->name)) . ')' . $singleSuffix;
+        }
+        foreach ($lims_product_list_with_variant as $product) {
+            $productArray[] = htmlspecialchars($product->item_code) . ' (' . preg_replace('/[\n\r]/', "<br>", htmlspecialchars($product->name)) . ')' . $singleSuffix;
+        }
+        if (isset($product_form_type) && $product_form_type === 'combo' && isset($lims_basement_list)) {
+            foreach ($lims_basement_list as $b) {
+                $productArray[] = htmlspecialchars($b['code']) . ' (' . htmlspecialchars($b['name']) . ') [Warehouse Store]';
+            }
+        }
+        ?>
+    var lims_product_code = <?php echo json_encode($productArray); ?>;
+    var lims_basement_data = <?php echo json_encode($lims_basement_list ?? []); ?>;
+    var lims_combo_units = <?php echo json_encode($lims_combo_units ?? []); ?>;
 
     var lims_productcodeSearch = $('#lims_productcodeSearch');
 
@@ -1392,68 +1330,90 @@
             }));
         },
         select: function(event, ui) {
-            var data = ui.item.value;
+            var selectedValue = ui.item.value;
+            $("input[name='product_code_name']").val('');
+            if (selectedValue.indexOf('[Warehouse Store]') !== -1) {
+                var code = selectedValue.split(' (')[0].trim();
+                var basement = lims_basement_data.find(function(b) { return b.code === code; });
+                if (!basement) return false;
+                var flag = 1;
+                $(".product_type_combo").each(function() {
+                    if ($(this).val() === 'warehouse_store' && $(this).closest('tr').find('.product-id').val() == basement.id) {
+                        alert('Duplicate input is not allowed!');
+                        flag = 0;
+                    }
+                });
+                if (flag) {
+                    var unitOpts = [];
+                    var uid = basement.unit_id ? String(basement.unit_id) : '';
+                    for (var i = 0; i < lims_combo_units.length; i++) {
+                        var u = lims_combo_units[i];
+                        if (String(u.id) === uid || String(u.base_unit) === uid) {
+                            var sel = (String(u.id) === uid) ? ' selected' : '';
+                            unitOpts.push('<option value="' + u.id + '" data-operation_value="' + (u.operation_value || 1) + '" data-operator="' + (u.operator || '*') + '"' + sel + '>' + (u.unit_name || '') + '</option>');
+                        }
+                    }
+                    var unitSelect = '<select name="combo_unit_id[]" style="width: 112px;" class="btn btn-outline-secondary form-control combo_unit_id" onchange="calculate_price()">' + (unitOpts.length ? unitOpts.join('') : '<option value="' + (basement.unit_id || '') + '">' + (basement.unit_name || '') + '</option>') + '</select>';
+                    var newRow = $("<tr>");
+                    var cols = '<td>' + basement.name + ' [' + basement.code + '] <span class="badge badge-info">Warehouse Store</span></td>';
+                    cols += '<td><div class="input-group"><input type="number" name="wastage_percent[]" class="form-control wastage_percent" value="0"/><div class="input-group-append"><span class="input-group-text">%</span></div></div></td>';
+                    cols += '<td><div class="input-group" style="max-width: unset"><input type="number" class="form-control qty" name="product_qty[]" value="1" step="any" placeholder="Qty"><div class="input-group-append">' + unitSelect + '</div></div></td>';
+                    cols += '<td><input type="number" class="form-control unit_cost" name="product_unit_cost[]" value="' + basement.cost + '"/></td>';
+                    cols += '<td><input type="number" class="form-control unit_price" name="unit_price[]" value="' + basement.price + '" step="any"/></td>';
+                    cols += '<td><input type="number" class="form-control subtotal" name="subtotal[]" value="' + basement.price + '" step="any"/></td>';
+                    cols += '<td><button type="button" class="ibtnDel btn btn-sm btn-danger">X</button></td>';
+                    cols += '<input type="hidden" class="product-id" name="product_id[]" value="' + basement.id + '"/>';
+                    cols += '<input type="hidden" name="variant_id[]" value=""/>';
+                    cols += '<input type="hidden" class="product_type_combo" name="product_type[]" value="warehouse_store"/>';
+                    cols += '<input type="hidden" class="product_unit_price" value="' + basement.price + '"/>';
+                    cols += '<input type="hidden" class="product_unit_cost" value="' + basement.cost + '"/>';
+                    cols += '<input type="hidden" class="varient_id" value="b_' + basement.id + '"/>';
+                    newRow.append(cols);
+                    $(".combo_product_list_table").append(newRow);
+                    newRow.find('select.combo_unit_id').selectpicker();
+                    calculate_price();
+                    lims_product_code = lims_product_code.filter(function(item) { return item !== selectedValue; });
+                }
+                return false;
+            }
+            var dataToSend = selectedValue.replace(' [Single Product]', '');
             $.ajax({
                 type: 'GET',
-                url: 'lims_product_search',
-                data: {
-                    data: data
-                },
+                url: "{{ url('products/lims_product_search') }}",
+                data: { data: dataToSend },
                 success: function(responseData) {
-                    data = responseData[0];
-                    console.log(data)
-                    //console.log(data);
+                    var data = responseData[0];
                     var flag = 1;
                     $(".varient_id").each(function() {
                         if ($(this).val() == data[1]) {
-                            alert('Duplicate input is not allowed!')
+                            alert('Duplicate input is not allowed!');
                             flag = 0;
                         }
                     });
-                    $("input[name='product_code_name']").val('');
                     if(flag){
                         var newRow = $("<tr>");
                         var cols = '';
-                        cols += '<td>' + data[0] +' [' + data[1] + ']</td>';
-                        cols += `<td>
-                                    <div class="input-group">
-                                        <input type="number" name="wastage_percent[]" class="form-control wastage_percent" value="0"/>
-                                        <div class="input-group-append">
-                                            <span class="input-group-text">%</span>
-                                        </div>
-                                    </div>
-                                </td>`;
-                        cols += `<td>
-                                    <div class="input-group" style="max-width: unset">
-                                        <input type="number"
-                                            class="form-control qty"
-                                            min="1"
-                                            name="product_qty[]"
-                                            value="1"
-                                            step="any"
-                                            placeholder="Qty"
-                                            aria-label="Quantity">
-                                        <div class="input-group-append">
-                                            `+data[13]+`
-                                        </div>
-                                    </div>
-                                </td>`;
+                        cols += '<td>' + data[0] + ' [' + data[1] + '] <span class="badge badge-primary">Single Product</span></td>';
+                        cols += '<td><div class="input-group"><input type="number" name="wastage_percent[]" class="form-control wastage_percent" value="0"/><div class="input-group-append"><span class="input-group-text">%</span></div></div></td>';
+                        cols += '<td><div class="input-group" style="max-width: unset"><input type="number" class="form-control qty" name="product_qty[]" value="1" step="any" placeholder="Qty"><div class="input-group-append">' + (data[13] || '') + '</div></div></td>';
                         cols += '<td><input type="number" class="form-control unit_cost" name="product_unit_cost[]" value="' + data[10] + '"/></td>';
                         cols += '<td><input type="number" class="form-control unit_price" name="unit_price[]" value="' + data[2] + '" step="any"/></td>';
                         cols += '<td><input type="number" class="form-control subtotal" name="subtotal[]" value="' + data[2] + '" step="any"/></td>';
                         cols += '<td><button type="button" class="ibtnDel btn btn-sm btn-danger">X</button></td>';
                         cols += '<input type="hidden" class="product-id" name="product_id[]" value="' + data[8] + '"/>';
-                        cols += '<input type="hidden" class="" name="variant_id[]" value="' + data[9] + '"/>';
-                        cols += '<input type="hidden" class="product_unit_price" name="" value="' + data[2] + '"/>';
-                        cols += '<input type="hidden" class="product_unit_cost" name="" value="' + data[10] + '"/>';
+                        cols += '<input type="hidden" name="variant_id[]" value="' + (data[9] || '') + '"/>';
+                        cols += '<input type="hidden" class="product_type_combo" name="product_type[]" value="single"/>';
+                        cols += '<input type="hidden" class="product_unit_price" value="' + data[2] + '"/>';
+                        cols += '<input type="hidden" class="product_unit_cost" value="' + data[10] + '"/>';
                         cols += '<input type="hidden" class="varient_id" name="" value="' + data[1] + '"/>';
-
                         newRow.append(cols);
                         $(".combo_product_list_table").append(newRow);
                         calculate_price();
+                        lims_product_code = lims_product_code.filter(function(item) { return item !== selectedValue; });
                     }
                 }
             });
+            return false;
         }
     });
 
@@ -1476,67 +1436,43 @@
 
     function calculate_price() {
         var price = 0;
-        var cost = 0
         $(".qty").each(function() {
-            rowindex = $(this).closest('tr').index();
-            quantity =  $(this).val();
-            unit_price = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .product_unit_price').val();
-            product_unit_price = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .product_unit_price').val();
-            product_unit_cost = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')  .product_unit_cost').val();
+            var $row = $(this).closest('tr');
+            var quantity = parseFloat($(this).val()) || 0;
+            var unit_cost_per = parseFloat($row.find('.product_unit_cost').val()) || 0;
+            var unit_price_per = parseFloat($row.find('.product_unit_price').val()) || 0;
 
-            // price += quantity * unit_price;
-            unit_cost = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .unit_cost').val();
-            cost += quantity * unit_cost;
-
-            // subtotal calculation
-            let $row = $(this).closest('tr');
-            let qty = parseFloat($(this).val()) || 0;
-
-            // Get selected option and its data attributes
-            let $selectedOption = $row.find('.combo_unit_id option:selected');
-            let operator = $selectedOption.data('operator');
-            let operationValue = parseFloat($selectedOption.data('operation_value')) || 1;
-
-            // Convert quantity based on operator
-            let convertedQty = quantity;
-            if (operator === '*') {
-                convertedQty = quantity * operationValue;
-            } else if (operator === '/') {
-                convertedQty = quantity / operationValue;
+            var $comboSelect = $row.find('select.combo_unit_id option:selected');
+            var convertedQty = quantity;
+            if ($comboSelect.length) {
+                var operator = $comboSelect.data('operator');
+                var operationValue = parseFloat($comboSelect.data('operation_value')) || 1;
+                if (operator === '*') {
+                    convertedQty = quantity * operationValue;
+                } else if (operator === '/') {
+                    convertedQty = quantity / operationValue;
+                }
             }
 
-            console.log(
-                'subtotal :' + unit_price,
-                'product_unit_price :' + product_unit_price,
-                'product_unit_cost :' + product_unit_cost,
-                'convertedQty : ' + convertedQty
-            )
-
-            // Calculate subtotal using convertedQty
-            let subtotal = convertedQty * unit_price;
-            let total_unit_cost = convertedQty * product_unit_cost;
-            let total_unit_price = convertedQty * product_unit_price;
-            cost += convertedQty * unit_cost;
-            price += subtotal;
-            // Update subtotal field
-            $row.find('.unit_cost').val(total_unit_cost.toFixed(2));
-            $row.find('.unit_price').val(total_unit_price.toFixed(2));
-            $row.find('.subtotal').val(subtotal.toFixed(2));
+            var line_cost = convertedQty * unit_cost_per;
+            var line_price = convertedQty * unit_price_per;
+            $row.find('.unit_cost').val(line_cost.toFixed(2));
+            $row.find('.unit_price').val(line_price.toFixed(2));
+            $row.find('.subtotal').val(line_price.toFixed(2));
+            price += line_price;
         });
         $('input[name="price"]').val(price.toFixed(2));
 
-        let total_cost = 0;
+        var total_cost = 0;
         $('input[name="product_unit_cost[]"]').each(function() {
-            let value = parseFloat($(this).val()) || 0;
-            total_cost += value;
+            total_cost += parseFloat($(this).val()) || 0;
         });
         $('input[name="cost"]').val(total_cost.toFixed(2));
-
     }
 
     function populate_category(unitID){
         $.ajax({
-            url: 'saleunit/'+unitID,
+            url: '{{ url("products/saleunit") }}/'+unitID,
             type: "GET",
             dataType: "json",
             success:function(data) {
@@ -1889,8 +1825,7 @@
                             contentType: false,
                             processData: false,
                             success:function(response) {
-                                //console.log(response);
-                                location.href = '../products';
+                                location.href = "{{ $product_create_redirect }}";
                             },
                             error:function(response) {
                                 // console.log(response);
@@ -1955,8 +1890,7 @@
             }
         },
         successmultiple: function (file, response) {
-            location.href = '../products';
-            //console.log(file, response);
+            location.href = "{{ $product_create_redirect }}";
         },
         completemultiple: function (file, response) {
             console.log(file, response, "completemultiple");
@@ -1965,22 +1899,6 @@
             console.log("resetFiles");
             this.removeAllFiles(true);
         }
-    });
-    // brand create ajax start
-    $('.brand-submit-btn').on("click", function() {
-        $.ajax({
-            type:'POST',
-            url:'{{route('brand.store')}}',
-            data: $("#brand-form").serialize(),
-            success:function(response) {
-                key = response['id'];
-                value = response['title'];
-                $('select[name="brand_id"]').append('<option value="'+ key +'">'+ value +'</option>');
-                $('select[name="brand_id"]').val(key);
-                $('.selectpicker').selectpicker('refresh');
-                $("#addBrand").modal('hide');
-            }
-        });
     });
     $('.category-model').on("click", function() {
         $('.category-submit-btn').prop('type', 'button');

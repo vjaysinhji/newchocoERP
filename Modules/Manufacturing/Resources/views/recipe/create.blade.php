@@ -18,6 +18,7 @@
 @section('content')
 <section class="forms">
     <div class="container-fluid">
+        @include('includes.session_message')
         <div class="row">
             <div class="col-md-12">
                 <div class="card">
@@ -727,20 +728,20 @@
             $('select[name="purchase_unit_id"]').empty();
         }
     });
-    <?php $productArray = []; ?>
+    <?php $rawmaterialArray = []; ?>
     var lims_product_code = [
-        @foreach($lims_product_list_without_variant as $product)
+        @foreach($lims_rawmaterial_list_without_variant as $rawmaterial)
             <?php
-                $productArray[] = htmlspecialchars($product->code) . ' (' . preg_replace('/[\n\r]/', "<br>", htmlspecialchars($product->name)) . ')';
+                $rawmaterialArray[] = htmlspecialchars($rawmaterial->code) . ' (' . preg_replace('/[\n\r]/', "<br>", htmlspecialchars($rawmaterial->name)) . ')';
             ?>
         @endforeach
-        @foreach($lims_product_list_with_variant as $product)
+        @foreach($lims_rawmaterial_list_with_variant as $rawmaterial)
             <?php
-                $productArray[] = htmlspecialchars($product->item_code) . ' (' . preg_replace('/[\n\r]/', "<br>", htmlspecialchars($product->name)) . ')';
+                $rawmaterialArray[] = htmlspecialchars($rawmaterial->item_code) . ' (' . preg_replace('/[\n\r]/', "<br>", htmlspecialchars($rawmaterial->name)) . ')';
             ?>
         @endforeach
             <?php
-                echo  '"'.implode('","', $productArray).'"';
+                echo  '"'.implode('","', $rawmaterialArray).'"';
             ?> ];
 
     var lims_productcodeSearch = $('#lims_productcodeSearch');
@@ -756,22 +757,38 @@
             var data = ui.item.value;
             $.ajax({
                 type: 'GET',
-                url: '{{ route("product.search") }}',
+                url: '{{ route("rawmaterial.recipe.search") }}',
                 data: {
                     data: data
                 },
                 success: function(responseData) {
-                    data = responseData[0];
-                    // console.log(data)
+                    data = responseData;
                     var flag = 1;
-                    // $(".product-id").each(function() {
-                    //     if ($(this).val() == data[8]) {
-                    //         alert('Duplicate input is not allowed!')
-                    //         flag = 0;
-                    //     }
-                    // });
+                    $(".product-id").each(function() {
+                        if ($(this).val() == data[2]) {
+                            alert('Duplicate input is not allowed!')
+                            flag = 0;
+                        }
+                    });
                     $("input[name='product_code_name']").val('');
-                    if(flag){
+                    if(flag && data.length > 0){
+                        var unitsList = (typeof data[7] === 'string') ? JSON.parse(data[7] || '[]') : (data[7] || []);
+                        var unitId = data[5] || '';
+                        var unitName = data[6] || 'Unit';
+                        var unitSelectHtml = '';
+                        if (unitsList && unitsList.length > 0) {
+                            unitSelectHtml = '<select name="combo_unit_id[]" style="width: 112px;" class="btn btn-outline-secondary form-control combo_unit_id" onchange="calculate_price()">';
+                            for (var u = 0; u < unitsList.length; u++) {
+                                var uo = unitsList[u];
+                                var opVal = uo.operation_value != null ? uo.operation_value : 1;
+                                var op = uo.operator != null ? uo.operator : '';
+                                var sel = (uo.id == unitId) ? ' selected' : '';
+                                unitSelectHtml += '<option value="' + uo.id + '" data-operation_value="' + opVal + '" data-operator="' + op + '"' + sel + '>' + (uo.unit_name || '') + '</option>';
+                            }
+                            unitSelectHtml += '</select>';
+                        } else {
+                            unitSelectHtml = '<span class="input-group-text">' + unitName + '</span><input type="hidden" name="combo_unit_id[]" value=""/>';
+                        }
                         var newRow = $("<tr>");
                         var cols = '';
                         cols += '<td>' + data[0] +' [' + data[1] + ']</td>';
@@ -787,23 +804,22 @@
                                     <div class="input-group" style="max-width: unset">
                                         <input type="number"
                                             class="form-control qty"
-                                            min="1"
                                             name="product_qty[]"
                                             value="1"
                                             step="any"
                                             placeholder="Qty"
                                             aria-label="Quantity">
                                         <div class="input-group-append">
-                                            `+data[13]+`
+                                            ` + unitSelectHtml + `
                                         </div>
                                     </div>
                                 </td>`;
-                        cols += '<td><input type="number" class="form-control unit_cost" name="product_unit_cost[]" value="' + data[10] + '"/></td>';
-                        cols += '<td><input type="number" class="form-control unit_price" name="unit_price[]" value="' + data[2] + '" step="any"/></td>';
-                        cols += '<td><input type="number" class="form-control subtotal" name="subtotal[]" value="' + data[2] + '" step="any"/></td>';
+                        cols += '<td><input type="number" class="form-control unit_cost" name="product_unit_cost[]" value="' + (data[4] || 0) + '"/></td>';
+                        cols += '<td><input type="number" class="form-control unit_price" name="unit_price[]" value="' + (data[4] || 0) + '" step="any"/></td>';
+                        cols += '<td><input type="number" class="form-control subtotal" name="subtotal[]" value="' + (data[4] || 0) + '" step="any" readonly/></td>';
                         cols += '<td><button type="button" class="ibtnDel btn btn-sm btn-danger">X</button></td>';
-                        cols += '<input type="hidden" class="product-id" name="product_id[]" value="' + data[8] + '"/>';
-                        cols += '<input type="hidden" class="" name="variant_id[]" value="' + data[9] + '"/>';
+                        cols += '<input type="hidden" class="product-id" name="product_id[]" value="' + data[2] + '"/>';
+                        cols += '<input type="hidden" name="variant_id[]" value="' + (data[3] || '') + '"/>';
 
                         newRow.append(cols);
                         $(".combo_product_list_table").append(newRow);
@@ -945,33 +961,6 @@
 
 
 
-
-
-    $('#selectRecipe').on('change', function() {
-        var productId = $(this).val();
-        $.ajaxSetup({
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            }
-        });
-
-        // Ajax Request
-        $.ajax({
-                url: '{{ route("get-Ingredients") }}',
-                type: 'POST',
-                data: {
-                        product_id: productId,
-                        recipe: true
-                    },
-                success: function(response) {
-                    $('#ingredients-table').html(response.ingredients)
-                    calculate_price();
-                },
-                error: function(xhr) {
-                    console.error(xhr.responseText);
-                }
-            });
-        });
 
 
         $('.production_cost').on('input',function(){

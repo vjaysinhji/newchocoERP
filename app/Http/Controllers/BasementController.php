@@ -224,7 +224,7 @@ class BasementController extends Controller
             $data['product_details'] = str_replace('"', '@', $data['product_details'] ?? '');
             $data['is_active'] = true;
             $data['type'] = $data['type'] ?? 'standard';
-            $data['barcode_symbology'] = $data['barcode_symbology'] ?? 'C128';
+            $data['barcode_symbology'] = $data['barcode_symbology'] ?? 'UPCE';
             $data['price'] = $data['price'] ?? 0;
 
             $images = $request->file('image');
@@ -390,7 +390,7 @@ class BasementController extends Controller
             $data['product_details'] = str_replace('"', '@', $data['product_details'] ?? '');
             
             // Ensure required fields have defaults
-            $data['barcode_symbology'] = $data['barcode_symbology'] ?? 'C128';
+            $data['barcode_symbology'] = $data['barcode_symbology'] ?? 'UPCE';
             $data['type'] = $data['type'] ?? 'standard';
             
             // Preserve price if not provided (required in DB but not in form)

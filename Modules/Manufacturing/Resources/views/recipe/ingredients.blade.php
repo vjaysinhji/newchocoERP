@@ -30,7 +30,7 @@
                 </td>
                 <td>
                     <div class="input-group" style="max-width: unset">
-                        <input type="number" class="form-control qty" min="1" name="product_qty[]"
+                        <input type="number" class="form-control qty" name="product_qty[]"
                             value="{{ $qty_list[$key] ?? 1 }}" step="any" placeholder="Qty" aria-label="Quantity">
 
                         <div class="input-group-append">

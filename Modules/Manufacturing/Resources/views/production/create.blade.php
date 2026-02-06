@@ -25,6 +25,7 @@
                         <h4>{{__('db.Add Production')}}</h4>
                     </div>
                     <div class="card-body">
+                        @include('includes.session_message')
                         <p class="italic"><small>{{__('db.The field labels marked with * are required input fields')}}.</small></p>
                         <form id="product-form" method="post" action="{{ route('productions.store') }}" enctype="multipart/form-data">
                             @csrf
@@ -38,10 +39,10 @@
                                     </div>
                                     <div class="col-md-4">
                                         <div class="form-group">
-                                            <label>{{__('db.Warehouse')}} *</label>
+                                            <label>{{__('db.Production Warehouse')}} *</label>
                                             <select required id="warehouse_id" name="warehouse_id" class="selectpicker form-control" data-live-search="true" title="Select warehouse...">
                                                 @foreach($lims_warehouse_list as $warehouse)
-                                                <option value="{{$warehouse->id}}">{{$warehouse->name}}</option>
+                                                <option value="{{$warehouse->id}}" @if(isset($default_warehouse_id) && $default_warehouse_id == $warehouse->id) selected @endif>{{$warehouse->name}}</option>
                                                 @endforeach
                                             </select>
                                         </div>
@@ -81,11 +82,30 @@
                                      <div class="col-md-4">
                                         <div class="form-group">
                                             <label>{{__('db.Total Qty')}}</label>
-                                            <input type="number" name="total_qty" min="1" class="form-control total_qty" value="1" step="any" />
+                                            <input type="number" name="total_qty" class="form-control total_qty" value="1" step="any" />
                                         </div>
                                     </div>
-
-
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Expiry Date</label>
+                                            <input type="text" name="expiry_date" id="expiry_date" class="form-control" placeholder="dd-mm-yyyy" />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Production Overhead Type</label>
+                                            <select name="production_overhead_type" id="production_overhead_type" class="form-control">
+                                                <option value="fixed">Fixed Amount</option>
+                                                <option value="percent">Percentage (%)</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label>Production Overhead</label>
+                                            <input type="number" name="production_overhead_cost" id="production_overhead_cost" class="form-control production_overhead_cost" value="0" min="0" step="any" placeholder="100 or 20" />
+                                        </div>
+                                    </div>
                                 </div>
                             <div class="row">
                                 <div id="digital" class="col-md-4">
@@ -887,7 +907,6 @@
                                     <div class="input-group" style="max-width: unset">
                                         <input type="number"
                                             class="form-control qty"
-                                            min="1"
                                             name="product_qty[]"
                                             value="1"
                                             step="any"
@@ -1072,10 +1091,18 @@
     $('.production_cost').on('input',function(){
         calculate_price();
     })
-
-        $('.shipping_cost').on('input',function(){
+    $('.shipping_cost').on('input',function(){
         calculate_price();
     })
+    $('.production_overhead_cost, #production_overhead_type').on('input change',function(){
+        calculate_price();
+    })
+    $('#expiry_date').datepicker({
+        format: 'dd-mm-yyyy',
+        autoclose: true,
+        todayHighlight: true,
+        startDate: new Date()
+    });
 
     $('.total_qty').on('keyup change', function(){
          var productId = $('#selectRecipe').val();
@@ -1152,27 +1179,23 @@
             $('.submit-btn').prop('disabled', true);
         }
 
-        // Get production and shipping cost safely
         let production_cost = parseFloat($('.production_cost').val()) || 0;
         let shipping_cost = parseFloat($('.shipping_cost').val()) || 0;
+        let overhead_value = parseFloat($('.production_overhead_cost').val()) || 0;
+        let overhead_type = $('#production_overhead_type').val();
+        let overhead_cost = 0;
+        if (overhead_type === 'fixed') {
+            overhead_cost = overhead_value;
+        } else if (overhead_type === 'percent') {
+            overhead_cost = (price * overhead_value) / 100;
+        }
 
-        // Calculate total unit cost from all unit_cost inputs
-        let total_cost = 0;
-        $('input[name="product_unit_cost[]"]').each(function () {
-            total_cost += parseFloat($(this).val()) || 0;
-        });
+        let base_total = price + shipping_cost + production_cost;
+        grand_total = base_total + overhead_cost;
 
-        $('input[name="product_qty[]"]').each(function () {
-            var this_val = $(this).val();
-            // ingredient_qty = parseFloat($(this).val(4 * this_val)) || 0;
-        });
-
-        // Final price including additional costs
-        grand_total = price + shipping_cost + production_cost;
-
-        // Update results in DOM
         $('#shipping_cost').html(shipping_cost.toFixed(2));
         $('#production_cost').html(production_cost.toFixed(2));
+        $('#overhead_cost').html(overhead_cost.toFixed(2));
         $('#total').html(price.toFixed(2));
         $('.total_cost').val(price.toFixed(2));
         $('#grand_total').html(grand_total.toFixed(2));

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Warehouse;
 use App\Models\RawMaterial;
+use App\Models\Unit;
 use App\Models\Adjustment;
 use App\Models\ProductAdjustment;
 use Illuminate\Support\Facades\DB;
@@ -90,14 +91,23 @@ class RawMaterialAdjustmentController extends Controller
         $raw_material[] = $lims_raw_material_data->name;
         $raw_material[] = $lims_raw_material_data->code;
         $raw_material[] = $lims_raw_material_data->id;
-        $raw_material[] = null; // variant_id (not applicable for raw materials)
+        $raw_material[] = null;
         $raw_material[] = isset($raw_material_info[1]) ? $raw_material_info[1] : ($lims_raw_material_data->cost ?? 0);
-        $quantity = explode("|", $request['data']);
-        if (count($quantity) >= 3) {
-            $raw_material[] = $quantity[2];
+
+        $unit_id = $lims_raw_material_data->unit_id;
+        $unit_name = 'Unit';
+        $units_list = [];
+        if ($unit_id) {
+            $unit = Unit::find($unit_id);
+            if ($unit) {
+                $unit_name = $unit->unit_name;
+                $units_list = Unit::where('id', $unit_id)->orWhere('base_unit', $unit_id)->get(['id', 'unit_name', 'operator', 'operation_value'])->toArray();
+            }
         }
-        
-        \Log::info('Raw Material found', ['code' => $raw_material_code[0], 'name' => $lims_raw_material_data->name]);
+        $raw_material[] = $unit_id;
+        $raw_material[] = $unit_name;
+        $raw_material[] = $units_list;
+
         return $raw_material;
     }
 

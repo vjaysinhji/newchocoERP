@@ -7,6 +7,7 @@ use App\Models\Category;
 use App\Models\CustomField;
 use App\Models\Product;
 use App\Models\Product_Warehouse;
+use App\Models\RawMaterial;
 use App\Models\Tax;
 use App\Models\Unit;
 use App\Models\Warehouse;
@@ -73,8 +74,8 @@ class RecipeController extends Controller
     {
         $role = Role::firstOrCreate(['id' => Auth::user()->role_id]);
         if ($role->hasPermissionTo('products-add')){
-            $lims_product_list_without_variant = $this->productWithoutVariant();
-            $lims_product_list_with_variant = $this->productWithVariant();
+            $lims_rawmaterial_list_without_variant = $this->rawMaterialWithoutVariant();
+            $lims_rawmaterial_list_with_variant = $this->rawMaterialWithVariant();
             $lims_brand_list = Brand::where('is_active', true)->get();
             $lims_category_list = Category::where('is_active', true)->get();
             $lims_unit_list = Unit::where('is_active', true)->get();
@@ -92,10 +93,10 @@ class RecipeController extends Controller
                 $kitchen_list = DB::table('kitchens')->where('is_active',1)->get();
                 $menu_type_list = DB::table('menu_type')->where('is_active',1)->get();
 
-                return view('manufacturing::recipe.create',compact('lims_product_list','kitchen_list','menu_type_list','lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_warehouse_list', 'numberOfProduct', 'custom_fields'));
+                return view('manufacturing::recipe.create',compact('lims_product_list','kitchen_list','menu_type_list','lims_rawmaterial_list_without_variant', 'lims_rawmaterial_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_warehouse_list', 'numberOfProduct', 'custom_fields'));
             }
 
-            return view('manufacturing::recipe.create',compact('lims_product_list','lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_warehouse_list', 'numberOfProduct', 'custom_fields'));
+            return view('manufacturing::recipe.create',compact('lims_product_list','lims_rawmaterial_list_without_variant', 'lims_rawmaterial_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_warehouse_list', 'numberOfProduct', 'custom_fields'));
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
@@ -108,13 +109,25 @@ class RecipeController extends Controller
                 ->whereNull('is_variant')->get();
     }
 
-       public function productWithVariant()
+    public function productWithVariant()
     {
         return Product::join('product_variants', 'products.id', 'product_variants.product_id')
                 ->ActiveStandard()
                 ->whereNotNull('is_variant')
                 ->select('products.id', 'products.name', 'product_variants.item_code', 'product_variants.qty')
                 ->orderBy('position')->get();
+    }
+
+    public function rawMaterialWithoutVariant()
+    {
+        return RawMaterial::where('is_active', true)
+                ->select('id', 'name', 'code')
+                ->get();
+    }
+
+    public function rawMaterialWithVariant()
+    {
+        return collect([]);
     }
 
     /**
@@ -124,33 +137,42 @@ class RecipeController extends Controller
      */
     public function store(Request $request)
     {
+        $ingredientIds = $request->product_list ?? $request->product_id ?? [];
+        $ingredientIds = is_array($ingredientIds) ? array_filter($ingredientIds) : [];
+
         $request->validate([
             'p_id' => 'required',
+        ], [
+            'p_id.required' => 'Please select a recipe',
         ]);
+
+        if (count($ingredientIds) < 1) {
+            return redirect()->back()->with('not_permitted', 'Please add at least one ingredient')->withInput();
+        }
+        
         try{
             DB::beginTransaction();
             $product = Product::query()->findOrFail($request->p_id);
-            // dd($request->all());
+            
             $data = [
-                'qty_list'=> implode(",", $request->product_qty),
-                'price_list'=> implode(",", $request->unit_price),
-                'wastage_percent'=> implode(",", $request->wastage_percent),
-                'combo_unit_id'=> implode(",", $request->combo_unit_id),
-                'product_list'=> implode(",", $request->product_list ?? $request->product_id),
-                'variant_list'=> implode(",", $request->variant_list ?? $request->variant_id),
+                'qty_list'=> implode(",", $request->product_qty ?? []),
+                'price_list'=> implode(",", $request->unit_price ?? []),
+                'wastage_percent'=> implode(",", $request->wastage_percent ?? []),
+                'combo_unit_id'=> implode(",", $request->combo_unit_id ?? []),
+                'product_list'=> implode(",", $ingredientIds),
+                'variant_list'=> implode(",", $request->variant_list ?? $request->variant_id ?? []),
                 'is_recipe' => 1
             ];
 
-            $data['cost'] = array_sum($request->product_unit_cost);
-            $data['price'] = array_sum($request->unit_price);
+            $data['cost'] = array_sum($request->product_unit_cost ?? [0]);
+            $data['price'] = array_sum($request->unit_price ?? [0]);
             $product->update($data);
             DB::commit();
             return redirect()->route('recipes.index')->with('success','Successfully Recipe Created');
 
         } catch (\Throwable $e){
             DB::rollBack();
-            // dd($e);
-            return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
+            return redirect()->back()->with('not_permitted', $e->getMessage());
         }
 
     }
@@ -174,8 +196,8 @@ class RecipeController extends Controller
     {
         $role = Role::firstOrCreate(['id' => Auth::user()->role_id]);
         if ($role->hasPermissionTo('products-add')){
-            $lims_product_list_without_variant = $this->productWithoutVariant();
-            $lims_product_list_with_variant = $this->productWithVariant();
+            $lims_rawmaterial_list_without_variant = $this->rawMaterialWithoutVariant();
+            $lims_rawmaterial_list_with_variant = $this->rawMaterialWithVariant();
             $lims_brand_list = Brand::where('is_active', true)->get();
             $lims_category_list = Category::where('is_active', true)->get();
             $lims_unit_list = Unit::where('is_active', true)->get();
@@ -192,10 +214,10 @@ class RecipeController extends Controller
                 $kitchen_list = DB::table('kitchens')->where('is_active',1)->get();
                 $menu_type_list = DB::table('menu_type')->where('is_active',1)->get();
 
-                return view('manufacturing::recipe.edit',compact('lims_product_data','kitchen_list','menu_type_list','lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_warehouse_list', 'numberOfProduct', 'custom_fields'));
+                return view('manufacturing::recipe.edit',compact('lims_product_data','kitchen_list','menu_type_list','lims_rawmaterial_list_without_variant', 'lims_rawmaterial_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_warehouse_list', 'numberOfProduct', 'custom_fields'));
             }
 
-            return view('manufacturing::recipe.edit',compact('lims_product_data','lims_product_list_without_variant', 'lims_product_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_warehouse_list', 'numberOfProduct', 'custom_fields'));
+            return view('manufacturing::recipe.edit',compact('lims_product_data','lims_rawmaterial_list_without_variant', 'lims_rawmaterial_list_with_variant', 'lims_brand_list', 'lims_category_list', 'lims_unit_list', 'lims_tax_list', 'lims_warehouse_list', 'numberOfProduct', 'custom_fields'));
         }
         else
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
@@ -392,8 +414,40 @@ class RecipeController extends Controller
                 else{
                     $nestedData['combo_unit_id'] = 'N/A';
                 }
-                $nestedData['cost'] = $product->cost;
-                $nestedData['price'] = $product->price;
+                $nestedData['cost'] = $product->cost !== null && $product->cost !== '' ? (float) $product->cost : 0;
+                $nestedData['price'] = $product->price !== null && $product->price !== '' ? (float) $product->price : 0;
+
+                $ingredients_for_view = [];
+                if ($product->is_recipe == 1 && $product->product_list) {
+                    $plist = array_filter(explode(',', $product->product_list));
+                    $qty_list = explode(',', $product->qty_list ?? '');
+                    $price_list = explode(',', $product->price_list ?? '');
+                    $wastage_list = explode(',', $product->wastage_percent ?? '');
+                    $combo_unit_ids = explode(',', $product->combo_unit_id ?? '');
+                    foreach ($plist as $idx => $ingId) {
+                        $ingId = trim($ingId);
+                        $raw = RawMaterial::find($ingId);
+                        $prod = $raw ? null : Product::find($ingId);
+                        $ing = $raw ?? $prod;
+                        if (!$ing) continue;
+                        $unitName = 'Unit';
+                        if (!empty($combo_unit_ids[$idx]) && $combo_unit_ids[$idx] !== '') {
+                            $u = Unit::find($combo_unit_ids[$idx]);
+                            if ($u) $unitName = $u->unit_name;
+                        } elseif ($ing->unit_id) {
+                            $u = Unit::find($ing->unit_id);
+                            if ($u) $unitName = $u->unit_name;
+                        }
+                        $ingredients_for_view[] = [
+                            'name' => $ing->name,
+                            'code' => $ing->code ?? '',
+                            'qty' => $qty_list[$idx] ?? '',
+                            'price' => $price_list[$idx] ?? '',
+                            'wastage' => $wastage_list[$idx] ?? '',
+                            'unit_name' => $unitName,
+                        ];
+                    }
+                }
 
                 if(config('currency_position') == 'prefix')
                     $nestedData['stock_worth'] = config('currency').' '.($nestedData['qty'] * $product->price).' / '.config('currency').' '.($nestedData['qty'] * $product->cost);
@@ -438,6 +492,7 @@ class RecipeController extends Controller
                 else
                     $tax_method = __('db.Inclusive');
 
+                $nestedData['ingredients_preview'] = json_encode($ingredients_for_view);
                 $nestedData['product'] = array( '[ "'.$product->type.'"', ' "'.$product->name.'"', ' "'.$product->code.'"', ' "'.$nestedData['brand'].'"', ' "'.$nestedData['category'].'"', ' "'.$nestedData['unit'].'"', ' "'.$product->cost.'"', ' "'.$product->price.'"', ' "'.$tax.'"', ' "'.$tax_method.'"', ' "'.$product->alert_quantity.'"', ' "'.preg_replace('/\s+/S', " ", $product->product_details).'"', ' "'.$product->id.'"', ' "'.$product->product_list.'"', ' "'.$product->variant_list.'"', ' "'.$product->qty_list.'"', ' "'.$product->price_list.'"', ' "'.$nestedData['qty'].'"', ' "'.$product->image.'"', ' "'.$product->is_variant.'"','"'.@$nestedData['combo_unit'].'"','"'.@$nestedData['wastage_percent'].'"]'
                 );
                 //$nestedData['imagedata'] = DNS1D::getBarcodePNG($product->code, $product->barcode_symbology);

@@ -74,6 +74,7 @@
 @section('content')
     <section class="forms">
         <div class="container-fluid">
+            @include('includes.session_message')
             <div class="row">
                 <div class="col-md-12">
                     <div class="card">
@@ -131,44 +132,56 @@
                                                 </thead>
                                                 <tbody class="combo_product_list_table" id="ingredients-table">
                                                     @php
-                                                        $product_list = explode(',', $lims_product_data->product_list);
-                                                        $wastage_percent = explode(',', $lims_product_data->wastage_percent);
-                                                        $qty_list = explode(',', $lims_product_data->qty_list);
-                                                        $variant_list = explode(',', $lims_product_data->variant_list);
-                                                        $price_list = explode(',', $lims_product_data->price_list);
-                                                        $unit_id = explode(',', $lims_product_data->combo_unit_id);
+                                                        $product_list = array_filter(explode(',', $lims_product_data->product_list ?? ''));
+                                                        $wastage_percent = explode(',', $lims_product_data->wastage_percent ?? '');
+                                                        $qty_list = explode(',', $lims_product_data->qty_list ?? '');
+                                                        $variant_list = explode(',', $lims_product_data->variant_list ?? '');
+                                                        $price_list = explode(',', $lims_product_data->price_list ?? '');
+                                                        $unit_id = explode(',', $lims_product_data->combo_unit_id ?? '');
                                                     @endphp
                                                     @foreach ($product_list as $key => $id)
-                                                        <tr>
-                                                            <?php
-                                                            $product    = App\Models\Product::find($id);
-                                                            $combo_unit = App\Models\Unit::query()->where('id', $product->unit_id)->orWhere('base_unit', $product->unit_id)->get()->unique('id');
-                                                            $unit       = App\Models\Unit::query()
-                                                                                ->where('id', $unit_id[$key])
-                                                                                ->first();
-                                                            if($unit->operator == '*'){
-                                                                $subtotal = $price_list[$key] * ($unit->operation_value * $qty_list[$key] ?? 1);
-                                                            }elseif($unit->operator == '/'){
-                                                                $subtotal = $price_list[$key] / $unit->operation_value;
-                                                            }else{
-                                                                $subtotal = $price_list[$key] * 1;
+                                                        @php
+                                                            $id = trim($id);
+                                                            $rawMaterial = App\Models\RawMaterial::find($id);
+                                                            $product = $rawMaterial ? null : App\Models\Product::find($id);
+                                                            $ingredient = $rawMaterial ?? $product;
+                                                            if (!$ingredient) continue;
+                                                            $ingredient_name = $ingredient->name;
+                                                            $ingredient_code = $ingredient->code ?? '';
+                                                            $ingredient_cost = $rawMaterial ? ($rawMaterial->cost ?? 0) : $product->cost;
+                                                            $unit_id_val = $unit_id[$key] ?? '';
+                                                            if ($rawMaterial && $rawMaterial->unit_id) {
+                                                                $combo_unit = App\Models\Unit::query()->where('id', $rawMaterial->unit_id)->orWhere('base_unit', $rawMaterial->unit_id)->get()->unique('id');
+                                                            } elseif ($product && $product->unit_id) {
+                                                                $combo_unit = App\Models\Unit::query()->where('id', $product->unit_id)->orWhere('base_unit', $product->unit_id)->get()->unique('id');
+                                                            } else {
+                                                                $combo_unit = collect([]);
                                                             }
-
-                                                            if ($lims_product_data->variant_list && $variant_list[$key]) {
+                                                            $unit = ($unit_id_val !== '' && $unit_id_val !== null) ? App\Models\Unit::find($unit_id_val) : null;
+                                                            $qty_val = (float) ($qty_list[$key] ?? 1);
+                                                            $price_val = (float) ($price_list[$key] ?? 0);
+                                                            if ($unit && $unit->operator === '*') {
+                                                                $subtotal = $price_val * (($unit->operation_value ?? 1) * $qty_val);
+                                                            } elseif ($unit && $unit->operator === '/') {
+                                                                $subtotal = ($unit->operation_value > 0) ? ($price_val * $qty_val) / $unit->operation_value : $price_val * $qty_val;
+                                                            } else {
+                                                                $subtotal = $price_val * $qty_val;
+                                                            }
+                                                            if ($product && ($lims_product_data->variant_list ?? '') && !empty(trim($variant_list[$key] ?? ''))) {
                                                                 $product_variant_data = App\Models\ProductVariant::select('item_code')->FindExactProduct($id, $variant_list[$key])->first();
-                                                                $product->code = $product_variant_data->item_code;
+                                                                if ($product_variant_data) $ingredient_code = $product_variant_data->item_code;
                                                             } else {
                                                                 $variant_list[$key] = '';
                                                             }
-
-                                                            ?>
-                                                            <td>{{ $product->name }} [{{ $product->code }}]</td>
+                                                        @endphp
+                                                        <tr>
+                                                            <td>{{ $ingredient_name }} [{{ $ingredient_code }}]</td>
                                                             <td>
                                                                 <div class="input-group">
                                                                     <input type="number"
                                                                         class="form-control wastage_percent"
                                                                         name="wastage_percent[]"
-                                                                        value="{{ @$wastage_percent[$key] ?? 0 }}"
+                                                                        value="{{ $wastage_percent[$key] ?? 0 }}"
                                                                         min="0" step="any" />
                                                                     <div class="input-group-append">
                                                                         <span class="input-group-text">%</span>
@@ -177,40 +190,45 @@
                                                             <td>
                                                                 <div class="input-group" style="max-width: unset">
                                                                     <input type="number" class="form-control qty"
-                                                                        min="1" name="product_qty[]"
+                                                                         name="product_qty[]"
                                                                         value="{{ $qty_list[$key] ?? 1 }}" step="any"
                                                                         placeholder="Qty" aria-label="Quantity">
                                                                     <div class="input-group-append">
+                                                                        @if($combo_unit->isNotEmpty())
                                                                         <select name="combo_unit_id[]" style="width: 112px;"
                                                                             class="btn btn-outline-secondary form-control combo_unit_id"
                                                                             onchange="calculate_price()">
                                                                             @foreach ($combo_unit as $row)
                                                                                 <option value="{{ $row->id }}"
-                                                                                    data-operation_value="{{ $row->operation_value }}"
-                                                                                    data-operator="{{ $row->operator }}"
-                                                                                    {{ $row->id ==  $unit_id[$key]  ? 'selected' : '' }}>
+                                                                                    data-operation_value="{{ $row->operation_value ?? 1 }}"
+                                                                                    data-operator="{{ $row->operator ?? '' }}"
+                                                                                    {{ ($row->id == $unit_id_val) ? 'selected' : '' }}>
                                                                                     {{ $row->unit_name }}
                                                                                 </option>
                                                                             @endforeach
                                                                         </select>
+                                                                        @else
+                                                                        <span class="input-group-text">Unit</span>
+                                                                        <input type="hidden" name="combo_unit_id[]" value="" />
+                                                                        @endif
                                                                     </div>
                                                                 </div>
                                                             </td>
 
 
                                                             <td><input type="number" class="form-control unit_cost"
-                                                                    name="product_unit_cost[]" value="{{ $product->cost }}"
+                                                                    name="product_unit_cost[]" value="{{ $ingredient_cost }}"
                                                                     step="any" /></td>
                                                             <td><input type="number" class="form-control unit_price"
-                                                                    name="unit_price[]" value="{{ $price_list[$key] }}"
+                                                                    name="unit_price[]" value="{{ $price_list[$key] ?? 0 }}"
                                                                     step="any" /></td>
                                                             <td><input type="number" class="form-control subtotal"
-                                                                    name="subtotal[]" value="{{ $subtotal ?? 0 }}" step="any" /></td>
+                                                                    name="subtotal[]" value="{{ $subtotal }}" step="any" readonly /></td>
                                                             <td><button type="button"
                                                                     class="ibtnDel btn btn-danger btn-sm">X</button></td>
                                                             <input type="hidden" class="product-id" name="product_list[]"
                                                                 value="{{ $id }}" />
-                                                            <input type="hidden" class="variant-id" name="variant_list[]" value="{{ $variant_list[$key] }}">
+                                                            <input type="hidden" class="variant-id" name="variant_list[]" value="{{ $variant_list[$key] ?? '' }}">
                                                         </tr>
                                                     @endforeach
 
@@ -918,20 +936,20 @@
                 $('select[name="purchase_unit_id"]').empty();
             }
         });
-        <?php $productArray = []; ?>
+        <?php $rawmaterialArray = []; ?>
         var lims_product_code = [
-            @foreach ($lims_product_list_without_variant as $product)
+            @foreach ($lims_rawmaterial_list_without_variant as $rawmaterial)
                 <?php
-                $productArray[] = htmlspecialchars($product->code) . ' (' . preg_replace('/[\n\r]/', '<br>', htmlspecialchars($product->name)) . ')';
+                $rawmaterialArray[] = htmlspecialchars($rawmaterial->code) . ' (' . preg_replace('/[\n\r]/', '<br>', htmlspecialchars($rawmaterial->name)) . ')';
                 ?>
             @endforeach
-            @foreach ($lims_product_list_with_variant as $product)
+            @foreach ($lims_rawmaterial_list_with_variant as $rawmaterial)
                 <?php
-                $productArray[] = htmlspecialchars($product->item_code) . ' (' . preg_replace('/[\n\r]/', '<br>', htmlspecialchars($product->name)) . ')';
+                $rawmaterialArray[] = htmlspecialchars($rawmaterial->item_code) . ' (' . preg_replace('/[\n\r]/', '<br>', htmlspecialchars($rawmaterial->name)) . ')';
                 ?>
             @endforeach
             <?php
-            echo '"' . implode('","', $productArray) . '"';
+            echo '"' . implode('","', $rawmaterialArray) . '"';
             ?>
         ];
 
@@ -948,21 +966,21 @@
                 var data = ui.item.value;
                 $.ajax({
                     type: 'GET',
-                    url: '{{ route('product.search') }}',
+                    url: '{{ route('rawmaterial.recipe.search') }}',
                     data: {
                         data: data
                     },
                     success: function(responseData) {
-                        data = responseData[0];
+                        data = responseData;
                         var flag = 1;
-                        // $(".product-id").each(function() {
-                        //     if ($(this).val() == data[8]) {
-                        //         alert('Duplicate input is not allowed!')
-                        //         flag = 0;
-                        //     }
-                        // });
+                        $(".product-id").each(function() {
+                            if ($(this).val() == data[2]) {
+                                alert('Duplicate input is not allowed!')
+                                flag = 0;
+                            }
+                        });
                         $("input[name='product_code_name']").val('');
-                        if (flag) {
+                        if (flag && data.length > 0) {
                             var newRow = $("<tr>");
                             var cols = '';
                             cols += '<td>' + data[0] + ' [' + data[1] + ']</td>';
@@ -978,33 +996,33 @@
                                     <div class="input-group" style="max-width: unset">
                                         <input type="number"
                                             class="form-control qty"
-                                            min="1"
                                             name="product_qty[]"
                                             value="1"
                                             step="any"
                                             placeholder="Qty"
                                             aria-label="Quantity">
                                         <div class="input-group-append">
-                                            ` + data[13] + `
+                                            <span class="input-group-text">Unit</span>
                                         </div>
                                     </div>
                                 </td>`;
                             cols +=
                                 '<td><input type="number" class="form-control unit_cost" name="product_unit_cost[]" value="' +
-                                data[10] + '"/></td>';
+                                (data[4] || 0) + '"/></td>';
                             cols +=
                                 '<td><input type="number" class="form-control unit_price" name="unit_price[]" value="' +
-                                data[2] + '" step="any"/></td>';
+                                (data[4] || 0) + '" step="any"/></td>';
                             cols +=
                                 '<td><input type="number" class="form-control subtotal" name="subtotal[]" value="' +
-                                data[2] + '" step="any"/></td>';
+                                (data[4] || 0) + '" step="any" readonly/></td>';
                             cols +=
                                 '<td><button type="button" class="ibtnDel btn btn-sm btn-danger">X</button></td>';
                             cols +=
                                 '<input type="hidden" class="product-id" name="product_list[]" value="' +
-                                data[8] + '"/>';
-                            cols += '<input type="hidden" class="" name="variant_list[]" value="' +
-                                data[9] + '"/>';
+                                data[2] + '"/>';
+                            cols += '<input type="hidden" name="variant_list[]" value="' +
+                                (data[3] || '') + '"/>';
+                            cols += '<input type="hidden" name="combo_unit_id[]" value=""/>';
 
                             newRow.append(cols);
                             $(".combo_product_list_table").append(newRow);
@@ -1038,15 +1056,12 @@
 
             $(".qty").each(function() {
                 let $row = $(this).closest('tr');
-                let rowIndex = $row.index();
-
                 let quantity = parseFloat($(this).val()) || 0;
                 let unit_price = parseFloat($row.find('.unit_price').val()) || 0;
                 let unit_cost = parseFloat($row.find('.unit_cost').val()) || 0;
 
-                // Handle combo unit conversion
                 let $selectedOption = $row.find('.combo_unit_id option:selected');
-                let operator = $selectedOption.data('operator');
+                let operator = $selectedOption.length ? $selectedOption.data('operator') : null;
                 let operationValue = parseFloat($selectedOption.data('operation_value')) || 1;
 
                 let convertedQty = quantity;
@@ -1056,12 +1071,10 @@
                     convertedQty = quantity / operationValue;
                 }
 
-                // Calculate subtotal and accumulate cost/price
                 let subtotal = convertedQty * unit_price;
                 cost += convertedQty * unit_cost;
                 price += subtotal;
 
-                // Update subtotal in DOM
                 $row.find('.subtotal').val(subtotal.toFixed(2));
             });
 
@@ -1144,32 +1157,6 @@
 
 
 
-
-
-        $('#selectRecipe').on('change', function() {
-            var productId = $(this).val();
-            $.ajaxSetup({
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                }
-            });
-
-            // Ajax Request
-            $.ajax({
-                url: '{{ route('get-Ingredients') }}',
-                type: 'POST',
-                data: {
-                    product_id: productId
-                },
-                success: function(response) {
-                    $('#ingredients-table').html(response.ingredients)
-                    calculate_price();
-                },
-                error: function(xhr) {
-                    console.error(xhr.responseText);
-                }
-            });
-        });
 
 
         $('.production_cost').on('input', function() {

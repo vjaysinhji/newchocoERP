@@ -31,6 +31,7 @@ if(config('database.connections.saleprosaas_landlord')) {
         Route::post('manufacturing/products/product-data',[ProductController::class,'productData'])->name ('get-products');
         Route::post('manufacturing/product-data',[RecipeController::class,'productData'])->name ('manufacturing.product-data');
         Route::get('manufacturing/recipes/lims_product_search',[ProductController::class,'limsProductSearch'])->name ('product.search');
+        Route::get('manufacturing/recipes/lims_rawmaterial_search',[\App\Http\Controllers\RawMaterialAdjustmentController::class,'limsRawMaterialSearch'])->name ('rawmaterial.recipe.search');
         Route::post('manufacturing/get-Ingredients',[ProductionController::class,'getIngredients'])->name ('get-Ingredients');
         Route::post('products/getdata/{id}/{variant_id}',[ProductController::class,'getData'])->name('products.getdata');
         Route::prefix('manufacturing')->group(function() {
@@ -52,6 +53,7 @@ else {
         Route::post('manufacturing/products/product-data',[ProductController::class,'productData'])->name ('get-products');
         Route::post('manufacturing/product-data',[RecipeController::class,'productData'])->name ('manufacturing.product-data');
         Route::get('manufacturing/recipes/lims_product_search',[ProductController::class,'limsProductSearch'])->name ('product.search');
+        Route::get('manufacturing/recipes/lims_rawmaterial_search',[\App\Http\Controllers\RawMaterialAdjustmentController::class,'limsRawMaterialSearch'])->name ('rawmaterial.recipe.search');
         Route::post('manufacturing/get-Ingredients',[ProductionController::class,'getIngredients'])->name ('get-Ingredients');
         Route::post('products/getdata/{id}/{variant_id}',[ProductController::class,'getData'])->name('products.getdata');
         Route::prefix('manufacturing')->group(function() {
