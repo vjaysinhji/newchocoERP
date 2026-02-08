@@ -2,545 +2,7 @@
 
 @push('css')
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.9/css/intlTelInput.css" />
-    <style>
-        .country-phone-group .bootstrap-select {
-            display: none !important
-        }
-    </style>
-    <style type="text/css">
-        body {
-            color: #303030;
-            font-family: 'Inter', sans-serif
-        }
-
-        .bootstrap-select-sm .btn {
-            font-size: 13px;
-            padding: 3px 25px 3px 10px;
-            height: 30px !important
-        }
-
-        .minus,
-        .plus {
-            padding: .35rem .75rem
-        }
-
-        .numkey.qty {
-            font-size: 13px;
-            padding: 0 0;
-            max-width: 50px;
-            text-align: center
-        }
-
-        .sub-total {
-            font-weight: 500;
-        }
-
-        .pos-page .container-fluid {
-            padding: 0 15px
-        }
-
-        .pos-page .side-navbar {
-            top: 0
-        }
-
-        section.pos-section {
-            padding: 5px 0
-        }
-
-        .pos-page .table-fixed {
-            margin-bottom: 0
-        }
-
-        .pos-text {
-            line-height: 1.8
-        }
-
-        .pos-page section header {
-            padding: 0 0
-        }
-
-        .pos .bootstrap-select button {
-            padding-right: 21px !important
-        }
-
-        .pos .bootstrap-select.form-control:not([class*=col-]) {
-            width: 100px
-        }
-
-        .pos-page .order-list .btn {
-            padding: 2px 5px
-        }
-
-        .pos-page [class=row] {
-            margin-left: -10px;
-            margin-right: -10px
-        }
-
-        .pos-page [class*=col-] {
-            padding: 0 10px
-        }
-
-        .pos-page #myTable [class*=col-] {
-            padding: .5rem
-        }
-
-        .pos-page #myTable tr th {
-            background: #d6deff;
-            color: #303030
-        }
-
-        .product-btns {
-            margin: 0 -5px
-        }
-
-        .edit-product {
-            white-space: break-spaces;
-            font-size: 13px;
-            font-weight: 500;
-            text-align: left;
-            padding: 0 0 !important
-        }
-
-        .edit-product i {
-            color: #00cec9
-        }
-
-        .product-title span {
-            font-size: 12px
-        }
-
-        .more-options {
-            box-shadow: -5px 0px 10px 0px rgba(44, 44, 44, 0.3);
-            font-size: 12px;
-            margin: 10px 0;
-            padding-left: 3px;
-            padding-right: 3px
-        }
-
-        label {
-            font-size: 13px
-        }
-
-        #tbody-id tr td {
-            font-size: 13px;
-            padding: 0
-        }
-
-        table,
-        tr,
-        td {
-            border-collapse: collapse;
-        }
-
-        .top-fields {
-            margin-top: 10px;
-            position: relative;
-        }
-
-        .top-fields label {
-            background: #FFF;
-            font-size: 11px;
-            margin-left: 10px;
-            padding: 0 3px;
-            position: absolute;
-            top: -8px;
-            z-index: 9;
-        }
-
-        .top-fields input,
-        .top-fields .btn {
-            font-size: 13px;
-            height: 37px
-        }
-
-        .product-grid {
-            align-items: center;
-            display: flex;
-            flex-wrap: wrap;
-            padding: 0;
-            margin: 0;
-            width: 100%;
-        }
-
-        .product-grid>div {
-            border: 1px solid #e4e6fc;
-            overflow: hidden;
-            padding: .5rem;
-            position: relative;
-            max-width: 300px;
-            min-width: 100px;
-            vertical-align: top;
-            width: calc(100%/4);
-        }
-
-        .product-grid>div p {
-            color: #303030;
-            font-size: 12px;
-            font-weight: 500;
-            margin: 10px 0 0;
-            min-height: 36px;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            -webkit-box-orient: vertical
-        }
-
-        .product-grid>div span {
-            font-size: 12px
-        }
-
-        .more-payment-options.column-5 {
-            margin: 0;
-            padding: 0
-        }
-
-        #print-layout {
-            padding: 0 0;
-            margin: 0 0;
-        }
-
-        .category-img p,
-        .brand-img p {
-            color: #5e5873;
-            font-size: 12px;
-            font-weight: 500
-        }
-
-        .brand-img,
-        .category-img {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .brand-img img {
-            max-width: 70%
-        }
-
-        .load-more {
-            margin-top: 15px
-        }
-
-        .load-more:disabled {
-            opacity: 0.5
-        }
-
-        .ui-helper-hidden-accessible {
-            display: none !important
-        }
-
-        .btn-custom {
-            font-size: 13px;
-        }
-
-        #register-details-modal table tr td {
-            padding: .35rem 0
-        }
-
-        .totals .totals-title {
-            color: #303030;
-        }
-
-        @media (max-width: 500px) {
-            .product-grid>div {
-                width: calc(100%/3);
-            }
-        }
-
-        @media (max-width: 375px) {
-            .product-grid>div {
-                width: calc(100%/2);
-            }
-        }
-
-        @media all and (max-width:767px) {
-            section.pos-section {
-                padding: 0 5px
-            }
-
-            nav.navbar {
-                margin: 0 -10px
-            }
-
-            .pos-form {
-                padding: 0 0 !important
-            }
-
-            .payment-options {
-                padding: 5px 0
-            }
-
-            .payment-options .column-5 {
-                margin: 5px 0;
-            }
-
-            .payment-options .btn-sm {
-                font-size: 12px;
-            }
-
-            .more-payment-options,
-            .more-payment-options .btn-group {
-                width: 100%
-            }
-
-            .more-payment-options.column-5 {
-                padding: 0 5px;
-            }
-
-            .product-btns {
-                margin: 0 -15px 10px -15px
-            }
-
-            .product-btns .btn {
-                font-size: 12px;
-            }
-
-            .more-options {
-                margin-top: 0;
-            }
-
-            .transaction-list {
-                height: 35vh;
-            }
-
-            .filter-window {
-                position: fixed;
-            }
-        }
-
-        @media print {
-            .hidden-print {
-                display: none !important;
-            }
-        }
-
-        #print-layout * {
-            font-size: 10px;
-            line-height: 20px;
-            font-family: 'Ubuntu', sans-serif;
-            text-transform: capitalize;
-        }
-
-        #print-layout .btn {
-            padding: 7px 10px;
-            text-decoration: none;
-            border: none;
-            display: block;
-            text-align: center;
-            margin: 7px;
-            cursor: pointer;
-        }
-
-        #print-layout .btn-info {
-            background-color: #999;
-            color: #FFF;
-        }
-
-        #print-layout .btn-primary {
-            background-color: #6449e7;
-            color: #FFF;
-            width: 100%;
-        }
-
-        #print-layout td,
-        #print-layout th,
-        #print-layout tr,
-        #print-layout table {
-            border-collapse: collapse;
-        }
-
-        #print-layout tr {
-            border-bottom: 1px dotted #ddd;
-            display: block
-        }
-
-        #print-layout td,
-        #print-layout th {
-            padding: 7px 0;
-        }
-
-        #print-layout table {
-            width: 100%;
-        }
-
-        #print-layout .centered {
-            display: block;
-            text-align: center;
-            align-content: center;
-        }
-
-        #print-layout small {
-            font-size: 10px;
-        }
-
-        @media print {
-            #print-layout * {
-                font-size: 10px !important;
-                line-height: 20px;
-            }
-
-            #print-layout table {
-                width: 100%;
-                margin: 0 0;
-            }
-
-            #print-layout td,
-            #print-layout th {
-                padding: 5px 0;
-            }
-
-            #print-layout .hidden-print {
-                display: none !important;
-            }
-        }
-
-        .loader {
-            display: block;
-            max-width: 100% !important;
-            min-width: 100% !important;
-            text-align: center;
-            vertical-align: middle;
-            width: 100% !important;
-            margin-top: 50px
-        }
-
-        .product-grid .loader {
-            margin-top: 25%;
-        }
-
-        .loader svg path,
-        .loader svg rect {
-            fill: #7c5cc4;
-        }
-
-        nav.navbar a.menu-btn {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        nav.navbar a {
-            align-items: center;
-            display: flex;
-        }
-
-        .right-sidebar li a svg {
-            margin-right: 10px
-        }
-
-        .nav-menu svg {
-            width: 20px;
-            height: 20px;
-            stroke: #7c5cc4;
-            vertical-align: middle
-        }
-
-        .btn svg {
-            vertical-align: middle;
-            width: 16px
-        }
-
-        button.close svg {
-            vertical-align: middle;
-            width: 26px
-        }
-
-        .bootstrap-select.btn-group>.dropdown-toggle {
-            height: 37px
-        }
-
-        .dropdown-toggle-no-arrow::after {
-            display: none !important
-        }
-
-        .calculator {
-            background-color: #fff;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, .2);
-            width: 240px
-        }
-
-        .calculator .display {
-            width: 100%;
-            height: 50px;
-            background-color: #f5f5f5;
-            border: 2px solid #7c5cc4;
-            font-size: 1.5em;
-            text-align: right;
-            padding: 0 10px;
-            margin-bottom: 10px;
-            border-radius: 5px
-        }
-
-        .calculator .buttons {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px
-        }
-
-        .calculator .btn {
-            height: 40px;
-            font-size: 1em;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: background-color .2s
-        }
-
-        .calculator .btn.number {
-            background-color: #fff;
-            color: #000;
-            border: 1px solid #ddd
-        }
-
-        .calculator .btn.operator {
-            background-color: #f0f0f0;
-            color: #000
-        }
-
-        .calculator .btn.action.ac {
-            background-color: #d63031;
-            color: #fff
-        }
-
-        .calculator .btn.action.ce {
-            background-color: #e28d02;
-            color: #fff
-        }
-
-        .calculator .btn.equals {
-            background-color: #7c5cc4;
-            color: #fff;
-            grid-column: span 2
-        }
-
-        #product-results-container {
-            background: #f5f6f7;
-            position: absolute;
-            overflow: hidden;
-            max-height: 300px;
-            overflow-y: auto;
-            top: 40px;
-            width: 100%;
-            z-index: 999999
-        }
-
-        #product-results-container .product-img {
-            border-radius: 3px;
-            color: #7c5cc4;
-            font-size: 13px;
-            padding-top: 7px;
-            padding-bottom: 7px;
-            text-align: left
-        }
-
-        #product-results-container .product-img:hover {
-            background-color: #7c5cc4;
-            color: #FFF
-        }
-    </style>
+    <link rel="stylesheet" href="{{ asset('css/pos.css') }}" />
 @endpush
 @section('content')
 
@@ -944,32 +406,6 @@
                                 @endforeach
                             </div>
                         </div>
-                        <div class="brand mt-3">
-                            <div class="row ml-2 mr-2 px-2">
-                                <div class="col-7">Choose brand</div>
-                                <div class="col-5 text-right">
-                                    <span class="btn btn-default btn-sm btn-close">
-                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                                            stroke-width="1.5" stroke="currentColor" class="size-6">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M6 18 18 6M6 6l12 12" />
-                                        </svg>
-                                    </span>
-                                </div>
-                            </div>
-                            <div class="row ml-2 mt-3">
-                                @foreach ($lims_brand_list as $brand)
-                                    <div class="col-md-3 col-6 brand-img text-center" data-brand="{{ $brand->id }}">
-                                        @if ($brand->image)
-                                            <img src="{{ url('images/brand', $brand->image) }}" />
-                                        @else
-                                            <img src="{{ url('/images/product/zummXD2dvAtI.png') }}" />
-                                        @endif
-                                        <p class="text-center">{{ $brand->title }}</p>
-                                    </div>
-                                @endforeach
-                            </div>
-                        </div>
                         <div class="products-m mt-3">
                             <div class="row ml-2 mr-2 px-2">
                                 <div class="col-7"></div>
@@ -994,14 +430,17 @@
                             <button class="btn btn-block btn-primary mt-0 ml-1 mr-1"
                                 id="category-filter">{{ __('db.category') }}</button>
 
-                            <button class="btn btn-block btn-info mt-0 ml-1 mr-1"
-                                id="brand-filter">{{ __('db.Brand') }}</button>
+                            <button class="btn btn-block btn-secondary mt-0 ml-1 mr-1"
+                                id="product-filter">{{ __('db.Product') }}</button>
 
-                            <button class="btn btn-block btn-danger mt-0 ml-1 mr-1"
-                                id="featured-filter">{{ __('db.Featured') }}</button>
+                            <button class="btn btn-block btn-info mt-0 ml-1 mr-1"
+                                id="combo-filter">{{ __('db.Combo Products') }}</button>
                         </div>
                     </div>
                     <div class="row">
+                        <div class="col-md-12 mb-2">
+                            <input type="text" id="main-grid-search" class="form-control" placeholder="{{ __('db.Search products by name or code') }}..." autocomplete="off" />
+                        </div>
                         <div class="col-md-12">
                             <div class="alert alert-primary alert-dismissible fade show mb-0 pt-1 pb-1 loading-message">
                                 <span class="small">{{ __('db.Loading products for selected warehouse') }}</span>
@@ -1011,7 +450,7 @@
                                 </button>
                             </div>
                         </div>
-                        <div class="col-md-12 table-container main mt-2" data-cat="" data-brand="">
+                        <div class="col-md-12 table-container main mt-2" id="main-product-grid" data-cat="" data-brand="">
 
                             <div class="product-grid text-center">
 
@@ -1039,6 +478,9 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="col-md-12 mt-2" id="customize-product-grid-container" style="display:none;">
+                            <div class="product-grid text-center"></div>
+                        </div>
                     </div>
                 </div>
 
@@ -1060,7 +502,7 @@
                     <div class="row">
                         <div class="col-md-11 col-12">
                             <div class="row">
-                                <div class="col-md-3 col-6">
+                                <div class="col-md-4 col-6">
                                     <div class="form-group top-fields">
                                         <label>{{ __('db.date') }}</label>
                                         <div class="input-group">
@@ -1079,7 +521,7 @@
                                     <input type="hidden" id="warehouse_id" name="warehouse_id"
                                         value="{{ auth()->user()->warehouse_id }}" />
                                 @else
-                                    <div class="col-md-3 col-6">
+                                    <div class="col-md-4 col-6">
                                         <div class="form-group top-fields">
                                             <label>{{ __('db.Warehouse') }}</label>
                                             @php
@@ -1112,7 +554,7 @@
                                     <input type="hidden" id="biller_id" name="biller_id"
                                         value="{{ auth()->user()->biller_id }}" />
                                 @else
-                                    <div class="col-md-3 col-6">
+                                    <div class="col-md-4 col-6">
                                         <div class="form-group top-fields">
                                             <label>{{ __('db.Biller') }}</label>
                                             @php
@@ -1140,7 +582,7 @@
                                         </div>
                                     </div>
                                 @endif
-                                <div class="col-md-3 col-6">
+                                <div class="col-md-12 col-6">
                                     <div class="form-group top-fields">
                                         <label>{{ __('db.customer') }}</label>
                                         <div class="input-group pos">
@@ -1180,14 +622,14 @@
                                                 @endforeach
                                             </select>
                                             @if ($customer_active)
-                                                <button type="button" class="btn btn-default btn-sm" data-toggle="modal"
+                                                <button type="button" class="btn btn-default btn-sm ml-2" data-toggle="modal"
                                                     data-target="#addCustomer" title="Add Customer"><svg xmlns="http://www.w3.org/2000/svg"
                                                         fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                                         stroke="currentColor" class="size-6">
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             d="M12 4.5v15m7.5-7.5h-15" />
                                                     </svg></button>
-                                                <button type="button" class="btn btn-info btn-sm" id="viewCustomerBtn" 
+                                                <button type="button" class="btn btn-info btn-sm ml-2" id="viewCustomerBtn" 
                                                     title="View Customer" disabled><svg xmlns="http://www.w3.org/2000/svg"
                                                         fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                                         stroke="currentColor" class="size-6" style="width: 16px; height: 16px;">
@@ -1196,7 +638,7 @@
                                                         <path stroke-linecap="round" stroke-linejoin="round"
                                                             d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                                                     </svg></button>
-                                                <button type="button" class="btn btn-warning btn-sm" id="editCustomerBtn" 
+                                                <button type="button" class="btn btn-warning btn-sm ml-2" id="editCustomerBtn" 
                                                     title="Edit Customer" disabled><svg xmlns="http://www.w3.org/2000/svg"
                                                         fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                                                         stroke="currentColor" class="size-6" style="width: 16px; height: 16px;">
@@ -1207,6 +649,36 @@
                                             <x-validation-error fieldName="customer_id" />
                                         </div>
                                     </div>
+                                </div>
+                                {{-- Order Type: Display (default) / Customization (Box/Tray) --}}
+                                <div class="col-md-4 col-6">
+                                    <div class="form-group top-fields">
+                                        <label>{{ __('db.Order Type') }}</label>
+                                        <div class="input-group pos">
+                                            <select name="order_type" id="order_type" class="form-control" style="width:100%;">
+                                                @php
+                                                    $order_type = isset($lims_sale_data) && !empty($lims_sale_data) ? ($lims_sale_data->order_type ?? 1) : 1;
+                                                @endphp
+                                                <option value="1" @if ($order_type == 1) selected @endif>{{ __('db.Display') }}</option>
+                                                <option value="2" @if ($order_type == 2) selected @endif>{{ __('db.Customization') }}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="customizetypebox" class="col-12 form-group" style="display:none;">
+                                    <label class="d-block mb-1">{{ __('db.Select Tray or Box') }}</label>
+                                    <div class="d-flex flex-wrap gap-2 align-items-center">
+                                        @if(!empty($pos_boxes_category_id))
+                                        <a href="javascript:void(0);" class="btn btn-outline-secondary btn-sm customize_type" data-customize-type-id="{{ $pos_boxes_category_id }}">BOXES</a>
+                                        @endif
+                                        @if(!empty($pos_empty_tray_category_id))
+                                        <a href="javascript:void(0);" class="btn btn-outline-secondary btn-sm customize_type" data-customize-type-id="{{ $pos_empty_tray_category_id }}">EMPTY TRAY</a>
+                                        @endif
+                                        @if(!empty($pos_customer_tray_category_id))
+                                        <a href="javascript:void(0);" class="btn btn-outline-secondary btn-sm customize_type customize_type_static" data-customize-type-id="{{ $pos_customer_tray_category_id }}">Customer Tray</a>
+                                        @endif
+                                    </div>
+                                    <input type="hidden" id="customize_type" name="customize_type" value="" />
                                 </div>
                                 @if (in_array('restaurant', explode(',', $general_setting->modules)))
                                     <div class="col-md-3 col-6">
@@ -1475,7 +947,7 @@
                             <div class="search-box form-group mb-2">
                                 <div class="input-group pos">
                                     <input style="border: 1px solid #7c5cc4;" type="text" name="product_code_name"
-                                        id="product-search-input" placeholder="Scan/Search product by name/code/IMEI"
+                                        id="product-search-input" placeholder="Scan/Search product by name/code"
                                         class="form-control" autofocus />
                                     <button type="button" class="btn btn-primary" onclick="barcode()"><svg
                                             xmlns="http://www.w3.org/2000/svg" width="16" height="16"
@@ -1496,9 +968,10 @@
                             <table id="myTable" class="table table-hover table-striped order-list table-fixed">
                                 <thead class="d-none d-md-block">
                                     <tr>
+                                        <th class="customize-parent-col" style="width:36px; display:none;"></th>
                                         <th class="col-sm-5 col-6">{{ __('db.product') }}</th>
-                                        <th class="col-sm-2">{{ __('db.Price') }}</th>
-                                        <th class="col-sm-3">{{ __('db.Quantity') }}</th>
+                                        <th class="col-sm-2 d-none d-md-table-cell">{{ __('db.Price') }}</th>
+                                        <th class="col-sm-2">{{ __('db.Quantity') }}</th>
                                         <th class="col-sm-2">{{ __('db.Subtotal') }}</th>
                                     </tr>
                                 </thead>
@@ -3357,20 +2830,115 @@
             $noResults.hide();
         }
 
+        // Track current filter type globally
+        var currentFilterType = 'product'; // Default to product
+
+        // Customization (Box/Tray): current type id and sort counter for addNewProduct
+        var customSortCounter = 0;
+
         $(document).ready(function() {
 
             $('#product-search-input').focus();
 
-            //Get all products on page load - if no products, try featured, otherwise load all
-            $.get('{{ url('sales/getproducts') }}/' + warehouse_id + '/all/0', function(response) {
-                if (response.data && response.data.name && response.data.name.length > 0) {
-                    populateProduct(response);
+            // Order Type: show/hide Box-Tray selection
+            $('#order_type').on('change', function() {
+                var v = $(this).val();
+                if (v == '2') {
+                    $('#customizetypebox').slideDown(200);
+                    $('.customize_type').removeClass('btn-primary').addClass('btn-outline-secondary');
                 } else {
-                    // If no products found, try featured products
-                    $.get('{{ url('sales/getproducts') }}/' + warehouse_id + '/featured/1', function(response) {
-                        populateProduct(response);
-                    });
+                    $('#customizetypebox').slideUp(200);
+                    $('#customize_type').val('');
+                    $('#customize-product-grid-container').hide();
+                    $('.customize-parent-col').hide();
+                    $('.customize-parent-td').hide();
+                    customSortCounter = 0;
                 }
+            });
+
+            // Box / Empty Tray / Customer Tray click
+            $(document).on('click', '.customize_type', function(e) {
+                e.preventDefault();
+                var typeId = $(this).data('customize-type-id');
+                $('#customize_type').val(typeId);
+                $('#order_type').val('2');
+                $('#customizetypebox').show();
+                $('.customize_type').removeClass('btn-primary').addClass('btn-outline-secondary');
+                $(this).removeClass('btn-outline-secondary').addClass('btn-primary');
+
+                var $container = $('#customize-product-grid-container');
+                var $mainGrid = $('#main-product-grid');
+                var isStaticCustomerTray = $(this).hasClass('customize_type_static');
+                var customerTrayProductCode = @json($pos_customer_tray_product_code ?? null);
+
+                if (isStaticCustomerTray) {
+                    $container.hide();
+                    $mainGrid.show();
+                    if (!customerTrayProductCode) {
+                        alert('Add at least one product in Customer Tray category.');
+                        return;
+                    }
+                    var customer_id = $('#customer_id').val();
+                    var wh = $('#warehouse_id').val();
+                    if (!customer_id) { alert('Please select Customer!'); return; }
+                    if (!wh) { alert('Please select Warehouse!'); return; }
+                    var product = { code: customerTrayProductCode, qty: 1, pre_qty: 1, imei: null, embedded: 0, batch: '', price: 0, customer_id: customer_id, type: 'product' };
+                    $.ajax({
+                        type: 'GET',
+                        url: '{{ url("sales/lims_product_search") }}',
+                        data: { data: product },
+                        success: function(responseData) {
+                            if (responseData && responseData[0]) {
+                                var productCode = responseData[1];
+                                var sameCodeCount = $('table.order-list tbody tr').filter(function() { return $(this).find('.product-code').val() === productCode; }).length;
+                                addNewProduct(responseData, null, true, sameCodeCount + 1);
+                                $('.customize-parent-col').show();
+                            } else {
+                                alert('Product in Customer Tray category not found or inactive.');
+                            }
+                        },
+                        error: function() {
+                            alert('Could not add Customer Tray.');
+                        }
+                    });
+                } else if (typeId && !isNaN(parseInt(typeId, 10))) {
+                    $mainGrid.hide();
+                    $container.show();
+                    $container.find('.product-grid').html('<div class="loader" style="border:none;min-height:120px"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="24px" height="30px" viewBox="0 0 24 30"><rect x="0" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0" dur="0.6s" repeatCount="indefinite"/></rect><rect x="10" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.2s" dur="0.6s" repeatCount="indefinite"/></rect><rect x="20" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.4s" dur="0.6s" repeatCount="indefinite"/></rect></svg></div>');
+                    var wh = $('#warehouse_id').val();
+                    if (!wh) { alert('Please select Warehouse.'); $container.hide(); $mainGrid.show(); return; }
+                    $.get('{{ url("sales/getproducts") }}/' + wh + '/category/' + typeId + '?pos_customize=1', function(response) {
+                        var tableData = '<div class="product-grid text-center">';
+                        if (response.data && response.data['name']) {
+                            $.each(response.data['name'], function(index) {
+                                var image = response.data['image'][index] || 'zummXD2dvAtI.png';
+                                var price = parseFloat(response.data['price'][index]) || 0;
+                                var formattedPrice = price.toFixed(2);
+                                var productType = (response.data['type'] && response.data['type'][index]) ? response.data['type'][index] : 'product';
+                                tableData += '<div class="product-img sound-btn customize-grid-product" title="' + response.data['name'][index] + '" data-code="' + response.data['code'][index] + '" data-qty="' + response.data['qty'][index] + '" data-imei="' + (response.data['is_imei'] ? response.data['is_imei'][index] : 0) + '" data-embedded="' + (response.data['is_embeded'] ? response.data['is_embeded'][index] : 0) + '" data-batch="" data-price="' + response.data['price'][index] + '" data-type="' + productType + '"><img src="{{ url("/images/product") }}/' + image + '" width="100%" /><p>' + response.data['name'][index] + '</p><span>[' + response.data['code'][index] + ']</span> <span class="d-block" style="font-weight:600;color:#5f27cd;">Price: ' + formattedPrice + '</span> <span class="d-block">Qty: ' + response.data['qty'][index] + '</span></div>';
+                            });
+                        } else {
+                            tableData += '<p class="text-muted py-3">No products in this category</p>';
+                        }
+                        tableData += '</div>';
+                        $container.html(tableData);
+                    }).fail(function() {
+                        $container.find('.product-grid').html('<p class="text-danger py-3">Failed to load products</p>');
+                    });
+                } else {
+                    $container.hide();
+                    $mainGrid.show();
+                }
+            });
+
+            if ($('#order_type').val() == '2') {
+                $('#customizetypebox').show();
+            }
+
+            //Get single products on page load
+            currentFilterType = 'product';
+            $.get('{{ url('sales/getproducts') }}/' + warehouse_id + '/product/0', function(response) {
+                populateProduct(response);
             });
 
             let typingTimer;
@@ -3414,8 +2982,7 @@
                                     $('.imei-number').each(function() {
                                         let val = $(this).val();
                                         imeiNumbersArray = val.split(",");
-                                        if (imeiNumbersArray.includes(product
-                                                .imei_number)) {
+                                        if (                        imeiNumbersArray.includes(productInput.imei)) {
                                             exists = true;
                                             return;
                                         }
@@ -3428,7 +2995,8 @@
                                                                 data-imei="${product.imei_number}"
                                                                 data-embedded="${product.is_embeded}"
                                                                 data-batch="${batch_id}"
-                                                                data-price="${product.price}">
+                                                                data-price="${product.price}"
+                                                                data-type="${product.type || 'product'}">
                                             ${product.name} (${product.code}) | ${product.price} | IMEI: ${product.imei_number}
                                         </div>
                                     `;
@@ -3459,7 +3027,8 @@
                                                             data-imei="${product.is_imei}"
                                                             data-embedded="${product.is_embeded}"
                                                             data-batch="${batch_id}"
-                                                            data-price="${product.price}">
+                                                            data-price="${product.price}"
+                                                            data-type="${product.type || 'product'}">
                                         ${product.name} (${product.code}) | ${product.price} ${displayStock}
                                     </div>
                                 `;
@@ -3648,7 +3217,7 @@
 
         if (isMobile == true) {
             $('.loading-message').hide();
-            $('.table-container').hide();
+            $('#main-product-grid').hide();
             $('.more-payment-options > div > div').addClass('dropdown-menu');
             $('#collapseProducts').addClass('collapse');
             $('#grand-total-m').html($('input[name="grand_total"]').val());
@@ -3715,6 +3284,16 @@
         var next_page_url;
         var lims_customer_list = <?php echo json_encode($lims_customer_list); ?>;
 
+        function escapeHtml(text) {
+            if (text == null || text === '') return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        function safeBtoa(str) {
+            try { return btoa(str); } catch (e) { return btoa(unescape(encodeURIComponent(str))); }
+        }
+
         $(window).on('load', async function() {
             //await getProduct(warehouse_id);
 
@@ -3751,9 +3330,9 @@
                 direction: 'right'
             }, 'fast');
             $('.category').show();
-            $('.brand').hide();
             $('.products-m').hide();
-            $(".table-container").removeClass('brand').removeClass('featured').addClass('category');
+            $("#main-product-grid").removeClass('product').removeClass('combo').addClass('category');
+            currentFilterType = 'product'; // Category filter shows products
         });
 
         //click on category image on the filter window shown after clicking the category button
@@ -3762,7 +3341,9 @@
             $('.filter-window').hide('slide', {
                 direction: 'right'
             }, 'fast');
-            $(".table-container").children().remove();
+            $('#main-grid-search').val('');
+            $("#main-product-grid").children().remove();
+            currentFilterType = 'product'; // Category filter shows products
             $.get('{{ url('sales/getproducts') }}/' + warehouse_id + '/category/' + category_id, function(
                 response) {
                 populateProduct(response);
@@ -3775,41 +3356,13 @@
             }
         });
 
-        ///brand button
-        $('#brand-filter').on('click', function(e) {
-            e.stopPropagation();
-            $('.filter-window').show('slide', {
-                direction: 'right'
-            }, 'fast');
-            $('.brand').show();
-            $('.category').hide();
-            $('.products-m').hide();
-            $(".table-container").removeClass('category').removeClass('featured').addClass('brand');
-        });
+        ///product button (single products)
+        $('#product-filter').on('click', function(e) {
+            $("#main-product-grid").removeClass('category').removeClass('combo').addClass('product');
+            currentFilterType = 'product';
+            $('#main-grid-search').val('');
 
-        //click on brand image on the filter window shown after clicking the brand button
-        $(document).on('click', '.brand-img', function() {
-            var brand_id = $(this).data('brand');
-            $('.filter-window').hide('slide', {
-                direction: 'right'
-            }, 'fast');
-            $(".table-container").children().remove();
-            $.get('{{ url('sales/getproducts') }}/' + warehouse_id + '/brand/' + brand_id, function(response) {
-                populateProduct(response);
-            });
-
-            if (isMobile == true) {
-                $('.filter-window').show('slide', {
-                    direction: 'right'
-                }, 'fast');
-            }
-        });
-
-        ///featured button
-        $('#featured-filter').on('click', function(e) {
-            $(".table-container").removeClass('category').removeClass('brand').addClass('featured');
-
-            $.get('{{ url('sales/getproducts') }}/' + warehouse_id + '/featured/1', function(response) {
+            $.get('{{ url('sales/getproducts') }}/' + warehouse_id + '/product/0', function(response) {
                 populateProduct(response);
             });
 
@@ -3817,12 +3370,30 @@
                 e.stopPropagation();
                 $(".product_list_mobile.table-container").show();
                 $('.product_list_mobile').html('');
-                let featured_products = $(".table-container .product-grid").clone();
-                $('.product_list_mobile').html(featured_products);
-                $('.filter-window').show('slide', {
-                    direction: 'right'
-                }, 'fast');
-                $('.brand').hide();
+                let productList = $("#main-product-grid .product-grid").clone();
+                $('.product_list_mobile').html(productList);
+                $('.filter-window').show('slide', { direction: 'right' }, 'fast');
+                $('.category').hide();
+            }
+        });
+
+        ///combo button
+        $('#combo-filter').on('click', function(e) {
+            $("#main-product-grid").removeClass('category').removeClass('product').addClass('combo');
+            currentFilterType = 'combo';
+            $('#main-grid-search').val('');
+
+            $.get('{{ url('sales/getproducts') }}/' + warehouse_id + '/combo/0', function(response) {
+                populateProduct(response);
+            });
+
+            if (isMobile == true) {
+                e.stopPropagation();
+                $(".product_list_mobile.table-container").show();
+                $('.product_list_mobile').html('');
+                let comboList = $("#main-product-grid .product-grid").clone();
+                $('.product_list_mobile').html(comboList);
+                $('.filter-window').show('slide', { direction: 'right' }, 'fast');
                 $('.category').hide();
             }
         });
@@ -3832,9 +3403,9 @@
             $('.filter-window').hide('slide', {
                 direction: 'right'
             }, 'fast');
-            $(".table-container").removeClass('category').removeClass('brand').removeClass('featured');
+            $("#main-product-grid").removeClass('category').removeClass('product').removeClass('combo');
             if (isMobile == true) {
-                $(".table-container").hide();
+                $("#main-product-grid").hide();
             }
         });
 
@@ -3848,13 +3419,54 @@
             });
         });
 
+        // Main product grid search: single + combo, same product-img sound-btn style, no type label
+        var mainGridSearchTimer;
+        var mainGridLoaderHtml = '<div class="loader" style="border:none;min-height:120px"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="24px" height="30px" viewBox="0 0 24 30"><rect x="0" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0" dur="0.6s" repeatCount="indefinite"/></rect><rect x="10" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.2s" dur="0.6s" repeatCount="indefinite"/></rect><rect x="20" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.4s" dur="0.6s" repeatCount="indefinite"/></rect></svg></div>';
+        $('#main-grid-search').on('input', function() {
+            var $input = $(this);
+            var q = $.trim($input.val());
+            clearTimeout(mainGridSearchTimer);
+            if (q.length === 0) {
+                $('#main-product-grid').html(mainGridLoaderHtml);
+                $('#product-filter').trigger('click');
+                return;
+            }
+            if (q.length < 2) return;
+            mainGridSearchTimer = setTimeout(function() {
+                var wh = $('#warehouse_id').val();
+                if (!wh) return;
+                $('#main-product-grid').html(mainGridLoaderHtml);
+                $.get('{{ url("sales/search") }}/' + wh + '/' + safeBtoa(q), function(data) {
+                    var tableData = '<div class="product-grid">';
+                    if (data && data.length > 0) {
+                        data.forEach(function(p) {
+                            var img = (p.image && String(p.image).trim()) ? String(p.image).trim() : 'zummXD2dvAtI.png';
+                            var price = parseFloat(p.price) || 0;
+                            var formattedPrice = price.toFixed(2);
+                            var pType = (p.type && String(p.type).trim()) ? String(p.type).trim() : 'product';
+                            var nameEsc = escapeHtml(p.name || '');
+                            var codeEsc = escapeHtml(p.code || '');
+                            tableData += '<div class="product-img sound-btn" title="' + nameEsc.replace(/"/g, '&quot;') + '" data-code="' + codeEsc.replace(/"/g, '&quot;') + '" data-qty="' + (p.qty || 0) + '" data-imei="' + (p.is_imei || 0) + '" data-embedded="' + (p.is_embeded || 0) + '" data-batch="" data-price="' + price + '" data-type="' + escapeHtml(pType) + '"><img src="{{ url("/images/product") }}/' + escapeHtml(img) + '" width="100%" /><p>' + nameEsc + '</p><span>[' + codeEsc + ']</span> <span class="d-block" style="font-weight:600;color:#5f27cd;">Price: ' + formattedPrice + '</span> <span class="d-block">Qty: ' + (p.qty || 0) + '</span></div>';
+                        });
+                    } else {
+                        tableData += '<p class="text-muted py-4">No products found.</p>';
+                    }
+                    tableData += '</div>';
+                    $('#main-product-grid').html(tableData);
+                    $('#main-product-grid').show();
+                }).fail(function() {
+                    $('#main-product-grid').html('<div class="product-grid"><p class="text-danger py-4">Search failed.</p></div>');
+                });
+            }, 350);
+        });
+
         $('#warehouse_id').on('change', function() {
             warehouse_id = $(this).val();
-            // getProduct(warehouse_id);
+            $('#main-grid-search').val('');
             @if ($lims_pos_setting_data && $lims_pos_setting_data->cash_register)
                 isCashRegisterAvailable(warehouse_id);
             @endif
-            $('#featured-filter').trigger('click');
+            $('#product-filter').trigger('click');
 
             saveDataToLocalStorageForCustomerDisplay('clear_no');
         });
@@ -3924,12 +3536,14 @@
                     image = 'zummXD2dvAtI.png';
                 var price = parseFloat(response.data['price'][index]) || 0;
                 var formattedPrice = price.toFixed(2);
+                // Use type from response if available, otherwise use currentFilterType, fallback to 'product'
+                var productType = (response.data['type'] && response.data['type'][index]) ? response.data['type'][index] : (currentFilterType || 'product');
                 tableData += '<div class="product-img sound-btn" title="' + response.data['name'][index] +
                     '" data-code = "' + response.data['code'][index] + '" data-qty="' + response.data['qty'][
                         index
                     ] + '" data-imei="' + response.data['is_imei'][index] + '" data-embedded="' + response
                     .data['is_embeded'][index] + '" data-batch="" data-price="' + response.data['price'][index] +
-                    '"><img  src="{{ url('/images/product') }}/' + image + '" width="100%" /><p>' + response.data[
+                    '" data-type="' + productType + '"><img  src="{{ url('/images/product') }}/' + image + '" width="100%" /><p>' + response.data[
                         'name'][index] + '</p><span>[' + response.data['code'][index] +
                     ']</span> <span class="d-block" style="font-weight: 600; color: #5f27cd;">Price: ' +
                     formattedPrice + '</span> <span class="d-block">Qty: ' + response.data['qty'][index] +
@@ -3943,15 +3557,14 @@
                 tableData +=
                     '<button class="btn btn-primary btn-block load-more"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3" /></svg></button>';
             }
-            $(".table-container").html(tableData);
+            $("#main-product-grid").html(tableData);
 
             if (isMobile) {
-                $('.brand').hide();
                 $('.category').hide();
                 $('.products-m').show();
                 $(".product_list_mobile.table-container").show();
             } else {
-                $(".table-container").show();
+                $("#main-product-grid").show();
             }
         }
 
@@ -3964,18 +3577,20 @@
                     image = 'zummXD2dvAtI.png';
                 var price = parseFloat(response.data['price'][index]) || 0;
                 var formattedPrice = price.toFixed(2);
+                // Use type from response if available, otherwise use currentFilterType, fallback to 'product'
+                var productType = (response.data['type'] && response.data['type'][index]) ? response.data['type'][index] : (currentFilterType || 'product');
                 tableData += '<div class="product-img sound-btn" title="' + response.data['name'][index] +
                     '" data-code = "' + response.data['code'][index] + '" data-qty="' + response.data['qty'][
                         index
                     ] + '" data-imei="' + response.data['is_imei'][index] + '" data-embedded="' + response
                     .data['is_embeded'][index] + '" data-batch="" data-price="' + response.data['price'][index] +
-                    '"><img  src="{{ url('/images/product') }}/' + image + '" width="100%" /><p>' + response.data[
+                    '" data-type="' + productType + '"><img  src="{{ url('/images/product') }}/' + image + '" width="100%" /><p>' + response.data[
                         'name'][index] + '</p><span>' + response.data['code'][index] +
                     '</span> <span class="d-block" style="font-weight: 600; color: #5f27cd;">Price: ' +
                     formattedPrice + '</span> <span class="d-block">Qty: ' + response.data['qty'][index] +
                     '</span></div>';
             });
-            $(".table-container .product-grid").append(tableData);
+            $("#main-product-grid .product-grid").append(tableData);
 
             next_page_url = response.next_page_url;
             if (!next_page_url) {
@@ -3987,6 +3602,33 @@
             playSound();
             alert('Product is expired!');
             return false;
+        });
+
+        // Customization grid (Boxes / Empty Tray): add product as PARENT row with radio; name + 1,2,3 for same product
+        $(document).on('click', '.customize-grid-product', function(e) {
+            e.stopPropagation();
+            playSound();
+            if ($('#order_type').val() != '2') return;
+            var customer_id = $('#customer_id').val();
+            var warehouse_id = $('#warehouse_id').val();
+            if (!customer_id) { alert('Please select Customer!'); return; }
+            if (!warehouse_id) { alert('Please select Warehouse!'); return; }
+            var data = $(this).data();
+            if (!data.type) data.type = $(this).attr('data-type') || 'product';
+            var product = { code: data.code, qty: data.qty, pre_qty: 1, imei: data.imei || null, embedded: data.embedded || 0, batch: data.batch || '', price: data.price, customer_id: customer_id, type: data.type || 'product' };
+            $.ajax({
+                type: 'GET',
+                url: '{{ url("sales/lims_product_search") }}',
+                data: { data: product },
+                success: function(responseData) {
+                    if (responseData && responseData[0]) {
+                        var productCode = responseData[1];
+                        var sameCodeCount = $('table.order-list tbody tr').filter(function() { return $(this).find('.product-code').val() === productCode; }).length;
+                        addNewProduct(responseData, null, true, sameCodeCount + 1);
+                        $('.customize-parent-col').show();
+                    }
+                }
+            });
         });
 
         $(document).on('click', '.product-img', function() {
@@ -4024,6 +3666,10 @@
             @endif
             else {
                 var data = $(this).data();
+                // Ensure type is read correctly from data-type attribute
+                if (!data.type) {
+                    data.type = $(this).attr('data-type') || 'product';
+                }
                 productSearch(data);
             }
         });
@@ -4031,29 +3677,37 @@
         function processDraftData() {
             @if (isset($lims_sale_data))
                 let draft_product_data = @json($draft_product_data);
+                var maxSort = 0;
+                draft_product_data.forEach(function(p) {
+                    if (p.custom_sort != null && p.custom_sort > maxSort) maxSort = parseInt(p.custom_sort, 10);
+                });
+                if (maxSort > 0) customSortCounter = maxSort;
                 draft_product_data.forEach(function(product) {
-                    productSearch(product); // product is already an object
+                    productSearch(product);
                 });
             @endif
         }
 
-        function productSearch(data) {
-            // if(data.embedded == 1) {
-            //     alert('{{ __('db.This product has been added using the weight scale machine.') }}');
-            //     return;
-            // }
-            var item_code = data.code;
+        function productSearch(productInput) {
+            // Customization: must select Tray or Box before adding product (skip when loading draft with customize_type_id)
+            if ($('#order_type').val() == '2') {
+                if (!$('#customize_type').val() && !(productInput.customize_type_id)) {
+                    alert('{{ __("db.Select Tray or Box") }}');
+                    return;
+                }
+            }
+            var item_code = productInput.code;
             var pre_qty = 0;
             var flag = true;
             $(".product-code").each(function(i) {
                 if ($(this).val().trim() == item_code) {
                     rowindex = i;
-                    if (data.imei != 'null' && data.imei != '') {
+                    if (productInput.imei != 'null' && productInput.imei != '') {
                         imeiNumbers = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .imei-number')
                             .val();
                         imeiNumbersArray = imeiNumbers.split(",");
 
-                        if (imeiNumbersArray.includes(data.imei)) {
+                        if (imeiNumbersArray.includes(productInput.imei)) {
                             alert('Same imei or serial number is not allowed!');
                             flag = false;
                             $('#product-search-input').val('');
@@ -4065,14 +3719,15 @@
             });
             if (flag) {
                 let product = {
-                    code: data.code,
-                    qty: data.qty,
+                    code: productInput.code,
+                    qty: productInput.qty,
                     pre_qty: (parseFloat(pre_qty) + 1),
-                    imei: data.imei,
-                    embedded: data.embedded,
-                    batch: data.batch,
-                    price: data.price,
-                    customer_id: $('#customer_id').val()
+                    imei: productInput.imei,
+                    embedded: productInput.embedded,
+                    batch: productInput.batch,
+                    price: productInput.price,
+                    customer_id: $('#customer_id').val(),
+                    type: productInput.type || 'product'
                 };
                 //data += '?'+$('#customer_id').val()+'?'+(parseFloat(pre_qty) + 1);
                 $.ajax({
@@ -4100,8 +3755,14 @@
                         }
                         var flag = 1;
                         if (pre_qty > 0) {
-                            var qty = data[15];
-                            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .qty').val(qty);
+                            var qty = parseFloat(data[15]) || 1;
+                            var maxStock = parseFloat(data[19]);
+                            if (!isNaN(maxStock) && maxStock >= 0 && (!data[18] || data[18] == 'null' || data[18] == '')) {
+                                if (qty > maxStock) qty = maxStock;
+                            }
+                            var $rowQty = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .qty');
+                            $rowQty.val(qty);
+                            if (!isNaN(maxStock) && maxStock >= 0) $rowQty.attr('max', maxStock);
                             //pos = product_code.indexOf(data[1]);
 
                             product_price[rowindex] = parseFloat(data[2] * currency['exchange_rate']) +
@@ -4113,7 +3774,13 @@
                         $("input[name='product_code_name']").val('');
 
                         if (flag) {
-                            addNewProduct(data);
+                            var draftCustomize = null;
+                            if (productInput.customize_type_id != null && productInput.customize_type_id !== '') {
+                                draftCustomize = { customize_type_id: productInput.customize_type_id, custom_sort: productInput.custom_sort };
+                                if (productInput.is_customize_parent !== undefined) draftCustomize.is_customize_parent = productInput.is_customize_parent;
+                            }
+                            var isParentRow = (draftCustomize && draftCustomize.is_customize_parent == 1) ? true : false;
+                            addNewProduct(data, draftCustomize, isParentRow);
                         } else if (data[18] != 'null' && data[18] != '') {
                             var imeiNumbers = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')')
                                 .find('.imei-number').val();
@@ -4136,38 +3803,70 @@
             const productSale = null;
         @endif
 
-        function addNewProduct(data) {
+        var customizeParentCounter = 0;
+        function addNewProduct(data, draftCustomize, isParentRow, instanceNumber) {
+            if (typeof isParentRow === 'undefined') isParentRow = false;
             $('.payment-btn').removeAttr('disabled');
             $('#installmentPlanBtn').removeAttr('disabled');
-            var newRow = $('<tr id=' + data[1] + '>');
+            var orderType2 = ($('#order_type').val() == '2');
+            if (orderType2 && isParentRow) customizeParentCounter++;
+            // Customize type box: show name + 1, 2, 3 so same product can be distinguished
+            var displayName = data[0];
+            if (orderType2 && isParentRow && typeof instanceNumber !== 'undefined' && instanceNumber > 0) {
+                displayName = data[0] + ' ' + instanceNumber;
+            }
+            // Cap qty at in-stock when product has stock limit (no IMEI)
+            var maxStock = parseFloat(data[19]);
+            if (!isNaN(maxStock) && maxStock >= 0 && (!data[18] || data[18] == 'null' || data[18] == '' || data[18] == 0)) {
+                var requestedQty = parseFloat(data[15]) || 1;
+                if (requestedQty > maxStock) data[15] = maxStock;
+            }
+            var newRow = $('<tr id="' + String(data[1]).replace(/[^a-zA-Z0-9_-]/g, '_') + '_' + (isParentRow ? 'p' + customizeParentCounter : Date.now()) + '">');
             var cols = '';
             temp_unit_name = (data[6]).split(',');
+            if (orderType2) {
+                $('.customize-parent-col').show();
+                if (isParentRow) {
+                    var fromDraft = draftCustomize && draftCustomize.is_customize_parent == 1;
+                    var shouldCheck = fromDraft ? !(window.firstDraftParentChecked) : true;
+                    if (fromDraft && shouldCheck) window.firstDraftParentChecked = true;
+                    if (!fromDraft) $('.customize-parent-radio').prop('checked', false);
+                    var radioId = 'custom_parent_' + customizeParentCounter;
+                    cols += '<td class="align-middle text-center customize-parent-td"><label class="d-flex align-items-center justify-content-center mb-0" for="' + radioId + '"><input type="radio" class="customize-parent-radio" name="customize_parent_row" value="' + radioId + '" id="' + radioId + '"' + (shouldCheck ? ' checked' : '') + ' /></label></td>';
+                } else {
+                    cols += '<td class="align-middle text-center customize-parent-td">&mdash;</td>';
+                }
+            } else {
+                cols += '<td class="customize-parent-td" style="display:none;"></td>';
+            }
             //pos = product_code.indexOf(data[1]);
 
             let stockDisplay = '';
 
-            if (all_permission.includes("cart-product-update")) {
-                if (data[20].trim() == 'standard' || data[20].trim() == 'combo') {
-                    if (!data[18] || data[18] == 'null') {
-                        stockDisplay = ` | {{ __('db.In Stock') }} : <span class="in-stock">` + data[19] + `</span>`;
-                    }
+            // Show stock display for standard, combo, raw_material, and warehouse_store products
+            if (data[20] && (data[20].trim() == 'standard' || data[20].trim() == 'combo' || data[20].trim() == 'raw_material' || data[20].trim() == 'warehouse_store')) {
+                if (!data[18] || data[18] == 'null' || data[18] == '0' || data[18] == 0 || data[18] === '') {
+                    stockDisplay = ` | {{ __('db.In Stock') }} : <span class="in-stock">` + data[19] + `</span>`;
                 }
+            }
+
+            if (all_permission.includes("cart-product-update")) {
                 cols +=
                     '<td class="col-sm-5 col-6 product-title"><strong class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal">' +
-                    data[0] +
+                    displayName +
                     ' <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg></strong><br><span>' +
                     data[1] + '</span>' + stockDisplay + ' <strong class="product-price d-none"></strong>';
             } else {
-                cols += '<td class="col-sm-5 col-6 product-title"><strong>' + data[0] + '<br><span>' + data[1] + '</span>' +
+                cols += '<td class="col-sm-5 col-6 product-title"><strong>' + displayName + '<br><span>' + data[1] + '</span>' +
                     stockDisplay + ' <strong class="product-price d-none"></strong>';
             }
 
-            if (data[12]) {
+            // Show batch-no input only for batch-enabled standard products (not for combo)
+            if ((data[12] == 1 || data[12] === true) && data[20] != 'combo') {
                 cols +=
                     '<br><input style="font-size:13px;padding:3px 25px 3px 10px;height:30px !important" type="text" class="form-control batch-no" value="' +
-                    data[22] +
-                    '" required/> <input type="hidden" class="product-batch-id" name="product_batch_id[]" value="' + data[
-                        21] + '"/>';
+                    (data[22] || '') +
+                    '" required/> <input type="hidden" class="product-batch-id" name="product_batch_id[]" value="' + (data[21] || '') + '"/>';
             } else {
                 cols +=
                     '<input type="text" class="form-control batch-no d-none" disabled/> <input type="hidden" class="product-batch-id" name="product_batch_id[]"/>';
@@ -4175,14 +3874,10 @@
 
             cols += '</td>';
             cols += '<td class="col-sm-2 product-price d-none d-md-block"></td>';
-            cols += '<td class="col-sm-3" style="min-width:140px"><div class="input-group"><span class="input-group-btn">';
+            cols += '<td class="col-sm-2" style="min-width:140px"><div class="input-group"><span class="input-group-btn">';
 
-            // Always show delete button
-            cols +=
-                '<button type="button" class="ibtnDel btn btn-danger btn-sm mr-2" style="padding:5px"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button></span>';
-
-            // If no IMEI, show minus button
-            if (!data[18] || data[18] == 'null') {
+            // Show minus button if no IMEI (for all product types including raw_material and warehouse_store)
+            if (!data[18] || data[18] == 'null' || data[18] == '0' || data[18] == 0 || data[18] === '' || (data[20] && (data[20].trim() == 'raw_material' || data[20].trim() == 'warehouse_store'))) {
                 cols +=
                     '<button type="button" class="btn btn-default minus mr-1" style="padding:5px"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" /></svg></button>';
             }
@@ -4191,15 +3886,15 @@
             cols += '<input type="text" name="qty[]" class="form-control qty numkey input-number" step="any" value="' +
                 data[15] + '" max="' + data[19] + '" required><span class="input-group-btn">';
 
-            // If no IMEI, show plus button
-            if (!data[18] || data[18] == 'null') {
+            // Show plus button if no IMEI (for all product types including raw_material and warehouse_store)
+            if (!data[18] || data[18] == 'null' || data[18] == '0' || data[18] == 0 || data[18] === '' || (data[20] && (data[20].trim() == 'raw_material' || data[20].trim() == 'warehouse_store'))) {
                 cols +=
                     '<button type="button" class="btn btn-default plus ml-1" style="padding:5px"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg></button>';
             }
 
             cols += '</span></div></td>';
 
-            cols += '<td class="col-sm-2 sub-total"></td>';
+            cols += '<td class="col-sm-2 sub-total-cell"><span class="sub-total"></span> <button type="button" class="ibtnDel btn btn-danger btn-sm" title="' + {{ json_encode(__('db.Remove')) }} + '"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button></td>';
             cols += '<input type="hidden" class="product-code" name="product_code[]" value="' + data[1] + '"/>';
             cols += '<input type="hidden" class="product-id" name="product_id[]" value="' + data[9] + '"/>';
             cols += '<input type="hidden" class="product_type" name="product_type[]" value="' + data[20] + '"/>';
@@ -4214,6 +3909,23 @@
             cols += '<input type="hidden" class="sale-unit-operator" value="' + data[7] + '" />';
             cols += '<input type="hidden" class="sale-unit-operation-value" value="' + data[8] + '" />';
             cols += '<input type="hidden" class="subtotal-value" name="subtotal[]" />';
+            // Customization: store type (Box/Tray) and sort order per row
+            var orderTypeVal = $('#order_type').val();
+            var customizeTypeVal = $('#customize_type').val();
+            var custId = '';
+            var custSort = '';
+            if (draftCustomize && (draftCustomize.customize_type_id || draftCustomize.custom_sort !== undefined)) {
+                custId = (draftCustomize.customize_type_id || '');
+                custSort = (draftCustomize.custom_sort !== undefined && draftCustomize.custom_sort !== null) ? draftCustomize.custom_sort : '';
+            } else if (orderTypeVal == '2' && customizeTypeVal) {
+                customSortCounter = (typeof customSortCounter === 'undefined' ? 0 : customSortCounter) + 1;
+                custId = customizeTypeVal;
+                custSort = customSortCounter;
+            }
+            cols += '<input type="hidden" class="customize-type-id" name="customize_type_id[]" value="' + custId + '"/>';
+            cols += '<input type="hidden" class="custom-sort" name="custom_sort[]" value="' + custSort + '"/>';
+            var isParentVal = (orderType2 && isParentRow) ? '1' : '0';
+            cols += '<input type="hidden" class="is-customize-parent" name="is_customize_parent[]" value="' + isParentVal + '"/>';
             if (data[18] != 'null' && data[18] != '')
                 cols += '<input type="hidden" class="imei-number" name="imei_number[]" value="' + data[18] + '" />';
             else
@@ -4225,8 +3937,16 @@
 
             newRow.append(cols);
 
+            var $tbody = $("table.order-list tbody");
+            var $selectedParent = $tbody.find('tr').has('.customize-parent-radio:checked');
+            if (orderType2 && !isParentRow && $selectedParent.length) {
+                $selectedParent.after(newRow);
+            } else {
+                $tbody.prepend(newRow);
+            }
+
             if (keyboard_active == 1) {
-                $("table.order-list tbody").prepend(newRow).find('.qty').keyboard({
+                newRow.find('.qty').keyboard({
                     usePreview: false,
                     layout: 'custom',
                     display: {
@@ -4247,8 +3967,7 @@
                         buttonDisabled: 'disabled'
                     },
                 });
-            } else
-                $("table.order-list tbody").prepend(newRow);
+            }
 
             rowindex = newRow.index();
 
@@ -5560,7 +5279,7 @@
             rowindex = $(this).closest('tr').index();
         });
 
-        //Delete product
+        //Delete product (row remove: subtotal column delete icon)
         $("table.order-list tbody").on("click", ".ibtnDel", function(event) {
             playSound();
             rowindex = $(this).closest('tr').index();
@@ -5575,6 +5294,9 @@
             unit_name.splice(rowindex, 1);
             unit_operator.splice(rowindex, 1);
             unit_operation_value.splice(rowindex, 1);
+            if (typeof cost !== 'undefined') cost.splice(rowindex, 1);
+            if (typeof is_imei !== 'undefined') is_imei.splice(rowindex, 1);
+            if (typeof is_variant !== 'undefined') is_variant.splice(rowindex, 1);
             $(this).closest("tr").remove();
             calculateTotal();
             if ($('#tbody-id tr').length < 1) {
@@ -5732,6 +5454,24 @@
         $("#submit-btn").on("click", function(e) {
             e.preventDefault();
 
+            // Payment modal validation (reference: Order Type, Delivery Type, Delivery Date, Delivery Time required)
+            if (!$('#posdeliverytype').val() || $('#posdeliverytype').val() === '') {
+                alert('{{ __('db.Please select an Order Type') }}');
+                return;
+            }
+            if (!$('#order_mode').val() || $('#order_mode').val() === '') {
+                alert('{{ __('db.Please select a Delivery Type') }}');
+                return;
+            }
+            if (!$('#sldate').val() || $('#sldate').val().trim() === '') {
+                alert('{{ __('db.Please select a Delivery Date') }}');
+                return;
+            }
+            if (!$('#posdeliverytime').val() || $('#posdeliverytime').val() === '') {
+                alert('{{ __('db.Please select a Delivery Time') }}');
+                return;
+            }
+
             const paymentType = $('select[name="paid_by_id_select[]"]').val();
             const form = $('.payment-form');
             const csrf = $('meta[name="csrf-token"]').attr('content');
@@ -5877,7 +5617,14 @@
                 });
 
             } else {
-                // ✅ Non-Razorpay → just submit normally
+                // Underpaid confirmation (reference: confirm when total paid < grand total)
+                var totalPaying = parseFloat($('.total_paying').text()) || 0;
+                var grandTotal = parseFloat($('#grand-total').text()) || 0;
+                if (totalPaying < grandTotal) {
+                    if (!confirm('{{ __("db.Paid amount is less than the payable amount. Press OK to submit the sale.") }}')) {
+                        return;
+                    }
+                }
                 form.off('submit').submit();
             }
         });
@@ -6469,14 +6216,6 @@
                     '{{ number_format(0, $general_setting->decimal, '.', '') }}');
             change($('input[name="paying_amount"]').val(), $('input[name="paid_amount"]').val());
         });
-
-        function confirmDelete() {
-            if (confirm("Are you sure want to delete?")) {
-                return true;
-            }
-
-            return false;
-        }
 
         function populatePriceOption() {
             var product_price = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.product_price')
@@ -7353,6 +7092,7 @@
             saveDataToLocalStorageForCustomerDisplay('clear_no');
             // Initialize selectpicker for new fields
             $('#posdeliverytype, #order_mode, #posdeliverytime, #posdeliverytime2').selectpicker('refresh');
+            toggleReceiverBlocksByOrderType();
             // Initialize datetime picker for delivery date
             if ($('#sldate').length && typeof $.fn.datetimepicker !== 'undefined') {
                 $('#sldate').datetimepicker({
@@ -7376,15 +7116,17 @@
             saveDataToLocalStorageForCustomerDisplay('clear_partial');
         });
 
-        // Show/hide receiver fields based on delivery type
-        $(document).on('change', '#order_mode', function() {
-            if ($(this).val() === 'delivery') {
+        // Show/hide receiver fields based on Order Type (reference: gift_order_shop / gift_order_factory only)
+        function toggleReceiverBlocksByOrderType() {
+            var orderType = $('#posdeliverytype').val();
+            if (orderType === 'gift_order_shop' || orderType === 'gift_order_factory') {
                 $('#receivername_block, #receivernumber_block').removeClass('hide');
             } else {
                 $('#receivername_block, #receivernumber_block').addClass('hide');
                 $('#receiver_name, #receiver_number').val('');
             }
-        });
+        }
+        $(document).on('change', '#posdeliverytype', toggleReceiverBlocksByOrderType);
 
         // Make delivery_time2 optional
         $('#posdeliverytime2').attr('required', false);

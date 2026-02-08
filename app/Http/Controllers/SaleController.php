@@ -875,6 +875,8 @@ class SaleController extends Controller
                 $data['queue'] = 1;
         }
 
+        $data['order_type'] = $data['order_type'] ?? 1;
+
         //inserting data to sales table
         $lims_sale_data = Sale::create($data);
 
@@ -977,6 +979,10 @@ class SaleController extends Controller
         $tax_rate = $data['tax_rate'];
         $tax = $data['tax'];
         $total = $data['subtotal'];
+        $customize_type_id = $data['customize_type_id'] ?? [];
+        $custom_sort = $data['custom_sort'] ?? [];
+        $is_customize_parent = $data['is_customize_parent'] ?? [];
+        $current_custom_parent_id = null;
         $product_sale = [];
         $log_data['item_description'] = '';
 
@@ -1159,6 +1165,10 @@ class SaleController extends Controller
 
             $product_sale['sale_id'] = $lims_sale_data->id;
             $product_sale['product_id'] = $id;
+            $product_sale['customize_type_id'] = isset($customize_type_id[$i]) && $customize_type_id[$i] !== '' ? $customize_type_id[$i] : null;
+            $product_sale['custom_sort'] = isset($custom_sort[$i]) && $custom_sort[$i] !== '' ? (int) $custom_sort[$i] : null;
+            $is_parent = isset($is_customize_parent[$i]) && (int) $is_customize_parent[$i] === 1;
+            $product_sale['custom_parent_id'] = $is_parent ? null : $current_custom_parent_id;
             if ($imei_number[$i] && !str_contains($imei_number[$i], "null")) {
                 $product_sale['imei_number'] = $imei_number[$i];
             } else {
@@ -1186,7 +1196,10 @@ class SaleController extends Controller
                 }
             }
 
-            Product_Sale::create($product_sale);
+            $created = Product_Sale::create($product_sale);
+            if ($is_parent) {
+                $current_custom_parent_id = $created->id;
+            }
         }
         if ($data['sale_status'] == 3)
             $message = 'Sale successfully added to draft';
@@ -2029,6 +2042,23 @@ class SaleController extends Controller
 
             $lims_account_list = Account::select('id', 'name', 'is_default')->where('is_active', true)->get();
 
+            // POS customization: dynamic categories (BOXES, EMPTY TRAY) + static (Customer Tray) from category table (case-insensitive name match)
+            $pos_boxes_category = Category::where('is_active', true)->whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim('BOXES'))])->first();
+            $pos_empty_tray_category = Category::where('is_active', true)->whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim('EMPTY TRAY'))])->first();
+            $pos_customer_tray_category = Category::where('is_active', true)->whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim('Customer Tray'))])->first();
+            $pos_boxes_category_id = $pos_boxes_category ? $pos_boxes_category->id : null;
+            $pos_empty_tray_category_id = $pos_empty_tray_category ? $pos_empty_tray_category->id : null;
+            $pos_customer_tray_category_id = $pos_customer_tray_category ? $pos_customer_tray_category->id : null;
+            $pos_customer_tray_product_code = null;
+            if ($pos_customer_tray_category_id) {
+                $firstProduct = Product::where('category_id', $pos_customer_tray_category_id)->where('is_active', true)->first();
+                $pos_customer_tray_product_code = $firstProduct ? $firstProduct->code : null;
+            }
+            $variables[] = 'pos_boxes_category_id';
+            $variables[] = 'pos_empty_tray_category_id';
+            $variables[] = 'pos_customer_tray_category_id';
+            $variables[] = 'pos_customer_tray_product_code';
+
             if (!empty($id)) {
                 $lims_sale_data = Sale::find($id);
                 $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
@@ -2071,7 +2101,10 @@ class SaleController extends Controller
                                     'imei'     => $number ?: null,
                                     'embedded' => 0,
                                     'batch'    => $product_sale->product_batch_id,
-                                    'price'    => $product_sale->net_unit_price, // or ->price depending on field
+                                    'price'    => $product_sale->net_unit_price,
+                                    'customize_type_id' => $product_sale->customize_type_id ?? null,
+                                    'custom_sort' => $product_sale->custom_sort ?? null,
+                                    'is_customize_parent' => $product_sale->custom_parent_id === null ? 1 : 0,
                                 ];
                             }
                         } else {
@@ -2081,7 +2114,10 @@ class SaleController extends Controller
                                 'imei'     => null,
                                 'embedded' => 0,
                                 'batch'    => $product_sale->product_batch_id,
-                                'price'    => $product_sale->net_unit_price, // or ->price depending on field
+                                'price'    => $product_sale->net_unit_price,
+                                'customize_type_id' => $product_sale->customize_type_id ?? null,
+                                'custom_sort' => $product_sale->custom_sort ?? null,
+                                'is_customize_parent' => $product_sale->custom_parent_id === null ? 1 : 0,
                             ];
                         }
                     }
@@ -2191,9 +2227,33 @@ class SaleController extends Controller
             return redirect()->back()->with('not_permitted', __('db.Sorry! You are not allowed to access this module'));
     }
 
+    /**
+     * Category IDs to exclude from main POS grid (BOXES, EMPTY TRAY, Customer Tray).
+     * Used by getProducts and search so these products load only via "Select Tray or Box".
+     */
+    private function getPosExcludeCategoryIds(): array
+    {
+        $pos_boxes = Category::where('is_active', true)->whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim('BOXES'))])->first();
+        $pos_empty_tray = Category::where('is_active', true)->whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim('EMPTY TRAY'))])->first();
+        $pos_customer_tray = Category::where('is_active', true)->whereRaw('LOWER(TRIM(name)) = ?', [strtolower(trim('Customer Tray'))])->first();
+        return array_values(array_filter([
+            $pos_boxes ? $pos_boxes->id : null,
+            $pos_empty_tray ? $pos_empty_tray->id : null,
+            $pos_customer_tray ? $pos_customer_tray->id : null,
+        ]));
+    }
+
     public function getProducts($warehouse_id, $key, $cat_or_brand_id)
     {
+        $pos_customize = request()->query('pos_customize', 0);
+        $excludeCategoryIds = $pos_customize ? [] : $this->getPosExcludeCategoryIds();
+
+        // Handle products only: category, product (single), combo
         $query = Product::join('product_warehouse', 'products.id', '=', 'product_warehouse.product_id')->where('products.is_active', true);
+
+        if (!empty($excludeCategoryIds)) {
+            $query = $query->whereNotIn('products.category_id', $excludeCategoryIds);
+        }
 
         if ($key == 'category') {
             $query = $query->join('categories', 'products.category_id', '=', 'categories.id')
@@ -2201,20 +2261,26 @@ class SaleController extends Controller
                     $query->where('products.category_id', $cat_or_brand_id)
                         ->orWhere('categories.parent_id', $cat_or_brand_id);
                 });
+            $query = $query->where('products.type', '!=', 'combo');
         } elseif ($key == 'brand') {
             $query = $query->where('products.brand_id', $cat_or_brand_id);
+            $query = $query->where('products.type', '!=', 'combo');
         } elseif ($key == 'featured') {
             $query = $query->where('products.featured', true);
-        } elseif ($key == 'all') {
-            // Load all products - no additional filter
+            $query = $query->where('products.type', '!=', 'combo');
+        } elseif ($key == 'product') {
+            // Single (standard) products only
+            $query = $query->where('products.type', '!=', 'combo');
+        } elseif ($key == 'combo') {
+            // Combo products only
+            $query = $query->where('products.type', 'combo');
         }
 
-        $query = $query->where('products.type', '!=', 'combo')
-            ->where(function($q) {
-                $q->where('products.is_imei', null)->orWhere('products.is_imei', 0);
-            });
-
-        if (config('without_stock') == 'no') {
+        // POS customization: show category products even with 0 stock so BOXES/EMPTY TRAY always list products
+        if ($pos_customize && $key == 'category') {
+            $query = $query->where('products.is_active', true)
+                ->where('product_warehouse.warehouse_id', $warehouse_id);
+        } elseif (config('without_stock') == 'no') {
             $query = $query->where('products.is_active', true)
                 ->where('product_warehouse.warehouse_id', $warehouse_id)
                 ->where('product_warehouse.qty', '>', 0);
@@ -2261,6 +2327,7 @@ class SaleController extends Controller
                     $data['code'][$index] = $variant->item_code;
                     $data['is_imei'][$index] = $product->is_imei;
                     $data['is_embeded'][$index] = $product->is_embeded;
+                    $data['type'][$index] = $product->type ?? 'product';
                     $images = explode(",", $product->image);
                     $data['image'][$index] = $images[0] ?? null;
                     $data['qty'][$index] = $pw->qty;
@@ -2288,6 +2355,7 @@ class SaleController extends Controller
                 $data['code'][$index] = $product->code;
                 $data['is_imei'][$index] = $product->is_imei;
                 $data['is_embeded'][$index] = $product->is_embeded;
+                $data['type'][$index] = $product->type ?? 'product';
                 $images = explode(",", $product->image);
                 $data['image'][$index] = $images[0] ?? null;
                 $data['qty'][$index] = $pw->qty;
@@ -2316,11 +2384,16 @@ class SaleController extends Controller
         // $productData = explode("|", $request['data']);
         // $productInfo = explode("?", $productData[4]);
 
-        $code = $request->data['code'];
-        $qty = $request->data['qty'];
-        $is_embedded = $request->data['embedded'];
-        $batch_id = $request->data['batch'];
-        $customerId = $request->data['customer_id'];
+        $code = $request->data['code'] ?? '';
+        $qty = $request->data['qty'] ?? 0;
+        $is_embedded = $request->data['embedded'] ?? 0;
+        $batch_id = $request->data['batch'] ?? '';
+        $customerId = $request->data['customer_id'] ?? 0;
+
+        // Validate code
+        if (empty($code)) {
+            return response()->json(['error' => 'Product code is required'], 400);
+        }
         $productVariantId = null;
         $qty = ($is_embedded == 1) ? substr($code, 7, 5) / 1000 : $request->data['pre_qty'];
 
@@ -2345,15 +2418,14 @@ class SaleController extends Controller
             $general_setting = DB::table('general_settings')->select('modules')->first();
             cache()->put('general_setting', $general_setting, 60 * 60 * 24);
         }
+
+        // Search in products only
         if ($general_setting && in_array('restaurant', explode(',', $general_setting->modules))) {
-            // Try to find base product
             $product = Product::select('id', 'name', 'code', 'is_variant', 'is_batch', 'is_imei', 'qty', 'price', 'wholesale_price', 'cost', 'promotion', 'promotion_price', 'last_date', 'tax_id', 'tax_method', 'type', 'unit_id', 'sale_unit_id', 'extras')->where('code', $code)->where('is_active', true)->first();
         } else {
-            // Try to find base product
             $product = Product::select('id', 'name', 'code', 'is_variant', 'is_batch', 'is_imei', 'qty', 'price', 'wholesale_price', 'cost', 'promotion', 'promotion_price', 'last_date', 'tax_id', 'tax_method', 'type', 'unit_id', 'sale_unit_id')->where('code', $code)->where('is_active', true)->first();
         }
 
-        // Try to find variant if base product not found
         if (!$product) {
             $variantProduct = Product::join('product_variants', 'products.id', '=', 'product_variants.product_id')
                 ->select('products.*', 'product_variants.id as product_variant_id', 'product_variants.item_code')
@@ -2368,44 +2440,40 @@ class SaleController extends Controller
         }
 
         if (!$product) {
-            return response()->json(['error' => 'Product not found'], 404);
+            return response()->json(['error' => 'Product not found', 'code' => $code], 404);
         }
 
         // Handle pricing
         if ($request->data['price'] && $request->data['price'] > 0)
             $price = $request->data['price'];
         else
-            $price = $product->price;
-
-        // if ($product->is_variant && isset($product->additional_price)) {
-        //     $price += $product->additional_price;
-        // }
+            $price = $product->price ?? 0;
 
         $discountedPrice = null;
         $noDiscountApplied = true;
 
         foreach ($discounts as $discount) {
-            $applicableProducts = explode(',', $discount->product_list);
-            $applicableDays = explode(',', $discount->days);
-            $todayDay = date('D');
+                $applicableProducts = explode(',', $discount->product_list);
+                $applicableDays = explode(',', $discount->days);
+                $todayDay = date('D');
 
-            if ((
-                    $discount->applicable_for === 'All' ||
-                    in_array($product->id, $applicableProducts)
-                ) && (
-                    $todayDate >= $discount->valid_from &&
-                    $todayDate <= $discount->valid_till &&
-                    in_array($todayDay, $applicableDays) &&
-                    $qty >= $discount->minimum_qty &&
-                    $qty <= $discount->maximum_qty
-                )
-            ) {
-                $discountedPrice = $discount->type === 'flat'
-                    ? $price - $discount->value
-                    : $price - ($price * ($discount->value / 100));
-                $noDiscountApplied = false;
-                break;
-            }
+                if ((
+                        $discount->applicable_for === 'All' ||
+                        in_array($product->id, $applicableProducts)
+                    ) && (
+                        $todayDate >= $discount->valid_from &&
+                        $todayDate <= $discount->valid_till &&
+                        in_array($todayDay, $applicableDays) &&
+                        $qty >= $discount->minimum_qty &&
+                        $qty <= $discount->maximum_qty
+                    )
+                ) {
+                    $discountedPrice = $discount->type === 'flat'
+                        ? $price - $discount->value
+                        : $price - ($price * ($discount->value / 100));
+                    $noDiscountApplied = false;
+                    break;
+                }
         }
 
         if ($noDiscountApplied && $product->promotion && $todayDate <= $product->last_date) {
@@ -2417,7 +2485,7 @@ class SaleController extends Controller
         // Tax info
         $taxRate = 0;
         $taxName = 'No Tax';
-        if ($product->tax_id) {
+        if ($product->tax_id ?? null) {
             $tax = Tax::find($product->tax_id);
             if ($tax) {
                 $taxRate = $tax->rate;
@@ -2426,7 +2494,8 @@ class SaleController extends Controller
         }
 
         // Units
-        if (in_array($product->type, ['standard', 'combo'])) {
+        $unitNames = $unitOperators = $unitValues = ['n/a'];
+        if (in_array($product->type ?? '', ['standard', 'combo'])) {
             $units = Unit::where("base_unit", $product->unit_id)->orWhere('id', $product->unit_id)->get();
             $unitNames = $unitOperators = $unitValues = [];
 
@@ -2441,43 +2510,43 @@ class SaleController extends Controller
                     $unitValues[] = $unit->operation_value;
                 }
             }
-        } else {
-            $unitNames = $unitOperators = $unitValues = ['n/a'];
         }
 
-        // check if batch product
+        $batch = null;
         if (!empty($batch_id)) {
             $batch = ProductBatch::find($batch_id);
         }
 
+        // Build product array (products only)
         $productArray = [
             $product->name, //0
-            $product->is_variant ? ($product->item_code ?? $product->code) : $product->code, //1
+            $product->code, //1
             $discountedPrice, //2
             $taxRate, //3
             $taxName, //4
-            $product->tax_method, //5
+            $product->tax_method ?? null, //5
             implode(',', $unitNames) . ',', //6
             implode(',', $unitOperators) . ',', //7
             implode(',', $unitValues) . ',', //8
             $product->id, //9
             $productVariantId, //10
-            $product->promotion, //11
-            $product->is_batch, //12
-            $product->is_imei, //13
-            $product->is_variant, //14
+            $product->promotion ?? 0, //11
+            // ($product->type == 'combo' ? 0 : ($product->is_batch ?? 0)), //12 - combo never uses batch
+            0, //12 - combo never uses batch
+            $product->is_imei ?? 0, //13
+            $product->is_variant ?? 0, //14
             $qty, //15
-            $product->wholesale_price, //16
-            $product->cost, //17
-            $request->data['imei'], // IMEI number //18
-            $request->data['qty'], // warehouse qty //19
-            $product->type, //20
-            $batch_id, // batch ID //21
+            $product->wholesale_price ?? 0, //16
+            $product->cost ?? 0, //17
+            $request->data['imei'], //18
+            $request->data['qty'] ?? 0, //19 warehouse qty
+            $product->type ?? 'standard', //20
+            $batch_id, //21
             $batch->batch_no ?? '' //22
         ];
 
-        // Restaurant extras
-        if ($general_setting && in_array('restaurant', explode(',', $general_setting->modules))) {
+        // Restaurant extras (only for products)
+        if ($product && $general_setting && in_array('restaurant', explode(',', $general_setting->modules))) {
             if (!empty($product->extras)) {
                 $extras = Product::whereIn('id', explode(',', $product->extras))
                     ->where('is_active', 1)
@@ -5180,9 +5249,15 @@ class SaleController extends Controller
             return response()->json([]);
         }
 
-        $search = trim(base64_decode($search));
+        $decoded = @base64_decode($search, true);
+        $search = is_string($decoded) ? trim($decoded) : '';
+        if ($search === '') {
+            return response()->json([]);
+        }
+
         $exactMatchFound = false;
         $products = [];
+        $excludeCategoryIds = $this->getPosExcludeCategoryIds();
 
         $today = Carbon::now()->toDateString();
 
@@ -5219,6 +5294,7 @@ class SaleController extends Controller
                 'products.is_embeded',
                 'products.is_batch',
                 'products.type',
+                'products.image',
                 'products.product_list',
                 'products.qty_list',
                 DB::raw("CASE WHEN products.is_diffPrice = 1
@@ -5232,6 +5308,8 @@ class SaleController extends Controller
             ->first();
 
         if ($exactVariant) {
+            $exactVariant->image = $exactVariant->image ? trim(explode(',', $exactVariant->image)[0]) : null;
+            $exactVariant->type = $exactVariant->type ?? 'product';
             return response()->json([$exactVariant]);
         }
 
@@ -5269,7 +5347,11 @@ class SaleController extends Controller
                 ->where('product_warehouse.warehouse_id', $warehouse_id);
         })
             ->where('products.is_active', 1)
-            ->where('products.code', 'like', $search . '%')
+            ->where('products.code', 'like', $search . '%');
+        if (!empty($excludeCategoryIds)) {
+            $byCode = $byCode->whereNotIn('products.category_id', $excludeCategoryIds);
+        }
+        $byCode = $byCode
             ->select(
                 'products.*',
                 DB::raw("CASE WHEN products.is_diffPrice = 1 THEN product_warehouse.price ELSE products.price END as price"),
@@ -5294,7 +5376,11 @@ class SaleController extends Controller
                     ->where('product_warehouse.warehouse_id', $warehouse_id);
             })
                 ->where('products.is_active', 1)
-                ->where('products.name', 'like', '%' . $search . '%')
+                ->where('products.name', 'like', '%' . $search . '%');
+            if (!empty($excludeCategoryIds)) {
+                $byName = $byName->whereNotIn('products.category_id', $excludeCategoryIds);
+            }
+            $byName = $byName
                 ->select(
                     'products.*',
                     DB::raw("CASE WHEN products.is_diffPrice = 1 THEN product_warehouse.price ELSE products.price END as price"),
@@ -5311,19 +5397,6 @@ class SaleController extends Controller
         // ------------------------------------------
         // SEARCH BY IMEI (ONLY if nothing found yet)
         // ------------------------------------------
-        $byIMEI = collect();
-
-        if ($byCode->isEmpty() && $byName->isEmpty()) {
-
-            $byIMEI = Product_Warehouse::where('warehouse_id', $warehouse_id)
-                ->where('imei_number', 'like', '%' . $search . '%')
-                ->limit(5)
-                ->get()
-                ->map(function ($pw) {
-                    return Product::find($pw->product_id);
-                });
-        }
-
         $byIMEI = collect();
 
         if ($byCode->isEmpty() && $byName->isEmpty()) {
@@ -5360,16 +5433,16 @@ class SaleController extends Controller
 
 
         // 🔹 Step 4: Add combo products
-        $combos = Product::where('products.is_active', true)
+        $comboQuery = Product::where('products.is_active', true)
             ->where('products.type', 'combo')
             ->where(function ($q) use ($search) {
-                $q->where('products.code', 'like', "%search%")
-                    ->orWhere('products.name', 'like', "%$search%");
-            })
-            ->select('products.*')
-            ->orderBy('name')
-            ->limit(20)
-            ->get();
+                $q->where('products.code', 'like', '%' . $search . '%')
+                    ->orWhere('products.name', 'like', '%' . $search . '%');
+            });
+        if (!empty($excludeCategoryIds)) {
+            $comboQuery = $comboQuery->whereNotIn('products.category_id', $excludeCategoryIds);
+        }
+        $combos = $comboQuery->select('products.*')->orderBy('name')->limit(20)->get();
 
         // Calculate combo available qty efficiently
         foreach ($combos as $combo) {
@@ -5453,6 +5526,7 @@ class SaleController extends Controller
             if ($product->is_variant == 1) {
                 $vars = $variants[$product->id] ?? collect();
                 foreach ($vars as $v) {
+                    $image = $product->image ? trim(explode(',', $product->image)[0]) : null;
                     $products[] = [
                         'id' => $product->id,
                         'code' => $v->item_code,
@@ -5465,6 +5539,8 @@ class SaleController extends Controller
                         'product_batch_id' => $product->product_batch_id,
                         'expired_date' => $expired_date,
                         'imei_number' => null,
+                        'type' => $product->type ?? 'product',
+                        'image' => $image,
                     ];
                 }
                 // ensuring uniqueness by product code (array to collection and back)
@@ -5481,6 +5557,7 @@ class SaleController extends Controller
                     $imeiList = array_filter(explode(',', $product->imei_number));
 
                     foreach ($imeiList as $imei) {
+                        $image = $product->image ? trim(explode(',', $product->image)[0]) : null;
                         $products[] = [
                             'type' => $product->type,
                             'id' => $product->id,
@@ -5494,9 +5571,11 @@ class SaleController extends Controller
                             'product_batch_id' => $product->product_batch_id,
                             'expired_date' => $expired_date,
                             'imei_number' => trim($imei),
+                            'image' => $image,
                         ];
                     }
                 } else {
+                    $image = $product->image ? trim(explode(',', $product->image)[0]) : null;
                     $products[] = [
                         'type' => $product->type,
                         'id' => $product->id,
@@ -5510,6 +5589,7 @@ class SaleController extends Controller
                         'product_batch_id' => $product->product_batch_id,
                         'expired_date' => $expired_date,
                         'imei_number' => $product->imei_number,
+                        'image' => $image,
                     ];
                 }
             }

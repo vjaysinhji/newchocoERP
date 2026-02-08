@@ -1931,8 +1931,11 @@ class ProductController extends Controller
 
         $qty_to_assemble = (float) $request->quantity;
         $combo_warehouse_id = (int) $request->combo_warehouse_id;
+        // Normalize to array with int keys (form may send string keys 0,1,2)
         $ingredient_warehouses = $request->ingredient_warehouse_id ?? [];
+        $ingredient_warehouses = is_array($ingredient_warehouses) ? $ingredient_warehouses : [];
         $ingredient_qtys = $request->ingredient_qty ?? [];
+        $ingredient_qtys = is_array($ingredient_qtys) ? $ingredient_qtys : [];
 
         $product_list_raw = array_filter(array_map('trim', explode(',', $combo->product_list ?? '')));
         $variant_list = explode(',', $combo->variant_list ?? '');

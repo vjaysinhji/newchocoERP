@@ -537,13 +537,13 @@
                             '<div class="input-group-append"><span class="input-group-text">' + unit + '</span></div></div></td>';
                         var row = '<tr data-index="' + ing.index + '" data-item-type="' + (ing.item_type || 'single') + '">' +
                             '<td>' + ing.name + ' [' + (ing.code || '') + ']' + badge + '</td>' +
-                            '<td><select class="form-control ingredient-warehouse-select" name="ingredient_warehouse_id[' + ing.index + ']" data-live-search="true" required>' + whOpts + '</select></td>' +
+                            '<td><select class="form-control ingredient-warehouse-select" name="ingredient_warehouse_id[' + ing.index + ']" required>' + whOpts + '</select></td>' +
                             qtyCell +
                             '</tr>';
                         tbody.append(row);
                     });
                     $('#combo_warehouse_id').selectpicker('refresh');
-                    $('.ingredient-warehouse-select').selectpicker('refresh');
+                    // Do NOT apply selectpicker to ingredient-warehouse-select so .val() is reliable in modal
                     $('#combo-assemble-loading').hide();
                     $('#combo-assemble-form').show();
                     $('#combo_assemble_expiry').val('');
@@ -579,33 +579,62 @@
             inp.val(v);
             updateComboIngredientQtys();
         });
+        // Helper: get value from select (bootstrap-select in modal may not sync to native .value)
+        function getSelectpickerVal($sel) {
+            if (!$sel || !$sel.length) return '';
+            var el = $sel[0];
+            try {
+                var v = null;
+                if (typeof $sel.selectpicker === 'function') v = $sel.selectpicker('val');
+                if (v === null || v === undefined) v = $sel.val();
+                if (Array.isArray(v)) v = v.length ? v[0] : '';
+                if ((v === null || v === undefined || v === '') && el && el.options && el.options[el.selectedIndex])
+                    v = el.options[el.selectedIndex].value;
+                return (v !== undefined && v !== null && v !== '') ? String(v).trim() : '';
+            } catch (e) {
+                if (el && el.options && el.selectedIndex >= 0 && el.options[el.selectedIndex])
+                    return String(el.options[el.selectedIndex].value || '').trim();
+                return ($sel.val() !== undefined && $sel.val() !== null && $sel.val() !== '') ? String($sel.val()).trim() : '';
+            }
+        }
         $('#combo-assemble-submit').on('click', function() {
             var productId = $('#combo_assemble_product_id').val();
-            var comboWh = $('#combo_warehouse_id').val();
-            var qty = $('#combo_assemble_qty').val();
+            var $comboWh = $('#combo-assemble-modal #combo_warehouse_id');
+            var comboWh = getSelectpickerVal($comboWh);
+            if (!comboWh && $comboWh.length) comboWh = ($comboWh[0].value !== undefined ? String($comboWh[0].value).trim() : '') || getSelectpickerVal($comboWh);
+            var qtyNum = parseFloat($('#combo_assemble_qty').val());
+            var qty = isNaN(qtyNum) ? 0 : qtyNum;
             var ingWh = {};
             var ingQty = {};
-            $('#combo-assemble-ingredients-tbody .ingredient-warehouse-select').each(function() {
+            $('#combo-assemble-modal #combo-assemble-ingredients-tbody .ingredient-warehouse-select').each(function() {
                 var name = $(this).attr('name');
                 if (name) {
                     var idx = name.match(/\[(\d+)\]/);
-                    if (idx) ingWh[idx[1]] = $(this).val();
+                    if (idx) {
+                        var v = (this.value !== undefined && this.value !== null) ? String(this.value).trim() : getSelectpickerVal($(this));
+                        ingWh[idx[1]] = v || '';
+                    }
                 }
             });
-            $('#combo-assemble-ingredients-tbody .ingredient-qty-input').each(function() {
+            $('#combo-assemble-modal #combo-assemble-ingredients-tbody .ingredient-qty-input').each(function() {
                 var name = $(this).attr('name');
                 if (name) {
                     var idx = name.match(/\[(\d+)\]/);
                     if (idx) ingQty[idx[1]] = $(this).val();
                 }
             });
-            if (!comboWh || !qty || qty <= 0) {
-                $('#combo-assemble-error').text('{{ __("db.Please fill all required fields") }}').show();
+            if (!comboWh) {
+                $('#combo-assemble-error').text('{{ __("db.Please select combo warehouse") }}').show();
+                return;
+            }
+            if (qty <= 0) {
+                $('#combo-assemble-error').text('{{ __("db.Please enter a valid quantity") }}').show();
                 return;
             }
             var allSelected = true;
-            $('#combo-assemble-ingredients-tbody .ingredient-warehouse-select').each(function() {
-                if (!$(this).val()) allSelected = false;
+            $('#combo-assemble-modal #combo-assemble-ingredients-tbody .ingredient-warehouse-select').each(function() {
+                var v = (this.value !== undefined && this.value !== null) ? String(this.value).trim() : getSelectpickerVal($(this));
+                if (!v) allSelected = false;
             });
             if (!allSelected) {
                 $('#combo-assemble-error').text('{{ __("db.Please select warehouse for all ingredients") }}').show();
@@ -615,18 +644,63 @@
             var btn = $(this);
             btn.prop('disabled', true);
             var expiryVal = $('#combo_assemble_expiry').val() || '';
+            
+            // Build data object with proper array structure for Laravel
+            var dataObj = {
+                _token: '{{ csrf_token() }}',
+                combo_product_id: productId,
+                combo_warehouse_id: comboWh,
+                quantity: qty
+            };
+            if (expiryVal) dataObj.expiry_date = expiryVal;
+            
+            // Convert objects to arrays with proper indexing for Laravel (only non-empty values)
+            dataObj.ingredient_warehouse_id = {};
+            dataObj.ingredient_qty = {};
+            var hasWarehouses = false;
+            for (var idx in ingWh) {
+                if (ingWh.hasOwnProperty(idx) && ingWh[idx] && String(ingWh[idx]).trim() !== '') {
+                    dataObj.ingredient_warehouse_id[idx] = String(ingWh[idx]).trim();
+                    hasWarehouses = true;
+                }
+            }
+            for (var idx in ingQty) {
+                if (ingQty.hasOwnProperty(idx) && ingQty[idx] && String(ingQty[idx]).trim() !== '') {
+                    dataObj.ingredient_qty[idx] = String(ingQty[idx]).trim();
+                }
+            }
+            
+            // Ensure we have at least one warehouse selected
+            if (!hasWarehouses || Object.keys(dataObj.ingredient_warehouse_id).length === 0) {
+                $('#combo-assemble-error').text('{{ __("db.Please select warehouse for all ingredients") }}').show();
+                btn.prop('disabled', false);
+                return;
+            }
+            
+            // Serialize manually to ensure proper array format: ingredient_warehouse_id[0]=value
+            var dataString = '_token=' + encodeURIComponent(dataObj._token) +
+                '&combo_product_id=' + encodeURIComponent(dataObj.combo_product_id) +
+                '&combo_warehouse_id=' + encodeURIComponent(dataObj.combo_warehouse_id) +
+                '&quantity=' + encodeURIComponent(dataObj.quantity);
+            if (dataObj.expiry_date) {
+                dataString += '&expiry_date=' + encodeURIComponent(dataObj.expiry_date);
+            }
+            for (var idx in dataObj.ingredient_warehouse_id) {
+                if (dataObj.ingredient_warehouse_id.hasOwnProperty(idx)) {
+                    dataString += '&ingredient_warehouse_id[' + idx + ']=' + encodeURIComponent(dataObj.ingredient_warehouse_id[idx]);
+                }
+            }
+            for (var idx in dataObj.ingredient_qty) {
+                if (dataObj.ingredient_qty.hasOwnProperty(idx)) {
+                    dataString += '&ingredient_qty[' + idx + ']=' + encodeURIComponent(dataObj.ingredient_qty[idx]);
+                }
+            }
+            
             $.ajax({
                 url: "{{ route('product.combo.assemble') }}",
                 method: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    combo_product_id: productId,
-                    combo_warehouse_id: comboWh,
-                    quantity: qty,
-                    expiry_date: expiryVal,
-                    ingredient_warehouse_id: ingWh,
-                    ingredient_qty: ingQty
-                }
+                contentType: 'application/x-www-form-urlencoded; charset=UTF-8',
+                data: dataString
             }).done(function(res) {
                 if (res.success) {
                     $('#combo-assemble-modal').modal('hide');
@@ -798,13 +872,10 @@
                 $("#product-variant-section").addClass('d-none');
             }
 
-            // Always fetch warehouse data for all users and all product types
+            // Always fetch warehouse data for all users and all product types (includes combo-assembled batches)
             var productId = product[13]; // Product ID is at index 13
-            console.log('Fetching warehouse data for product ID:', productId);
-            // let url = "{{ url('/products/product_warehouse') }}/" + productId;
             let url = "{{ route('product.warehouse', ['id' => '__ID__']) }}".replace('__ID__', productId);
             $.get(url, function(data) {
-                console.log('Warehouse Data:', data);
                 if (data && data.product_warehouse && data.product_warehouse[0] && data.product_warehouse[0]
                     .length != 0) {
                     warehouse = data.product_warehouse[0];

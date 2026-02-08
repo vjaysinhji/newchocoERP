@@ -10109,6 +10109,24 @@ return array(
         'key' => 'Select Order Type',
         'value' => 'Select Order Type',
     ),
+    17021 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Display',
+        'value' => 'Display',
+    ),
+    17022 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Customization',
+        'value' => 'Customization',
+    ),
+    17023 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Select Tray or Box',
+        'value' => 'Please select Tray or Box',
+    ),
     1703 =>
     array(
         'locale' => 'en',
@@ -10144,6 +10162,31 @@ return array(
         'locale' => 'en',
         'key' => 'Select Time',
         'value' => 'Select Time',
+    ),
+    array(
+        'locale' => 'en',
+        'key' => 'Please select an Order Type',
+        'value' => 'Please select an Order Type.',
+    ),
+    array(
+        'locale' => 'en',
+        'key' => 'Please select a Delivery Type',
+        'value' => 'Please select a Delivery Type.',
+    ),
+    array(
+        'locale' => 'en',
+        'key' => 'Please select a Delivery Date',
+        'value' => 'Please select a Delivery Date.',
+    ),
+    array(
+        'locale' => 'en',
+        'key' => 'Please select a Delivery Time',
+        'value' => 'Please select a Delivery Time.',
+    ),
+    array(
+        'locale' => 'en',
+        'key' => 'Paid amount is less than the payable amount. Press OK to submit the sale.',
+        'value' => 'Paid amount is less than the payable amount. Press OK to submit the sale.',
     ),
     1701 =>
     array(
@@ -10292,34 +10335,46 @@ return array(
     1725 =>
     array(
         'locale' => 'en',
+        'key' => 'Please select combo warehouse',
+        'value' => 'Please select combo warehouse',
+    ),
+    1726 =>
+    array(
+        'locale' => 'en',
+        'key' => 'Please enter a valid quantity',
+        'value' => 'Please enter a valid quantity',
+    ),
+    1727 =>
+    array(
+        'locale' => 'en',
         'key' => 'Invalid combo product',
         'value' => 'Invalid combo product',
     ),
-    1726 =>
+    1728 =>
     array(
         'locale' => 'en',
         'key' => 'Insufficient stock for',
         'value' => 'Insufficient stock for',
     ),
-    1727 =>
+    1729 =>
     array(
         'locale' => 'en',
         'key' => 'Combo Product',
         'value' => 'Combo Product',
     ),
-    1728 =>
+    1730 =>
     array(
         'locale' => 'en',
         'key' => 'Combo Warehouse',
         'value' => 'Combo Warehouse',
     ),
-    1729 =>
+    1731 =>
     array(
         'locale' => 'en',
         'key' => 'Warehouse Store',
         'value' => 'Warehouse Store',
     ),
-    1730 =>
+    1732 =>
     array(
         'locale' => 'en',
         'key' => 'Single Product',
