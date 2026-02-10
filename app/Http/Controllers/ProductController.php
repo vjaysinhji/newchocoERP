@@ -1813,6 +1813,83 @@ class ProductController extends Controller
     }
 
     /**
+     * Full product view data for POS modal (same structure as products/single or products/combo view action).
+     * Returns product array (0-22), warehouse data, variant data so POS can render the same details modal.
+     */
+    public function productViewDataForPos($id)
+    {
+        $product = Product::with(['unit', 'category', 'brand'])->where('id', (int) $id)->where('is_active', true)->first();
+        if (!$product) {
+            return response()->json(['error' => 'Product not found'], 404);
+        }
+
+        $tax = $product->tax_id ? (Tax::find($product->tax_id)->name ?? 'N/A') : 'N/A';
+        $tax_method = $product->tax_method == 1 ? __('db.Exclusive') : __('db.Inclusive');
+        $typeLabel = $product->type == 'standard' ? 'Single Product' : ($product->type == 'combo' ? 'Combo Product' : $product->type);
+        $category = $product->category->name ?? 'N/A';
+        $unit = $product->unit->unit_name ?? 'N/A';
+        $brand = $product->brand->title ?? 'N/A';
+
+        if ($product->type == 'standard') {
+            $total_qty_all_warehouses = (int) Product_Warehouse::where('product_id', $product->id)->sum('qty');
+        } else {
+            $total_qty_all_warehouses = (int) ($product->qty ?? 0);
+        }
+
+        $combo_unit = 'N/A';
+        $wastage_percent = 'N/A';
+        if ($product->type == 'combo') {
+            $wastage_percent = $product->wastage_percent ?? 'N/A';
+            $combo_unit_id = $product->combo_unit_id ?? '';
+            $combo_unit_arr = array_filter(explode(',', $combo_unit_id));
+            $units = Unit::whereIn('id', $combo_unit_arr)->pluck('unit_name', 'id')->toArray();
+            $combo_unit_names = array_map(function ($uid) use ($units) {
+                return $units[$uid] ?? '';
+            }, $combo_unit_arr);
+            $combo_unit = implode(',', $combo_unit_names);
+        }
+
+        $product_arr = [
+            $typeLabel,
+            $product->name ?? '',
+            $product->name_arabic ?? '',
+            $product->code ?? '',
+            $brand,
+            $category,
+            $unit,
+            (string) ($product->cost ?? ''),
+            (string) ($product->price ?? ''),
+            $tax,
+            $tax_method,
+            (string) ($product->alert_quantity ?? ''),
+            preg_replace('/\s+/s', ' ', $product->product_details ?? ''),
+            (string) $product->id,
+            (string) ($product->product_list ?? ''),
+            (string) ($product->variant_list ?? ''),
+            (string) ($product->qty_list ?? ''),
+            (string) ($product->price_list ?? ''),
+            (string) $total_qty_all_warehouses,
+            (string) ($product->image ?? ''),
+            (string) ($product->is_variant ?? '0'),
+            $combo_unit,
+            $wastage_percent,
+        ];
+
+        $warehouseResult = $this->productWarehouseData((int) $id);
+        $variant_data = $product->is_variant ? $this->variantData((int) $id) : [];
+        if (is_object($variant_data)) {
+            $variant_data = $variant_data->toArray();
+        }
+
+        return response()->json([
+            'product' => $product_arr,
+            'product_warehouse' => $warehouseResult['product_warehouse'] ?? [],
+            'product_variant_warehouse' => $warehouseResult['product_variant_warehouse'] ?? [],
+            'variant_data' => $variant_data,
+        ]);
+    }
+
+    /**
      * Get combo product ingredients with warehouse availability for assembly modal.
      * Supports: Product (p_X or plain id) and Basement/Warehouse Store (b_X)
      */

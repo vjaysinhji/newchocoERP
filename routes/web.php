@@ -205,6 +205,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::get('products/getdata/{id}/{variant_id}', 'getData')->name('products.getdata');
         Route::get('products/product_warehouse/{id}', 'productWarehouseData')->name('product.warehouse');
         Route::get('products/combo-ingredients/{id}', 'comboIngredientsData')->name('product.combo.ingredients');
+        Route::get('products/product-view-data-for-pos/{id}', 'productViewDataForPos')->name('product.view-data-pos');
         Route::post('products/combo-assemble', 'comboAssemble')->name('product.combo.assemble');
         Route::get('products/print_barcode','printBarcode')->name('product.printBarcode');
         Route::get('products/lims_product_search', 'limsProductSearch')->name('product.search');

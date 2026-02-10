@@ -875,7 +875,11 @@ class SaleController extends Controller
                 $data['queue'] = 1;
         }
 
-        $data['order_type'] = $data['order_type'] ?? 1;
+        // Display (1) vs Customization (2) - ensure no mismatch with POS structure
+        $data['order_type'] = isset($data['order_type']) ? (int) $data['order_type'] : 1;
+        if ($data['order_type'] !== 1 && $data['order_type'] !== 2) {
+            $data['order_type'] = 1;
+        }
 
         //inserting data to sales table
         $lims_sale_data = Sale::create($data);
@@ -979,9 +983,15 @@ class SaleController extends Controller
         $tax_rate = $data['tax_rate'];
         $tax = $data['tax'];
         $total = $data['subtotal'];
+        // Per-row customize fields (must align with product_id[] order - no mismatch with POS)
         $customize_type_id = $data['customize_type_id'] ?? [];
         $custom_sort = $data['custom_sort'] ?? [];
         $is_customize_parent = $data['is_customize_parent'] ?? [];
+        $product_count = count($product_id);
+        // Pad arrays so index $i always exists (avoid undefined index when POS sends fewer)
+        $customize_type_id = array_replace(array_fill(0, $product_count, null), array_slice($customize_type_id, 0, $product_count));
+        $custom_sort = array_replace(array_fill(0, $product_count, null), array_slice($custom_sort, 0, $product_count));
+        $is_customize_parent = array_replace(array_fill(0, $product_count, 0), array_slice($is_customize_parent, 0, $product_count));
         $current_custom_parent_id = null;
         $product_sale = [];
         $log_data['item_description'] = '';
@@ -1165,8 +1175,8 @@ class SaleController extends Controller
 
             $product_sale['sale_id'] = $lims_sale_data->id;
             $product_sale['product_id'] = $id;
-            $product_sale['customize_type_id'] = isset($customize_type_id[$i]) && $customize_type_id[$i] !== '' ? $customize_type_id[$i] : null;
-            $product_sale['custom_sort'] = isset($custom_sort[$i]) && $custom_sort[$i] !== '' ? (int) $custom_sort[$i] : null;
+            $product_sale['customize_type_id'] = (isset($customize_type_id[$i]) && $customize_type_id[$i] !== '' && $customize_type_id[$i] !== null) ? $customize_type_id[$i] : null;
+            $product_sale['custom_sort'] = (isset($custom_sort[$i]) && $custom_sort[$i] !== '' && $custom_sort[$i] !== null) ? (int) $custom_sort[$i] : null;
             $is_parent = isset($is_customize_parent[$i]) && (int) $is_customize_parent[$i] === 1;
             $product_sale['custom_parent_id'] = $is_parent ? null : $current_custom_parent_id;
             if ($imei_number[$i] && !str_contains($imei_number[$i], "null")) {
@@ -2325,6 +2335,7 @@ class SaleController extends Controller
 
                     $data['name'][$index] = $product->name . ' [' . $variant->name . ']';
                     $data['code'][$index] = $variant->item_code;
+                    $data['id'][$index] = $product->id;
                     $data['is_imei'][$index] = $product->is_imei;
                     $data['is_embeded'][$index] = $product->is_embeded;
                     $data['type'][$index] = $product->type ?? 'product';
@@ -2353,6 +2364,7 @@ class SaleController extends Controller
 
                 $data['name'][$index] = $product->name;
                 $data['code'][$index] = $product->code;
+                $data['id'][$index] = $product->id;
                 $data['is_imei'][$index] = $product->is_imei;
                 $data['is_embeded'][$index] = $product->is_embeded;
                 $data['type'][$index] = $product->type ?? 'product';

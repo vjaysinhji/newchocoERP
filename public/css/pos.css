@@ -685,3 +685,32 @@ button.close svg {
     flex-shrink: 0;
     display: block;
 }
+
+/* POS product grid: view button on each product card */
+.product-img {
+    position: relative;
+}
+.pos-product-view-btn {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #5f27cd;
+    cursor: pointer;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+    transition: background 0.2s, color 0.2s;
+}
+.pos-product-view-btn:hover {
+    background: #5f27cd;
+    color: #fff;
+}
+.pos-product-view-btn svg {
+    display: block;
+}

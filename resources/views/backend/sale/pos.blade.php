@@ -975,7 +975,7 @@
                                 <thead class="d-none d-md-block">
                                     <tr>
                                         <th class="customize-parent-col" style="width:36px; display:none;"></th>
-                                        <th class="col-sm-5 col-6">{{ __('db.product') }}</th>
+                                        <th class="col-sm-6 col-6">{{ __('db.product') }}</th>
                                         <th class="col-sm-2 d-none d-md-table-cell">{{ __('db.Price') }}</th>
                                         <th class="col-sm-2">{{ __('db.Quantity') }}</th>
                                         <th class="col-sm-2">{{ __('db.Subtotal') }}</th>
@@ -1973,6 +1973,58 @@
                                         </svg>
                                         {{ __('db.Edit Customer') }}
                                     </button>
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('db.Close') }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- POS product view modal (same structure as products/single or products/combo view action) -->
+                    <div id="posProductViewModal" tabindex="-1" role="dialog" aria-labelledby="posProductViewModalLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 id="posProductViewModalLabel" class="modal-title">{{ __('db.Product Details') }}</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                </div>
+                                <div class="modal-body" id="posProductViewModalBody">
+                                    <div class="text-center py-4 pos-product-view-loading">
+                                        <div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>
+                                    </div>
+                                    <div id="pos-product-view-content" style="display:none;">
+                                        <div class="row">
+                                            <div class="col-md-5" id="pos-slider-content"></div>
+                                            <div class="col-md-5 offset-md-1" id="pos-product-content"></div>
+                                            <div class="col-md-12 mt-2" id="pos-product-warehouse-section">
+                                                <h5>{{ __('db.Warehouse Quantity') }}</h5>
+                                                <table class="table table-bordered table-hover">
+                                                    <thead id="pos-product-warehouse-thead"></thead>
+                                                    <tbody id="pos-product-warehouse-tbody"></tbody>
+                                                </table>
+                                            </div>
+                                            <div class="col-md-12 mt-2 d-none" id="pos-product-variant-section">
+                                                <h5>{{ __('db.Product Variant Information') }}</h5>
+                                                <table class="table table-bordered table-hover">
+                                                    <thead id="pos-product-variant-thead"></thead>
+                                                    <tbody id="pos-product-variant-tbody"></tbody>
+                                                </table>
+                                            </div>
+                                            <div class="col-md-12 mt-2" id="pos-product-variant-warehouse-section">
+                                                <h5>{{ __('db.Warehouse quantity of product variants') }}</h5>
+                                                <table class="table table-bordered table-hover">
+                                                    <thead id="pos-product-variant-warehouse-thead"></thead>
+                                                    <tbody id="pos-product-variant-warehouse-tbody"></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <h5 id="pos-combo-header" class="mt-2"></h5>
+                                        <table class="table table-bordered table-hover" id="pos-combo-item-list">
+                                            <thead id="pos-combo-thead"></thead>
+                                            <tbody id="pos-combo-tbody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('db.Close') }}</button>
                                 </div>
                             </div>
@@ -3451,7 +3503,8 @@
                             var pType = (p.type && String(p.type).trim()) ? String(p.type).trim() : 'product';
                             var nameEsc = escapeHtml(p.name || '');
                             var codeEsc = escapeHtml(p.code || '');
-                            tableData += '<div class="product-img sound-btn" title="' + nameEsc.replace(/"/g, '&quot;') + '" data-code="' + codeEsc.replace(/"/g, '&quot;') + '" data-qty="' + (p.qty || 0) + '" data-imei="' + (p.is_imei || 0) + '" data-embedded="' + (p.is_embeded || 0) + '" data-batch="" data-price="' + price + '" data-type="' + escapeHtml(pType) + '"><img src="{{ url("/images/product") }}/' + escapeHtml(img) + '" width="100%" /><p>' + nameEsc + '</p><span>[' + codeEsc + ']</span> <span class="d-block" style="font-weight:600;color:#5f27cd;">Price: ' + formattedPrice + '</span> <span class="d-block">Qty: ' + (p.qty || 0) + '</span></div>';
+                            var pid = (p.id != null && p.id !== '') ? escapeHtml(String(p.id)) : '';
+                            tableData += '<div class="product-img sound-btn" data-product-id="' + pid + '" title="' + nameEsc.replace(/"/g, '&quot;') + '" data-code="' + codeEsc.replace(/"/g, '&quot;') + '" data-qty="' + (p.qty || 0) + '" data-imei="' + (p.is_imei || 0) + '" data-embedded="' + (p.is_embeded || 0) + '" data-batch="" data-price="' + price + '" data-type="' + escapeHtml(pType) + '"><span class="pos-product-view-btn" title="{{ __("db.View") }}" role="button"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg></span><img src="{{ url("/images/product") }}/' + escapeHtml(img) + '" width="100%" /><p>' + nameEsc + '</p><span>[' + codeEsc + ']</span> <span class="d-block" style="font-weight:600;color:#5f27cd;">Price: ' + formattedPrice + '</span> <span class="d-block">Qty: ' + (p.qty || 0) + '</span></div>';
                         });
                     } else {
                         tableData += '<p class="text-muted py-4">No products found.</p>';
@@ -3541,14 +3594,14 @@
                     image = 'zummXD2dvAtI.png';
                 var price = parseFloat(response.data['price'][index]) || 0;
                 var formattedPrice = price.toFixed(2);
-                // Use type from response if available, otherwise use currentFilterType, fallback to 'product'
                 var productType = (response.data['type'] && response.data['type'][index]) ? response.data['type'][index] : (currentFilterType || 'product');
-                tableData += '<div class="product-img sound-btn" title="' + response.data['name'][index] +
+                var productId = (response.data['id'] && response.data['id'][index] != null) ? response.data['id'][index] : '';
+                tableData += '<div class="product-img sound-btn" data-product-id="' + productId + '" title="' + response.data['name'][index] +
                     '" data-code = "' + response.data['code'][index] + '" data-qty="' + response.data['qty'][
                         index
                     ] + '" data-imei="' + response.data['is_imei'][index] + '" data-embedded="' + response
                     .data['is_embeded'][index] + '" data-batch="" data-price="' + response.data['price'][index] +
-                    '" data-type="' + productType + '"><img  src="{{ url('/images/product') }}/' + image + '" width="100%" /><p>' + response.data[
+                    '" data-type="' + productType + '"><span class="pos-product-view-btn" title="{{ __("db.View") }}" role="button"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg></span><img  src="{{ url('/images/product') }}/' + image + '" width="100%" /><p>' + response.data[
                         'name'][index] + '</p><span>[' + response.data['code'][index] +
                     ']</span> <span class="d-block" style="font-weight: 600; color: #5f27cd;">Price: ' +
                     formattedPrice + '</span> <span class="d-block">Qty: ' + response.data['qty'][index] +
@@ -3582,14 +3635,14 @@
                     image = 'zummXD2dvAtI.png';
                 var price = parseFloat(response.data['price'][index]) || 0;
                 var formattedPrice = price.toFixed(2);
-                // Use type from response if available, otherwise use currentFilterType, fallback to 'product'
                 var productType = (response.data['type'] && response.data['type'][index]) ? response.data['type'][index] : (currentFilterType || 'product');
-                tableData += '<div class="product-img sound-btn" title="' + response.data['name'][index] +
+                var productId = (response.data['id'] && response.data['id'][index] != null) ? response.data['id'][index] : '';
+                tableData += '<div class="product-img sound-btn" data-product-id="' + productId + '" title="' + response.data['name'][index] +
                     '" data-code = "' + response.data['code'][index] + '" data-qty="' + response.data['qty'][
                         index
                     ] + '" data-imei="' + response.data['is_imei'][index] + '" data-embedded="' + response
                     .data['is_embeded'][index] + '" data-batch="" data-price="' + response.data['price'][index] +
-                    '" data-type="' + productType + '"><img  src="{{ url('/images/product') }}/' + image + '" width="100%" /><p>' + response.data[
+                    '" data-type="' + productType + '"><span class="pos-product-view-btn" title="{{ __("db.View") }}" role="button"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg></span><img  src="{{ url('/images/product') }}/' + image + '" width="100%" /><p>' + response.data[
                         'name'][index] + '</p><span>' + response.data['code'][index] +
                     '</span> <span class="d-block" style="font-weight: 600; color: #5f27cd;">Price: ' +
                     formattedPrice + '</span> <span class="d-block">Qty: ' + response.data['qty'][index] +
@@ -3601,6 +3654,161 @@
             if (!next_page_url) {
                 $('.load-more').remove();
             }
+        }
+
+        function openPosProductViewModal(productId) {
+            if (!productId) return;
+            var $modal = $('#posProductViewModal');
+            var $body = $('#posProductViewModalBody');
+            $body.find('.pos-product-view-loading').html('<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>').show();
+            $body.find('#pos-product-view-content').hide();
+            $modal.modal('show');
+            $.get('{{ url("products/product-view-data-for-pos") }}/' + productId)
+                .done(function(data) {
+                    if (data.error) {
+                        $body.find('.pos-product-view-loading').hide().html('<p class="text-danger">' + (data.error || 'Product not found') + '</p>');
+                        return;
+                    }
+                    var product = data.product || [];
+                    var product_warehouse = data.product_warehouse || [];
+                    var product_variant_warehouse = data.product_variant_warehouse || [];
+                    var variant_data = data.variant_data || [];
+                    var baseUrl = '{{ url("/images/product") }}';
+                    var imgBase = (product[19] && String(product[19]).trim()) ? String(product[19]).trim() : 'zummXD2dvAtI.png';
+                    var product_images = String(product[19] || '').split(',');
+                    var sliderHtml = '';
+                    if (product_images.length > 1) {
+                        sliderHtml = '<div id="pos-product-img-slider" class="carousel slide" data-ride="carousel"><div class="carousel-inner">';
+                        product_images.forEach(function(im, i) {
+                            var img = (im && String(im).trim()) ? String(im).trim() : 'zummXD2dvAtI.png';
+                            sliderHtml += '<div class="carousel-item' + (i === 0 ? ' active' : '') + '"><img src="' + baseUrl + '/' + img + '" class="d-block w-100" style="max-height:300px;object-fit:contain;" alt=""></div>';
+                        });
+                        sliderHtml += '</div><a class="carousel-control-prev" href="#pos-product-img-slider" data-slide="prev"><span class="carousel-control-prev-icon"></span></a><a class="carousel-control-next" href="#pos-product-img-slider" data-slide="next"><span class="carousel-control-next-icon"></span></a></div>';
+                    } else {
+                        sliderHtml = '<img src="' + baseUrl + '/' + imgBase + '" class="img-fluid" style="max-height:300px;" alt="">';
+                    }
+                    $('#pos-slider-content').html(sliderHtml);
+                    var typeLabel = (product[0] || '').toString();
+                    var htmltext = '<p>{{ __("db.Type") }}: ' + typeLabel + '</p><p>{{ __("db.name") }}: ' + (product[1] || '') + (product[2] && product[2].toString().trim() ? ' / ' + product[2] : '') + '</p><p>{{ __("db.Code") }}: ' + (product[3] || '') + '</p><p>{{ __("db.Brand") }}: ' + (product[4] || '') + '</p><p>{{ __("db.category") }}: ' + (product[5] || '') + '</p><p>{{ __("db.Quantity") }}: ' + (product[18] != null ? String(product[18]) : '0') + '</p><p>{{ __("db.Unit") }}: ' + (product[6] || '') + '</p><p>{{ __("db.Cost") }}: ' + (product[7] || '') + '</p><p>{{ __("db.Price") }}: ' + (product[8] || '') + '</p><p>{{ __("db.Tax") }}: ' + (product[9] || '') + '</p><p>{{ __("db.Tax Method") }}: ' + (product[10] || '') + '</p><p>{{ __("db.Alert Quantity") }}: ' + (product[11] || '') + '</p><p>{{ __("db.Product Details") }}: </p>' + (product[12] || '');
+                    $('#pos-product-content').html(htmltext);
+                    var wh = product_warehouse[0] || [];
+                    var qty = product_warehouse[1] || [];
+                    var batch = product_warehouse[2] || [];
+                    var expired = product_warehouse[3] || [];
+                    var unitCost = product_warehouse[4] || [];
+                    var whHead = '<tr><th>{{ __("db.Warehouse") }}</th><th>{{ __("db.Batch No") }}</th><th>{{ __("db.Expired Date") }}</th><th>{{ __("db.Quantity") }}</th><th>{{ __("db.Unit Cost") }}</th></tr>';
+                    $('#pos-product-warehouse-thead').html(whHead);
+                    var whBody = '';
+                    if (wh && wh.length) {
+                        for (var w = 0; w < wh.length; w++) {
+                            whBody += '<tr><td>' + (wh[w] || '') + '</td><td>' + (batch[w] || 'N/A') + '</td><td>' + (expired[w] || 'N/A') + '</td><td>' + (qty[w] || '') + '</td><td>' + (unitCost[w] || 'N/A') + '</td></tr>';
+                        }
+                    } else {
+                        whBody = '<tr><td colspan="5" class="text-center text-muted">{{ __("db.No warehouse data") }}</td></tr>';
+                    }
+                    $('#pos-product-warehouse-tbody').html(whBody);
+                    $('#pos-product-warehouse-section').show();
+                    var vWh = product_variant_warehouse[0] || [];
+                    var vWhHead = '<tr><th>{{ __("db.Warehouse") }}</th><th>{{ __("db.Variant") }}</th><th>{{ __("db.Quantity") }}</th></tr>';
+                    $('#pos-product-variant-warehouse-thead').html(vWhHead);
+                    var vWhBody = '';
+                    if (vWh && vWh.length) {
+                        var vName = product_variant_warehouse[1] || [];
+                        var vQty = product_variant_warehouse[2] || [];
+                        for (var v = 0; v < vWh.length; v++) {
+                            vWhBody += '<tr><td>' + (vWh[v] || '') + '</td><td>' + (vName[v] || '') + '</td><td>' + (vQty[v] || '') + '</td></tr>';
+                        }
+                    } else {
+                        vWhBody = '<tr><td colspan="3" class="text-center text-muted">{{ __("db.No variant warehouse data") }}</td></tr>';
+                    }
+                    $('#pos-product-variant-warehouse-tbody').html(vWhBody);
+                    $('#pos-product-variant-warehouse-section').toggle(!!(vWh && vWh.length));
+                    if (product[20] && variant_data && variant_data.length > 0) {
+                        var vHead = '<tr><th>{{ __("db.Variant") }}</th><th>{{ __("db.Item Code") }}</th><th>{{ __("db.Additional Cost") }}</th><th>{{ __("db.Additional Price") }}</th><th>{{ __("db.Qty") }}</th></tr>';
+                        $('#pos-product-variant-thead').html(vHead);
+                        var vBody = '';
+                        variant_data.forEach(function(v) {
+                            vBody += '<tr><td>' + (v.name || '') + '</td><td>' + (v.item_code || '') + '</td><td>' + (v.additional_cost || '0') + '</td><td>' + (v.additional_price || '0') + '</td><td>' + (v.qty || '0') + '</td></tr>';
+                        });
+                        $('#pos-product-variant-tbody').html(vBody);
+                        $('#pos-product-variant-section').removeClass('d-none');
+                    } else {
+                        $('#pos-product-variant-section').addClass('d-none');
+                    }
+                    $('#pos-combo-header').text('');
+                    $('#pos-combo-thead').empty();
+                    $('#pos-combo-tbody').empty();
+                    $('#pos-combo-item-list').hide();
+                    if (product[0] === 'Combo Product' && product[14]) {
+                        $('#pos-combo-header').text('{{ __("db.Combo Products") }}');
+                        $('#pos-combo-thead').html('<tr><th>{{ __("db.product") }}</th><th>{{ __("db.Wastage Percent") }}</th><th>{{ __("db.Quantity") }}</th><th>{{ __("db.Price") }}</th></tr>');
+                        var product_list = String(product[14] || '').replace(/"/g, '').split(',').map(function(s) { return String(s).trim(); }).filter(Boolean);
+                        var variant_list = String(product[15] || '').replace(/"/g, '').split(',');
+                        var qty_list = String(product[16] || '').replace(/"/g, '').split(',');
+                        var price_list = String(product[17] || '').replace(/"/g, '').split(',');
+                        var combo_unit = String(product[21] || '').replace(/"/g, '').split(',');
+                        var wastage_percent = String(product[22] || '').replace(/"/g, '').split(',');
+                        var pending = product_list.length;
+                        if (pending === 0) {
+                            $('#pos-combo-tbody').html('<tr><td colspan="4" class="text-muted">{{ __("db.No ingredients") }}</td></tr>');
+                            $('#pos-combo-item-list').show();
+                            $body.find('.pos-product-view-loading').hide();
+                            $body.find('#pos-product-view-content').show();
+                        } else {
+                            product_list.forEach(function(pidRaw, i) {
+                                var qtyStr = qty_list[i] || '';
+                                var priceStr = price_list[i] || '';
+                                var unitStr = combo_unit[i] || '';
+                                var wastageStr = wastage_percent[i] || '';
+                                var idForGet = String(pidRaw).replace(/^p_/i, '');
+                                var isBasement = String(pidRaw).toLowerCase().indexOf('b_') === 0;
+                                if (isBasement || !idForGet) {
+                                    var label = isBasement ? '{{ __("db.Warehouse Store") }}' : ('ID ' + pidRaw);
+                                    $('#pos-combo-tbody').append('<tr><td>' + label + '</td><td>' + wastageStr + '</td><td>' + qtyStr + '(' + unitStr + ')</td><td>' + priceStr + '</td></tr>');
+                                    pending--;
+                                    if (pending <= 0) {
+                                        $('#pos-combo-item-list').show();
+                                        $body.find('.pos-product-view-loading').hide();
+                                        $body.find('#pos-product-view-content').show();
+                                    }
+                                    return;
+                                }
+                                var vid = (variant_list[i] && String(variant_list[i]).trim()) ? variant_list[i] : '0';
+                                $.get('{{ url("products/getdata") }}/' + idForGet + '/' + vid).done(function(qStr, pStr, uStr, wStr) {
+                                    return function(data) {
+                                        var name = (data && data.name) ? data.name : '';
+                                        var code = (data && data.code) ? data.code : '';
+                                        var row = '<tr><td>' + name + ' [' + code + ']</td><td>' + wStr + '</td><td>' + qStr + '(' + uStr + ')</td><td>' + pStr + '</td></tr>';
+                                        $('#pos-combo-tbody').append(row);
+                                        pending--;
+                                        if (pending <= 0) {
+                                            $('#pos-combo-item-list').show();
+                                            $body.find('.pos-product-view-loading').hide();
+                                            $body.find('#pos-product-view-content').show();
+                                        }
+                                    };
+                                }(qtyStr, priceStr, unitStr, wastageStr)).fail(function() {
+                                    $('#pos-combo-tbody').append('<tr><td>ID ' + idForGet + '</td><td>' + wastageStr + '</td><td>' + qtyStr + '(' + unitStr + ')</td><td>' + priceStr + '</td></tr>');
+                                    pending--;
+                                    if (pending <= 0) {
+                                        $('#pos-combo-item-list').show();
+                                        $body.find('.pos-product-view-loading').hide();
+                                        $body.find('#pos-product-view-content').show();
+                                    }
+                                });
+                            });
+                        }
+                    } else {
+                        $body.find('.pos-product-view-loading').hide();
+                        $body.find('#pos-product-view-content').show();
+                    }
+                    if ($('#pos-product-img-slider').length) {
+                        try { $('#pos-product-img-slider').carousel(0); } catch (e) {}
+                    }
+                })
+                .fail(function() {
+                    $body.find('.pos-product-view-loading').hide().html('<p class="text-danger">{{ __("db.Failed to load product details") }}</p>');
+                });
         }
 
         $(document).on('click', '.expired', function() {
@@ -3636,8 +3844,12 @@
             });
         });
 
-        $(document).on('click', '.product-img', function() {
-            // Customize grid products are handled by .customize-grid-product only — avoid duplicate add
+        $(document).on('click', '.product-img', function(e) {
+            if ($(e.target).closest('.pos-product-view-btn').length) {
+                var id = $(this).data('product-id');
+                if (id) openPosProductViewModal(id);
+                return;
+            }
             if ($(this).hasClass('customize-grid-product')) return;
 
             playSound();
@@ -5477,6 +5689,12 @@
                 alert("Please insert product to order table!");
             } else
                 $('.payment-form').submit();
+        });
+
+        // Ensure order_type (Display=1 / Customization=2) is always sent on submit - no mismatch with POS structure
+        $('.payment-form').on('submit', function() {
+            var ot = $('#order_type').val();
+            if (ot === '' || ot === undefined || ot === null) $('#order_type').val('1');
         });
 
         $("#submit-btn").on("click", function(e) {

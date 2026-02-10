@@ -10400,4 +10400,14 @@ return array(
         'key' => 'Single Product',
         'value' => 'Single Product',
     ),
+    array(
+        'locale' => 'en',
+        'key' => 'Products inside this combo',
+        'value' => 'Products inside this combo',
+    ),
+    array(
+        'locale' => 'en',
+        'key' => 'Failed to load product details',
+        'value' => 'Failed to load product details',
+    ),
 );
