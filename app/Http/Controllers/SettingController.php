@@ -188,6 +188,9 @@ class SettingController extends Controller
         $general_setting->show_products_details_in_sales_table = $data['show_products_details_in_sales_table'];
         $general_setting->show_products_details_in_purchase_table = $data['show_products_details_in_purchase_table'];
         $general_setting->timezone = $request->timezone;
+
+        $general_setting->website_default_locale = $data['website_default_locale'] ?? config('website.default_locale', 'en');
+        $general_setting->website_rtl_locales = isset($data['website_rtl_locales']) ? implode(',', (array) $data['website_rtl_locales']) : null;
         $logo = $request->site_logo;
         if ($logo) {
             $this->fileDelete('logo/', $general_setting->site_logo);
@@ -213,6 +216,7 @@ class SettingController extends Controller
 
         $general_setting->save();
         cache()->forget('general_setting');
+        cache()->forget('website_settings');
 
         return redirect()->back()->with('message', __('db.Data updated successfully'));
     }

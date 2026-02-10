@@ -37,9 +37,21 @@ class RouteServiceProvider extends ServiceProvider
     {
         $this->mapApiRoutes();
 
+        $this->mapWebsiteRoutes();
+
         $this->mapWebRoutes();
 
         //
+    }
+
+    /**
+     * Website routes - loaded before web.php so / shows website, not admin.
+     */
+    protected function mapWebsiteRoutes()
+    {
+        Route::middleware('web')
+             ->namespace($this->namespace)
+             ->group(base_path('routes/website.php'));
     }
 
     /**

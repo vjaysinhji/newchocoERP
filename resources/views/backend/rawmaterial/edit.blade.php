@@ -168,7 +168,7 @@
 
             $.ajax({
                 type:'POST',
-                url:"{{ route('rawmaterials.update') }}",
+                url:"{{ route('rawmaterials.updateData') }}",
                 data: formData,
                 contentType: false,
                 processData: false,

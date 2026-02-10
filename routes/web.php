@@ -173,7 +173,6 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
     Route::delete('/translations/{id}', [TranslationController::class, 'destroy']);
 
     Route::controller(HomeController::class)->group(function () {
-        Route::get('/', 'index');
         Route::get('/dashboard', 'dashboard');
 
         Route::get('new-release', 'newVersionReleasePage')->name('new-release');
@@ -232,7 +231,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::post('rawmaterials/rawmaterial-data', 'rawMaterialData')->name('rawmaterials.rawmaterial-data');
         Route::get('rawmaterials/gencode', 'generateCode')->name('rawmaterial.gencode');
         Route::post('rawmaterials/deletebyselection', 'deleteBySelection')->name('rawmaterials.deletebyselection');
-        Route::post('rawmaterials/update', 'update')->name('rawmaterials.update');
+        Route::post('rawmaterials/update', 'update')->name('rawmaterials.updateData');
         
         // Raw Material Category Routes
         Route::get('rawmaterials/category', 'indexCategory')->name('rawmaterials.category.index');
@@ -296,7 +295,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::post('coldstorages/coldstorage-data', 'coldStorageData')->name('coldstorages.coldstorage-data');
         Route::get('coldstorages/gencode', 'generateCode')->name('coldstorage.gencode');
         Route::post('coldstorages/deletebyselection', 'deleteBySelection')->name('coldstorages.deletebyselection');
-        Route::post('coldstorages/update', 'update')->name('coldstorages.update');
+        Route::post('coldstorages/update', 'update')->name('coldstorages.updateData');
      });
 
     // Warehouse Stores Routes
@@ -305,7 +304,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::post('warehouse-stores/basement-data', 'basementData')->name('warehouse-stores.basement-data');
         Route::get('warehouse-stores/gencode', 'generateCode')->name('warehouse-store.gencode');
         Route::post('warehouse-stores/deletebyselection', 'deleteBySelection')->name('warehouse-stores.deletebyselection');
-        Route::post('warehouse-stores/update', 'update')->name('warehouse-stores.update');
+        Route::post('warehouse-stores/update', 'update')->name('warehouse-stores.updateData');
      });
     Route::controller(WarehouseStoreController::class)->group(function () {
         Route::get('warehouse-stores/category', 'indexCategory')->name('warehouse-stores.category.index');

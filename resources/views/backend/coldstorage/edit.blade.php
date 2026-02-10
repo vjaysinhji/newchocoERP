@@ -202,7 +202,7 @@
 
             $.ajax({
                 type:'POST',
-                url:"{{ route('coldstorages.update') }}",
+                url:"{{ route('coldstorages.updateData') }}",
                 data: formData,
                 contentType: false,
                 processData: false,

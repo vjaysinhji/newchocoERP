@@ -63,6 +63,43 @@
                                         </div>
                                     </div>
                                 @endif
+                                {{-- Website Settings (separate from admin) --}}
+                                <div class="col-md-12 mt-4">
+                                    <hr>
+                                    <h5 class="mb-3">{{ __('db.Website Settings') }}</h5>
+                                    <p class="text-muted small">{{ __('db.These settings affect the public website only, not the admin panel.') }}</p>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="form-group">
+                                        <label>{{ __('db.Website Default Language') }}</label>
+                                        @php
+                                            $website_locales = config('website.supported_locales', ['en' => ['name' => 'English'], 'hi' => ['name' => 'हिन्दी'], 'ur' => ['name' => 'اردو'], 'ar' => ['name' => 'العربية']]);
+                                            $website_default = $lims_general_setting_data->website_default_locale ?? config('website.default_locale', 'en');
+                                        @endphp
+                                        <select name="website_default_locale" class="form-control">
+                                            @foreach($website_locales as $code => $config)
+                                                <option value="{{ $code }}" {{ old('website_default_locale', $website_default) == $code ? 'selected' : '' }}>{{ $config['name'] ?? $code }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="form-group">
+                                        <label>{{ __('db.Website RTL Languages') }}</label>
+                                        <p class="text-muted small mb-2">{{ __('db.Select languages that use right-to-left layout (e.g. Arabic, Urdu).') }}</p>
+                                        @php
+                                            $website_rtl = $lims_general_setting_data->website_rtl_locales ? explode(',', $lims_general_setting_data->website_rtl_locales) : config('website.rtl_locales', ['ar', 'ur']);
+                                        @endphp
+                                        <div class="d-flex flex-wrap gap-3">
+                                            @foreach($website_locales as $code => $config)
+                                                <label class="mr-3">
+                                                    <input type="checkbox" name="website_rtl_locales[]" value="{{ $code }}" {{ in_array($code, $website_rtl) ? 'checked' : '' }}>
+                                                    {{ $config['name'] ?? $code }} ({{ $code }})
+                                                </label>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="col-md-4">
                                     <div class="form-group">
                                         <label>{{__('db.Company Name')}}</label>

@@ -167,7 +167,7 @@
 
             $.ajax({
                 type:'POST',
-                url:"{{ route('warehouse-stores.update') }}",
+                url:"{{ route('warehouse-stores.updateData') }}",
                 data: formData,
                 contentType: false,
                 processData: false,
