@@ -37,7 +37,8 @@ class RouteServiceProvider extends ServiceProvider
     {
         $this->mapApiRoutes();
 
-        $this->mapWebsiteRoutes();
+        // Ecommerce = only frontend website (no separate simple website)
+        $this->mapEcommerceRoutes();
 
         $this->mapWebRoutes();
 
@@ -45,13 +46,16 @@ class RouteServiceProvider extends ServiceProvider
     }
 
     /**
-     * Website routes - loaded before web.php so / shows website, not admin.
+     * Ecommerce module routes first so "/" shows store and shop is public.
      */
-    protected function mapWebsiteRoutes()
+    protected function mapEcommerceRoutes()
     {
-        Route::middleware('web')
-             ->namespace($this->namespace)
-             ->group(base_path('routes/website.php'));
+        $path = base_path('Modules/Ecommerce/Routes/web.php');
+        if (file_exists($path)) {
+            Route::middleware('web')
+                ->namespace('Modules\Ecommerce\Http\Controllers')
+                ->group($path);
+        }
     }
 
     /**

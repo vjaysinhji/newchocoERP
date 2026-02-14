@@ -240,11 +240,12 @@
     		Route::post('/send-email', [FrontController::class, 'contactMail']);
 
 			// Blogs
-    		Route::get('/blog', [FrontController::class, 'blog']);
+			Route::get('/blog', [FrontController::class, 'blog']);
 			Route::get('/blog/{slug}', [FrontController::class, 'blogPost']);
 
-    		// Pages
-    		Route::get('/{slug}', [FrontController::class, 'page']);
+    		// Pages (exclude website locales so /en etc. don't loop)
+    		$locales = array_keys(config('website.supported_locales', ['en' => []]));
+    		Route::get('/{slug}', [FrontController::class, 'page'])->where('slug', '(?!' . implode('$|', $locales) . '$).+');
     	});
 
 		//Route::middleware(['ecommerce','customerauth', InitializeTenancyByDomain::class,PreventAccessFromCentralDomains::class])->prefix('customer')->group(function () {
@@ -476,11 +477,12 @@
     		Route::post('/send-email', [FrontController::class, 'contactMail']);
 
 			// Blogs
-    		Route::get('/blog', [FrontController::class, 'blog']);
+			Route::get('/blog', [FrontController::class, 'blog']);
 			Route::get('/blog/{slug}', [FrontController::class, 'blogPost']);
 
-    		// Pages
-    		Route::get('/{slug}', [FrontController::class, 'page']);
+    		// Pages (exclude website locales so /en etc. don't loop)
+    		$locales = array_keys(config('website.supported_locales', ['en' => []]));
+    		Route::get('/{slug}', [FrontController::class, 'page'])->where('slug', '(?!' . implode('$|', $locales) . '$).+');
     	});
 
     	//Route::middleware(['ecommerce','customerauth'])->prefix('customer')->group(function () {

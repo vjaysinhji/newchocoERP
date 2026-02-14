@@ -11,13 +11,13 @@ class SetWebsiteLocale
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $locale = $request->route('locale');
+        // $locale = $request->route('locale');
 
-        if ($locale && array_key_exists($locale, config('website.supported_locales', []))) {
-            App::setLocale($locale);
-        } else {
-            App::setLocale(config('website.default_locale', 'en'));
-        }
+        // if ($locale && array_key_exists($locale, config('website.supported_locales', []))) {
+        //     App::setLocale($locale);
+        // } else {
+        //     App::setLocale(config('website.default_locale', 'en'));
+        // }
 
         return $next($request);
     }

@@ -13,12 +13,19 @@ class Ecommerce
 {
     public function handle(Request $request, Closure $next)
     {
-        $general_setting =  Cache::remember('general_setting', 60*60*24*365, function () {
-            return DB::table('general_settings')->select('site_logo','expiry_date','developed_by', 'modules', 'currency_position', 'decimal')->latest()->first();
+        // Allow forcing cache refresh via ?refresh_settings=1 (e.g. after enabling ecommerce in DB)
+        if ($request->query('refresh_settings')) {
+            Cache::forget('general_setting');
+            Cache::forget('ecommerce_setting');
+        }
+
+        // Use full row so shared cache works for login/backend views that need site_title
+        $general_setting = Cache::remember('general_setting', 60*60*24*365, function () {
+            return DB::table('general_settings')->latest()->first();
         });
 
-        if(in_array('ecommerce',explode(',',$general_setting->modules))) {
-            if(auth()->user() && auth()->user()->role_id == 5){
+        // Always load Ecommerce frontend (no block on general_settings.modules)
+        if (auth()->user() && auth()->user()->role_id == 5) {
                 $customer = DB::table('customers')->select('id','user_id','wishlist')->where('user_id', Auth::id())->first();
                 if(isset($customer->wishlist)){
                     $wishlist = $customer->wishlist;
@@ -38,9 +45,28 @@ class Ecommerce
 
             View::share('general_setting', $general_setting);
 
-            $ecommerce_setting =  Cache::remember('ecommerce_setting', 60*60*24*365, function () {
-                return DB::table('ecommerce_settings')->latest()->first();
+            $defaults = [
+                'site_title' => 'Ecommerce',
+                'theme' => 'default',
+                'theme_font' => 'Inter',
+                'theme_color' => '#fa9928',
+                'logo' => null,
+                'favicon' => null,
+                'is_rtl' => 0,
+                'online_order' => 0,
+                'search' => 0,
+            ];
+
+            $ecommerce_setting = Cache::remember('ecommerce_setting', 60*60*24*365, function () use ($defaults) {
+                $row = DB::table('ecommerce_settings')->latest()->first();
+                if ($row) {
+                    return (object) array_merge($defaults, (array) $row);
+                }
+                return (object) $defaults;
             });
+
+            // Ensure site_title and other keys always exist (fixes old cache or missing DB columns)
+            $ecommerce_setting = (object) array_merge($defaults, (array) $ecommerce_setting);
 
             View::share('ecommerce_setting', $ecommerce_setting);
 
@@ -110,17 +136,13 @@ class Ecommerce
 
             $footer_widgets = $widgets->where('location', 'footer');
 
-            view()->share([
-                'topNavItems' => $topNavItems,
-                'menu_items' => $menu_items,
-                'footer_widgets' => $footer_widgets,
-                'footer_top_widgets' => $footer_top_widgets
-            ]);
+        view()->share([
+            'topNavItems' => $topNavItems,
+            'menu_items' => $menu_items,
+            'footer_widgets' => $footer_widgets,
+            'footer_top_widgets' => $footer_top_widgets
+        ]);
 
-            return $next($request);
-        }
-        else {
-            return redirect('dashboard');
-        }
+        return $next($request);
     }
 }
