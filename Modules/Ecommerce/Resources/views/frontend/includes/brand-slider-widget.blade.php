@@ -17,7 +17,7 @@
                 <div class="swiper-wrapper">
                     @forelse ($brands as $brand)
                         <div class="swiper-slide">
-                            <a href="{{url('brand')}}/{{$brand->slug}}">
+                            <a href="{{url('brands')}}/{{$brand->slug}}">
                                 <div class="brand-container">
                                     <div class="brand-img">
                                     @if($brand->image!==null)

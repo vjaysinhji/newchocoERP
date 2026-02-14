@@ -26,7 +26,7 @@ class EcommerceSettingController extends Controller
         $biller_list = DB::table('billers')->where('is_active',1)->get();
         $currencies = Currency::query()->where('is_active',1)->get();
 
-        return view('ecommerce::backend.settings.index', compact('settings','pages','warehouse_list','biller_list','currencies'));
+        return view('ecommerce::backend.settings.index', compact('settings','pages','warehouse_list','biller_list','currencies','collections'));
     }
 
     public function update(Request $request)
@@ -40,6 +40,9 @@ class EcommerceSettingController extends Controller
             'theme'               => $request->theme,
             'theme_font'          => $request->theme_font,
             'theme_color'         => $request->theme_color,
+            'header_bg_color'      => $request->header_bg_color,
+            'cta_bg_color'        => $request->cta_bg_color,
+            'featured_collection_id' => $request->featured_collection_id,
             'is_rtl'              => $request->is_rtl,
             'online_order'        => $request->online_order,
             'search'              => $request->search,

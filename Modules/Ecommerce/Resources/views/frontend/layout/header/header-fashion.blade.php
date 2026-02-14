@@ -110,9 +110,9 @@
                                                     @elseif($nav->type == 'page' && ($nav->slug == 'home'))
                                                     <li><a href="{{url('/')}}">@if($nav->name == NULL) {{$nav->title}} @else {{$nav->name}} @endif</a></li>
                                                     @elseif($nav->type == 'collection')
-                                                    <li><a href="{{url('products')}}/{{$nav->slug}}">@if($nav->name == NULL) {{$nav->title}} @else {{$nav->name}} @endif</a></li>
+                                                    <li><a href="{{url('collections')}}/{{$nav->slug}}">@if($nav->name == NULL) {{$nav->title}} @else {{$nav->name}} @endif</a></li>
                                                     @elseif($nav->type == 'brand')
-                                                    <li><a href="{{url('brand')}}/{{$nav->slug}}">@if($nav->name == NULL) {{$nav->title}} @else {{$nav->name}} @endif</a></li>
+                                                    <li><a href="{{url('brands')}}/{{$nav->slug}}">@if($nav->name == NULL) {{$nav->title}} @else {{$nav->name}} @endif</a></li>
                                                     @else
                                                     <li><a href="{{url('')}}/{{$nav->slug}}">@if($nav->name == NULL) {{$nav->title}} @else {{$nav->name}} @endif</a></li>
                                                     @endif

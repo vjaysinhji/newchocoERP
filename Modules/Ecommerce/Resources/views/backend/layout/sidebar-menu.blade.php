@@ -1,4 +1,5 @@
 <li><a href="{{route('slider.index')}}">{{__('db.Sliders')}}</a></li>
+<li><a href="{{route('homepage-banners.index')}}">{{__('db.Homepage Hero Banners')}}</a></li>
 <li><a href="{{route('menu.index')}}">{{__('db.Menu')}}</a></li>
 <li><a href="{{route('collection.index')}}">{{__('db.Collections')}}</a></li>
 <li><a href="{{route('page.index')}}">{{__('db.Pages')}}</a></li>

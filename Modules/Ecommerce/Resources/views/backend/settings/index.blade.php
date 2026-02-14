@@ -74,6 +74,7 @@
                                     <select name="theme" class="form-control">
                                         <option @if(isset($settings->theme) && $settings->theme == 'default') selected @endif value="default">{{__('db.Default')}}</option>
                                         <option @if(isset($settings->theme) && $settings->theme == 'fashion') selected @endif value="fashion">{{__('db.Fashion')}}</option>
+                                        <option @if(isset($settings->theme) && $settings->theme == 'chocolat') selected @endif value="chocolat">{{__('db.Chocolat (Hotel Chocolat style)')}}</option>
                                     </select>
                                 </div>
                             </div>
@@ -113,6 +114,32 @@
                                         <option @if(isset($settings->is_rtl) && $settings->is_rtl == 0) selected @endif value="0">{{__('db.LTR')}}</option>
                                         <option @if(isset($settings->is_rtl) && $settings->is_rtl == 1) selected @endif value="1">{{__('db.RTL')}}</option>
                                     </select>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>{{__('db.Header Background')}}</label>
+                                    <input type="text" name="header_bg_color" class="form-control" value="@if($settings){{$settings->header_bg_color ?? '#000000'}}@else#000000@endif" placeholder="#000000">
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label>{{__('db.Button Background')}}</label>
+                                    <input type="text" name="cta_bg_color" class="form-control" value="@if($settings){{$settings->cta_bg_color ?? '#000000'}}@else#000000@endif" placeholder="#000000">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label>{{__('db.Featured Products Collection')}}</label>
+                                    <select name="featured_collection_id" class="form-control">
+                                        <option value="">{{__('db.Default (Latest)')}}</option>
+                                        @if(isset($collections))
+                                        @foreach($collections as $col)
+                                        <option @if(isset($settings->featured_collection_id) && $settings->featured_collection_id == $col->id) selected @endif value="{{$col->id}}">{{$col->name}}</option>
+                                        @endforeach
+                                        @endif
+                                    </select>
+                                    <small class="text-muted">{{__('db.Products shown on homepage hero')}}</small>
                                 </div>
                             </div>
                             <div class="col-md-3">

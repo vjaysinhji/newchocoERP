@@ -27,8 +27,35 @@ class FrontController extends Controller
     public function index()
     {
         $sliders = DB::table('sliders')->orderBy('order', 'asc')->get();
-
         $ecommerce_setting = Cache::get('ecommerce_setting');
+
+        // Hero banners for Hotel Chocolat-style homepage
+        $hero_banners = DB::table('homepage_hero_banners')
+            ->where('status', 1)
+            ->orderBy('order')
+            ->get();
+
+        // Featured products from collection or default
+        $featured_products = collect();
+        if (isset($ecommerce_setting->featured_collection_id) && $ecommerce_setting->featured_collection_id) {
+            $collection = DB::table('collections')->where('id', $ecommerce_setting->featured_collection_id)->first();
+            if ($collection) {
+                $product_ids = array_filter(explode(',', $collection->products ?? ''));
+                $featured_products = DB::table('products')
+                    ->where('is_active', 1)
+                    ->where('is_online', 1)
+                    ->whereIn('id', $product_ids)
+                    ->limit(12)
+                    ->get();
+            }
+        }
+        if ($featured_products->isEmpty()) {
+            $featured_products = DB::table('products')
+                ->where('is_active', 1)
+                ->where('is_online', 1)
+                ->limit(12)
+                ->get();
+        }
 
         if(isset($ecommerce_setting->home_page)) {
             $home = $ecommerce_setting->home_page;
@@ -47,11 +74,19 @@ class FrontController extends Controller
                     $recently_viewed = session()->get('recently_viewed');
                 }
 
-                return view('ecommerce::frontend/home', compact('sliders', 'widgets', 'recently_viewed'));
+                if (isset($ecommerce_setting->theme) && $ecommerce_setting->theme == 'chocolat') {
+                    return view('ecommerce::frontend.home-chocolat', compact('sliders', 'widgets', 'recently_viewed', 'hero_banners', 'featured_products'));
+                }
+                return view('ecommerce::frontend/home', compact('sliders', 'widgets', 'recently_viewed', 'hero_banners', 'featured_products'));
             }
         }
 
-        return view('ecommerce::frontend/home', compact('sliders'));
+        $widgets = $widgets ?? collect();
+        $recently_viewed = $recently_viewed ?? [];
+        if (isset($ecommerce_setting->theme) && $ecommerce_setting->theme == 'chocolat') {
+            return view('ecommerce::frontend.home-chocolat', compact('sliders', 'hero_banners', 'featured_products', 'widgets', 'recently_viewed'));
+        }
+        return view('ecommerce::frontend/home', compact('sliders', 'hero_banners', 'featured_products', 'widgets', 'recently_viewed'));
     }
 
     public function page($slug)
@@ -440,6 +475,15 @@ class FrontController extends Controller
     public function sessionRenew(Request $request)
     {
         return response()->json('success');
+    }
+
+    public function setLocale($locale)
+    {
+        $supported = array_keys(config('website.supported_locales', ['en' => [], 'ar' => []]));
+        if (in_array($locale, $supported)) {
+            return redirect()->back()->cookie('language', $locale, 60 * 24 * 365);
+        }
+        return redirect()->back();
     }
 
     public function reviewStore(Request $request){

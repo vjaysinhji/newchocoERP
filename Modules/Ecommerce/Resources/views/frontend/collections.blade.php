@@ -24,9 +24,9 @@
     <section class="shop-cart-section">
         <div class="container-fluid">
             <div class="mb-5">
-                <a href="{{url('products/collections/all')}}" class="collection-name">All</a>
+                <a href="{{url('collections/all')}}" class="collection-name">All</a>
                 @foreach($collections as $collection)
-                <a href="{{url('products')}}/{{$collection->slug}}" class="collection-name">{{$collection->name}} ({{count(explode(',', $collection->products))}})</a>
+                <a href="{{url('collections')}}/{{$collection->slug}}" class="collection-name">{{$collection->name}} ({{count(explode(',', $collection->products))}})</a>
                 @endforeach
             </div>
             <div class="product-grid">

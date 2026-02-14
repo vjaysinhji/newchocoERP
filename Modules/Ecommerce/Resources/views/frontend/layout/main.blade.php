@@ -156,6 +156,23 @@ if (session()->get('currency_code')) {
 
     </style>
 
+    @if(isset($ecommerce_setting->theme) && $ecommerce_setting->theme == 'chocolat')
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'header-bg': '{{ $ecommerce_setting->header_bg_color ?? "#000000" }}',
+                        'cta-bg': '{{ $ecommerce_setting->cta_bg_color ?? "#000000" }}',
+                        'accent': '{{ $ecommerce_setting->theme_color ?? "#8B1538" }}'
+                    }
+                }
+            }
+        }
+    </script>
+    @endif
+
     @stack('css')
 
     @if(isset($ecommerce_setting->custom_css))
@@ -229,7 +246,7 @@ if (session()->get('currency_code')) {
     @endif
 </head>
 
-<body class="@if(!empty($ecommerce_setting->is_rtl)) rtl @endif">
+<body class="@if(!empty($ecommerce_setting->is_rtl) || in_array(app()->getLocale(), config('website.rtl_locales', ['ar']))) rtl @endif" dir="@if(in_array(app()->getLocale(), config('website.rtl_locales', ['ar']))) rtl @else ltr @endif">
     @if(env('USER_VERIFIED') == false)
     <div id="demo">
         <h6>Theme Colors</h6>
@@ -247,7 +264,9 @@ if (session()->get('currency_code')) {
     </div>
     @endif
     <!--Header Area starts-->
-    @if(isset($ecommerce_setting->theme) && $ecommerce_setting->theme == 'fashion')
+    @if(isset($ecommerce_setting->theme) && $ecommerce_setting->theme == 'chocolat')
+        @include('ecommerce::frontend.layout.header.header-chocolat')
+    @elseif(isset($ecommerce_setting->theme) && $ecommerce_setting->theme == 'fashion')
         @include('ecommerce::frontend.layout.header.header-fashion')
     @else
         @include('ecommerce::frontend.layout.header.header')
@@ -429,9 +448,9 @@ if (session()->get('currency_code')) {
                             @elseif($link->type == 'page' && ($link->slug == 'home'))
                             <li><a href="{{url('/')}}">@if($link->name == NULL) {{$link->title}} @else {{$link->name}} @endif</a></li>
                             @elseif($link->type == 'collection')
-                            <li><a href="{{url('products')}}/{{$link->slug}}">@if($link->name == NULL) {{$link->title}} @else {{$link->name}} @endif</a></li>
+                            <li><a href="{{url('collections')}}/{{$link->slug}}">@if($link->name == NULL) {{$link->title}} @else {{$link->name}} @endif</a></li>
                             @elseif($link->type == 'brand')
-                            <li><a href="{{url('brand')}}/{{$link->slug}}">@if($link->name == NULL) {{$link->title}} @else {{$link->name}} @endif</a></li>
+                            <li><a href="{{url('brands')}}/{{$link->slug}}">@if($link->name == NULL) {{$link->title}} @else {{$link->name}} @endif</a></li>
                             @else
                             <li><a href="{{url('')}}/{{$link->slug}}">@if($link->name == NULL) {{$link->title}} @else {{$link->name}} @endif</a></li>
                             @endif
