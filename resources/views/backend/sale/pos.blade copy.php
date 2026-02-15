@@ -1,0 +1,7549 @@
+@extends('backend.layout.top-head')
+
+@push('css')
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.9/css/intlTelInput.css" />
+    <link rel="stylesheet" href="{{ asset('css/pos.css') }}" />
+@endpush
+@section('content')
+
+    @php
+        $handle_discount_active = $role_has_permissions_list->where('name', 'handle_discount')->first();
+    @endphp
+
+    <x-success-message key="message" />
+    <x-error-message key="phone_number" />
+    <x-error-message key="not_permitted" />
+    <x-error-message key="error" />
+
+    <section id="pos-layout" class="forms pos-section hidden-print">
+        <div class="container-fluid">
+            <div class="row">
+                <!-- product list -->
+                <div class="col-md-5 order-first order-md-2">
+                    <!-- navbar-->
+                    <header>
+                        <nav class="navbar">
+                            <div class="dropdown">
+                                <a class="btn menu-btn dropdown-toggle-no-arrow" type="button" data-toggle="dropdown"
+                                    aria-expanded="false" role="button"><svg xmlns="http://www.w3.org/2000/svg"
+                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                        class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
+                                    </svg></a>
+                                <div class="dropdown-menu">
+                                    <a class="dropdown-item" target="_blank"
+                                        href="{{ url('/dashboard') }}">{{ __('db.dashboard') }}</a>
+                                    <?php
+                                    $product_permission_active = $role_has_permissions_list->where('name', 'products-index')->first();
+                                    ?>
+                                    @if ($product_permission_active)
+                                        <a class="dropdown-item" target="_blank"
+                                            href="{{ route('products.index') }}">{{ __('db.product_list') }}</a>
+                                    @endif
+
+                                    <?php
+                                    $sale_permission_active = $role_has_permissions_list->where('name', 'sales-index')->first();
+                                    ?>
+                                    @if ($sale_permission_active)
+                                        <a class="dropdown-item" target="_blank"
+                                            href="{{ route('sales.index') }}">{{ __('db.Sale List') }}</a>
+                                    @endif
+
+                                    <?php
+                                    $purchase_permission_active = $role_has_permissions_list->where('name', 'sales-index')->first();
+                                    ?>
+                                    @if ($purchase_permission_active)
+                                        <a class="dropdown-item" target="_blank"
+                                            href="{{ route('purchases.index') }}">{{ __('db.Purchase List') }}</a>
+                                    @endif
+
+                                    <?php
+                                    $transfer_permission_active = $role_has_permissions_list->where('name', 'transfers-index')->first();
+                                    ?>
+                                    @if ($transfer_permission_active)
+                                        <a class="dropdown-item" target="_blank"
+                                            href="{{ route('transfers.index') }}">{{ __('db.Transfer List') }}</a>
+                                    @endif
+                                </div>
+                            </div>
+                            <ul class="nav-menu list-unstyled d-flex flex-md-row align-items-md-center">
+                                <!-- //calculator -->
+                                <li class="nav-item d-md-none">
+                                    <a data-toggle="collapse" href="#collapseProducts" role="button" aria-expanded="false"
+                                        aria-controls="collapseProducts"><svg xmlns="http://www.w3.org/2000/svg"
+                                            fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                            class="size-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="m7.875 14.25 1.214 1.942a2.25 2.25 0 0 0 1.908 1.058h2.006c.776 0 1.497-.4 1.908-1.058l1.214-1.942M2.41 9h4.636a2.25 2.25 0 0 1 1.872 1.002l.164.246a2.25 2.25 0 0 0 1.872 1.002h2.092a2.25 2.25 0 0 0 1.872-1.002l.164-.246A2.25 2.25 0 0 1 16.954 9h4.636M2.41 9a2.25 2.25 0 0 0-.16.832V12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 12V9.832c0-.287-.055-.57-.16-.832M2.41 9a2.25 2.25 0 0 1 .382-.632l3.285-3.832a2.25 2.25 0 0 1 1.708-.786h8.43c.657 0 1.281.287 1.709.786l3.284 3.832c.163.19.291.404.382.632M4.5 20.25h15A2.25 2.25 0 0 0 21.75 18v-2.625c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125V18a2.25 2.25 0 0 0 2.25 2.25Z" />
+                                        </svg></a>
+                                </li>
+                                <div class="d-none d-lg-block dropdown">
+                                    <a class="dropdown-toggle-no-arrow" type="button" data-toggle="dropdown"
+                                        aria-expanded="false" role="button"><svg xmlns="http://www.w3.org/2000/svg"
+                                            fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                            class="size-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25V13.5Zm0 2.25h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25V18Zm2.498-6.75h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007V13.5Zm0 2.25h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007V18Zm2.504-6.75h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V13.5Zm0 2.25h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V18Zm2.498-6.75h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V13.5ZM8.25 6h7.5v2.25h-7.5V6ZM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 0 0 2.25 2.25h10.5a2.25 2.25 0 0 0 2.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0 0 12 2.25Z" />
+                                        </svg></a>
+                                    <div class="dropdown-menu calculator p-3" onclick="event.stopPropagation();">
+                                        <input type="text" class="display" readonly>
+                                        <div class="buttons">
+                                            <button class="btn action ac">AC</button>
+                                            <button class="btn action ce">CE</button>
+                                            <button class="btn operator">%</button>
+                                            <button class="btn operator">÷</button>
+
+                                            <button class="btn number">7</button>
+                                            <button class="btn number">8</button>
+                                            <button class="btn number">9</button>
+                                            <button class="btn operator">x</button>
+
+                                            <button class="btn number">4</button>
+                                            <button class="btn number">5</button>
+                                            <button class="btn number">6</button>
+                                            <button class="btn operator">-</button>
+
+                                            <button class="btn number">1</button>
+                                            <button class="btn number">2</button>
+                                            <button class="btn number">3</button>
+                                            <button class="btn operator">+</button>
+
+                                            <button class="btn number">0</button>
+                                            <button class="btn number">.</button>
+                                            <button class="btn equals">=</button>
+                                        </div>
+                                    </div>
+                                </div>
+                                <!-- //Sale return -->
+                                <li class="nav-item" data-toggle="tooltip" title="Sale Return">
+                                    <a type="button" data-toggle="dropdown" aria-expanded="false" role="button"><svg
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor" class="size-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M9 15 3 9m0 0 6-6M3 9h12a6 6 0 0 1 0 12h-3" />
+                                        </svg></a>
+                                    <div class="dropdown-menu pl-3 pr-3" style="max-width: 250px;">
+                                        <form method="GET" action="{{ route('return-sale.create') }}" target="_blank"
+                                            accept-charset="UTF-8">
+                                            <div class="form-group">
+                                                <label>Sale Reference *</label>
+                                                <div class="input-group">
+                                                    <input type="text" name="reference_no" class="form-control">
+                                                    <button type="submit" class="btn btn-primary btn-sm"
+                                                        data-toggle="tooltip"><svg xmlns="http://www.w3.org/2000/svg"
+                                                            fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                            style="stroke:#FFF" class="size-6">
+                                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                                d="M13.5 4.5 21 12m0 0-7.5 7.5M21 12H3" />
+                                                        </svg></button>
+                                                </div>
+                                            </div>
+                                        </form>
+                                    </div>
+                                </li>
+                                <!-- //fullscreen -->
+                                <li class="nav-item d-none d-lg-block">
+                                    <a id="btnFullscreen" data-toggle="tooltip" title="Full Screen"><svg
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor" class="size-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M3.75 3.75v4.5m0-4.5h4.5m-4.5 0L9 9M3.75 20.25v-4.5m0 4.5h4.5m-4.5 0L9 15M20.25 3.75h-4.5m4.5 0v4.5m0-4.5L15 9m5.25 11.25h-4.5m4.5 0v-4.5m0 4.5L15 15" />
+                                        </svg></a>
+                                </li>
+                                <!-- //Customer Display Screen -->
+                                <li class="nav-item">
+                                    <a id="customer-display" href="{{ route('sales.customerDisplay') }}"
+                                        data-toggle="tooltip" title="{{ __('db.Customer Display Screen') }}"><svg
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor" class="size-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M3.75 4.5h16.5a.75.75 0 01.75.75v10.5a.75.75 0 01-.75.75H3.75a.75.75 0 01-.75-.75V5.25a.75.75 0 01.75-.75zM6 18h12m-6 0v2.25" />
+                                        </svg></a>
+                                </li>
+                                <!-- //print last reciept -->
+                                <li class="nav-item">
+                                    <a id="print-last-reciept" href="{{ route('sales.printLastReciept') }}"
+                                        data-toggle="tooltip" title="{{ __('db.Print Last Reciept') }}"><svg
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor" class="size-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z" />
+                                        </svg></a>
+                                </li>
+                                @if ($lims_pos_setting_data && $lims_pos_setting_data->cash_register)
+                                    <!-- //cash register -->
+                                    <li class="nav-item d-none d-lg-block">
+                                        <a href="" id="register-details-btn" data-id="" data-toggle="tooltip"
+                                            title="{{ __('db.Cash Register Details') }}"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M20.25 14.15v4.25c0 1.094-.787 2.036-1.872 2.18-2.087.277-4.216.42-6.378.42s-4.291-.143-6.378-.42c-1.085-.144-1.872-1.086-1.872-2.18v-4.25m16.5 0a2.18 2.18 0 0 0 .75-1.661V8.706c0-1.081-.768-2.015-1.837-2.175a48.114 48.114 0 0 0-3.413-.387m4.5 8.006c-.194.165-.42.295-.673.38A23.978 23.978 0 0 1 12 15.75c-2.648 0-5.195-.429-7.577-1.22a2.016 2.016 0 0 1-.673-.38m0 0A2.18 2.18 0 0 1 3 12.489V8.706c0-1.081.768-2.015 1.837-2.175a48.111 48.111 0 0 1 3.413-.387m7.5 0V5.25A2.25 2.25 0 0 0 13.5 3h-3a2.25 2.25 0 0 0-2.25 2.25v.894m7.5 0a48.667 48.667 0 0 0-7.5 0M12 12.75h.008v.008H12v-.008Z" />
+                                            </svg></a>
+                                    </li>
+                                @endif
+                                <?php
+                                $today_sale_permission = $permission_list->where('name', 'today_sale')->first();
+                                $today_sale_permission_active = DB::table('role_has_permissions')
+                                    ->where([['permission_id', $today_sale_permission->id], ['role_id', Auth::user()->role_id]])
+                                    ->first();
+                                
+                                $today_profit_permission = $permission_list->where('name', 'today_profit')->first();
+                                $today_profit_permission_active = DB::table('role_has_permissions')
+                                    ->where([['permission_id', $today_profit_permission->id], ['role_id', Auth::user()->role_id]])
+                                    ->first();
+                                ?>
+
+                                @if ($today_sale_permission_active)
+                                    <li class="nav-item d-none d-lg-block">
+                                        <a href="" id="today-sale-btn" data-toggle="tooltip"
+                                            title="{{ __('db.Today Sale') }}"><svg xmlns="http://www.w3.org/2000/svg"
+                                                fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                                            </svg></a>
+                                    </li>
+                                @endif
+                                @if ($today_profit_permission_active)
+                                    <li class="nav-item d-none d-lg-block">
+                                        <a href="" id="today-profit-btn" data-toggle="tooltip"
+                                            title="{{ __('db.Today Profit') }}"><svg xmlns="http://www.w3.org/2000/svg"
+                                                fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                            </svg></a>
+                                    </li>
+                                @endif
+                                @if ($alert_product + count(\Auth::user()->unreadNotifications) > 0)
+                                    <li class="nav-item d-none d-lg-block" id="notification-icon">
+                                        <a rel="nofollow" data-toggle="tooltip" title="{{ __('Notifications') }}"
+                                            class="nav-link dropdown-item"><svg xmlns="http://www.w3.org/2000/svg"
+                                                fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M14.857 17.082a23.848 23.848 0 0 0 5.454-1.31A8.967 8.967 0 0 1 18 9.75V9A6 6 0 0 0 6 9v.75a8.967 8.967 0 0 1-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 0 1-5.714 0m5.714 0a3 3 0 1 1-5.714 0" />
+                                            </svg><span
+                                                class="badge badge-danger notification-number">{{ $alert_product + count(\Auth::user()->unreadNotifications) }}</span>
+                                            <span class="caret"></span>
+                                            <span class="sr-only">Toggle Dropdown</span>
+                                        </a>
+                                        <ul class="right-sidebar" user="menu">
+                                            <li class="notifications">
+                                                <a href="{{ route('report.qtyAlert') }}"
+                                                    class="btn btn-link">{{ $alert_product }} product exceeds alert
+                                                    quantity</a>
+                                            </li>
+                                            @foreach (\Auth::user()->unreadNotifications as $key => $notification)
+                                                <li class="notifications">
+                                                    <a href="#"
+                                                        class="btn btn-link">{{ $notification->data['message'] }}</a>
+                                                </li>
+                                            @endforeach
+                                        </ul>
+                                    </li>
+                                @endif
+                                <li class="nav-item">
+                                    <a rel="nofollow" data-toggle="tooltip" class="nav-link dropdown-item"><svg
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor" class="size-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                        </svg> <span>{{ ucfirst(Auth::user()->name) }}</span> <svg
+                                            xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor" class="size-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="m19.5 8.25-7.5 7.5-7.5-7.5" />
+                                        </svg>
+                                    </a>
+                                    <ul class="right-sidebar">
+                                        <li>
+                                            <a target="_blank"
+                                                href="{{ route('user.profile', ['id' => Auth::id()]) }}"><svg
+                                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M17.982 18.725A7.488 7.488 0 0 0 12 15.75a7.488 7.488 0 0 0-5.982 2.975m11.963 0a9 9 0 1 0-11.963 0m11.963 0A8.966 8.966 0 0 1 12 21a8.966 8.966 0 0 1-5.982-2.275M15 9.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                </svg> {{ __('db.profile') }}</a>
+                                        </li>
+                                        <?php
+                                        $add_expense_permission = $role_has_permissions_list->where('name', 'expenses-add')->first();
+                                        ?>
+                                        @if ($add_expense_permission)
+                                            <li>
+                                                <a href="" data-toggle="modal" data-target="#expense-modal"><svg
+                                                        xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                        class="size-6">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M21 12a2.25 2.25 0 0 0-2.25-2.25H15a3 3 0 1 1-6 0H5.25A2.25 2.25 0 0 0 3 12m18 0v6a2.25 2.25 0 0 1-2.25 2.25H5.25A2.25 2.25 0 0 1 3 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 9m18 0V6a2.25 2.25 0 0 0-2.25-2.25H5.25A2.25 2.25 0 0 0 3 6v3" />
+                                                    </svg> {{ __('db.Add Expense') }}</a>
+                                            </li>
+                                        @endif
+                                        <?php
+                                        $add_payment_permission = $role_has_permissions_list->where('name', 'purchase-payment-add')->first();
+                                        ?>
+                                        @if ($add_payment_permission)
+                                            <li>
+                                                <a href="" class="add-supplier-payment" data-toggle="modal"
+                                                    data-target="#add-supplier-payment"><svg
+                                                        xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                        class="size-6">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                                    </svg> {{ __('db.Add Payment') }}</a>
+                                            </li>
+                                        @endif
+                                        <?php
+                                        $general_setting_permission = $permission_list->where('name', 'general_setting')->first();
+                                        $general_setting_permission_active = DB::table('role_has_permissions')
+                                            ->where([['permission_id', $general_setting_permission->id], ['role_id', Auth::user()->role_id]])
+                                            ->first();
+                                        
+                                        $pos_setting_permission = $permission_list->where('name', 'pos_setting')->first();
+                                        
+                                        $pos_setting_permission_active = DB::table('role_has_permissions')
+                                            ->where([['permission_id', $pos_setting_permission->id], ['role_id', Auth::user()->role_id]])
+                                            ->first();
+                                        
+                                        $authUser = Auth::user()->role_id;
+                                        ?>
+                                        @if ($pos_setting_permission_active)
+                                            <li><a href="{{ route('setting.pos') }}"
+                                                    title="{{ __('db.POS Setting') }}"><svg
+                                                        xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                        class="size-6">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                    </svg> {{ __('db.POS Setting') }}</a> </li>
+                                        @endif
+                                        @if ($general_setting_permission_active)
+                                            <li>
+                                                <a href="{{ route('setting.general') }}"><svg
+                                                        xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                        class="size-6">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                    </svg> {{ __('db.settings') }}</a>
+                                            </li>
+                                        @endif
+                                        <li>
+                                            <a href="{{ url('my-transactions/' . date('Y') . '/' . date('m')) }}"><svg
+                                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+                                                </svg> {{ __('db.My Transaction') }}</a>
+                                        </li>
+                                        @if (Auth::user()->role_id != 5)
+                                            <li>
+                                                <a href="{{ url('holidays/my-holiday/' . date('Y') . '/' . date('m')) }}">
+                                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                        class="size-6">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M15.182 15.182a4.5 4.5 0 0 1-6.364 0M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0ZM9.75 9.75c0 .414-.168.75-.375.75S9 10.164 9 9.75 9.168 9 9.375 9s.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Zm5.625 0c0 .414-.168.75-.375.75s-.375-.336-.375-.75.168-.75.375-.75.375.336.375.75Zm-.375 0h.008v.015h-.008V9.75Z" />
+                                                    </svg> {{ __('db.My Holiday') }}</a>
+                                            </li>
+                                        @endif
+                                        <li>
+                                            <a href="{{ route('logout') }}"
+                                                onclick="event.preventDefault();
+                                                        document.getElementById('logout-form').submit();"><svg
+                                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M5.636 5.636a9 9 0 1 0 12.728 0M12 3v9" />
+                                                </svg>
+
+                                                {{ __('db.logout') }}
+                                            </a>
+                                            <form id="logout-form" action="{{ route('logout') }}" method="POST"
+                                                style="display: none;">
+                                                @csrf
+                                            </form>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </nav>
+                    </header>
+
+                    <div class="filter-window">
+                        <div class="category mt-3">
+                            <div class="row ml-2 mr-2 px-2">
+                                <div class="col-7">Choose category</div>
+                                <div class="col-5 text-right">
+                                    <span class="btn btn-default btn-sm btn-close">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor" class="size-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M6 18 18 6M6 6l12 12" />
+                                        </svg>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="row ml-2 mt-3">
+                                @foreach ($lims_category_list as $category)
+                                    <div class="col-md-3 col-6 category-img text-center"
+                                        data-category="{{ $category->id }}">
+                                        @if ($category->image)
+                                            <img src="{{ url('images/category', $category->image) }}" />
+                                        @else
+                                            <img src="{{ url('/images/product/zummXD2dvAtI.png') }}" />
+                                        @endif
+                                        <p class="text-center">{{ $category->name }}</p>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </div>
+                        <div class="products-m mt-3">
+                            <div class="row ml-2 mr-2 px-2">
+                                <div class="col-7"></div>
+                                <div class="col-5 text-right">
+                                    <span class="btn btn-default btn-sm btn-close">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                            stroke-width="1.5" stroke="currentColor" class="size-6">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M6 18 18 6M6 6l12 12" />
+                                        </svg>
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="product_list_mobile table-container row mt-3" data-cat="" data-brand="">
+
+                            </div>
+                        </div>
+                    </div>
+                    <div id="collapseProducts" class="">
+                        <div class="d-flex justify-content-between product-btns">
+
+                            <button class="btn btn-block btn-primary mt-0 ml-1 mr-1"
+                                id="category-filter">{{ __('db.category') }}</button>
+
+                            <button class="btn btn-block btn-secondary mt-0 ml-1 mr-1"
+                                id="product-filter">{{ __('Single') }}</button>
+
+                            <button class="btn btn-block btn-info mt-0 ml-1 mr-1"
+                                id="combo-filter">{{ __('db.Combo Products') }}</button>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-12 mb-2">
+                            <input type="text" id="main-grid-search" class="form-control" placeholder="{{ __('db.Search products by name or code') }}..." autocomplete="off" />
+                        </div>
+                        <div class="col-md-12">
+                            <div class="alert alert-primary alert-dismissible fade show mb-0 pt-1 pb-1 loading-message">
+                                <span class="small">{{ __('db.Loading products for selected warehouse') }}</span>
+                                <button type="button" id="closeButtonUpgrade" class="close pt-1 pb-1"
+                                    data-dismiss="alert" aria-label="Close">
+                                    <span aria-hidden="true">×</span>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-12 table-container main mt-2" id="main-product-grid" data-cat="" data-brand="">
+
+                            <div class="product-grid text-center">
+
+                                <div class="loader " title="4" style="border:none">
+                                    <svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg"
+                                        xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="24px"
+                                        height="30px" viewBox="0 0 24 30" style="enable-background:new 0 0 50 50;"
+                                        xml:space="preserve">
+                                        <rect x="0" y="0" width="4" height="10" fill="#333">
+                                            <animateTransform attributeType="xml" attributeName="transform"
+                                                type="translate" values="0 0; 0 20; 0 0" begin="0" dur="0.6s"
+                                                repeatCount="indefinite"></animateTransform>
+                                        </rect>
+                                        <rect x="10" y="0" width="4" height="10" fill="#333">
+                                            <animateTransform attributeType="xml" attributeName="transform"
+                                                type="translate" values="0 0; 0 20; 0 0" begin="0.2s" dur="0.6s"
+                                                repeatCount="indefinite"></animateTransform>
+                                        </rect>
+                                        <rect x="20" y="0" width="4" height="10" fill="#333">
+                                            <animateTransform attributeType="xml" attributeName="transform"
+                                                type="translate" values="0 0; 0 20; 0 0" begin="0.4s" dur="0.6s"
+                                                repeatCount="indefinite"></animateTransform>
+                                        </rect>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-12 mt-2" id="customize-product-grid-container" style="display:none;">
+                            <div class="product-grid text-center"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-7 pos-form">
+                    @if(isset($lims_sale_data) && $lims_sale_data)
+                        {!! Form::model($lims_sale_data, ['route' => ['sales.update', $lims_sale_data->id], 'method' => 'put', 'files' => true, 'class' => 'payment-form']) !!}
+                    @else
+                        {!! Form::open(['route' => 'sales.store', 'method' => 'post', 'files' => true, 'class' => 'payment-form']) !!}
+                    @endif
+
+                    @php
+                        if ($lims_pos_setting_data) {
+                            $keybord_active = $lims_pos_setting_data->keybord_active;
+                        } else {
+                            $keybord_active = 0;
+                        }
+
+                        $customer_active = DB::table('permissions')
+                            ->join('role_has_permissions', 'permissions.id', '=', 'role_has_permissions.permission_id')
+                            ->where([['permissions.name', 'customers-add'], ['role_id', \Auth::user()->role_id]])
+                            ->first();
+                    @endphp
+                    <div class="row">
+                        <div class="col-md-11 col-12">
+                            <div class="row">
+                                <div class="col-md-4 col-6">
+                                    <div class="form-group top-fields">
+                                        <label>{{ __('db.date') }}</label>
+                                        <div class="input-group">
+                                            @if (Auth::user()->role_id > 2)
+                                                <input type="text" name="created_at" class="form-control"
+                                                    value="{{ date($general_setting->date_format, strtotime('now')) }}"
+                                                    readonly />
+                                            @else
+                                                <input type="text" name="created_at" class="form-control date"
+                                                    value="{{ date($general_setting->date_format, strtotime('now')) }}" />
+                                            @endif
+                                        </div>
+                                    </div>
+                                </div>
+                                @if (isset(auth()->user()->warehouse_id))
+                                    <input type="hidden" id="warehouse_id" name="warehouse_id"
+                                        value="{{ auth()->user()->warehouse_id }}" />
+                                @else
+                                    <div class="col-md-4 col-6">
+                                        <div class="form-group top-fields">
+                                            <label>{{ __('db.Warehouse') }}</label>
+                                            @php
+                                                if (
+                                                    isset($lims_sale_data) &&
+                                                    !empty($lims_sale_data) &&
+                                                    $lims_sale_data->warehouse_id
+                                                ) {
+                                                    $warehouse_id = $lims_sale_data->warehouse_id;
+                                                } elseif ($lims_pos_setting_data) {
+                                                    $warehouse_id = $lims_pos_setting_data->warehouse_id;
+                                                } else {
+                                                    $warehouse_id = $lims_warehouse_list[0]->id;
+                                                }
+                                            @endphp
+                                            <select required id="warehouse_id" name="warehouse_id"
+                                                class="selectpicker form-control" data-live-search="true"
+                                                data-live-search-style="begins" title="Select warehouse...">
+                                                @foreach ($lims_warehouse_list as $warehouse)
+                                                    <option value="{{ $warehouse->id }}"
+                                                        @if ($warehouse->id == $warehouse_id) selected @endif>
+                                                        {{ $warehouse->name }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                @endif
+                                <x-validation-error fieldName="warehouse_id" />
+                                @if (isset(auth()->user()->biller_id))
+                                    <input type="hidden" id="biller_id" name="biller_id"
+                                        value="{{ auth()->user()->biller_id }}" />
+                                @else
+                                    <div class="col-md-4 col-6">
+                                        <div class="form-group top-fields">
+                                            <label>{{ __('db.Biller') }}</label>
+                                            @php
+                                                if (
+                                                    isset($lims_sale_data) &&
+                                                    !empty($lims_sale_data) &&
+                                                    $lims_sale_data->biller_id
+                                                ) {
+                                                    $biller_id = $lims_sale_data->biller_id;
+                                                } elseif ($lims_pos_setting_data) {
+                                                    $biller_id = $lims_pos_setting_data->biller_id;
+                                                } else {
+                                                    $biller_id = $lims_biller_list[0]->id;
+                                                }
+                                            @endphp
+                                            <select required id="biller_id" name="biller_id"
+                                                class="selectpicker form-control" data-live-search="true"
+                                                data-live-search-style="begins" title="Select Biller...">
+                                                @foreach ($lims_biller_list as $biller)
+                                                    <option value="{{ $biller->id }}"
+                                                        @if ($biller->id == $biller_id) selected @endif>
+                                                        {{ $biller->name . ' (' . $biller->company_name . ')' }}</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    </div>
+                                @endif
+                                <div class="col-md-8 col-6">
+                                    <div class="form-group top-fields">
+                                        <label>{{ __('db.customer') }}</label>
+                                        <div class="input-group pos">
+                                            @php
+                                                $deposit = [];
+                                                $points = [];
+                                                if (
+                                                    isset($lims_sale_data) &&
+                                                    !empty($lims_sale_data) &&
+                                                    $lims_sale_data->customer_id
+                                                ) {
+                                                    $customer_id = $lims_sale_data->customer_id;
+                                                } elseif ($lims_pos_setting_data) {
+                                                    $customer_id = $lims_pos_setting_data->customer_id;
+                                                } else {
+                                                    $customer_id = $lims_customer_list[0]->id;
+                                                }
+                                            @endphp
+                                            <select required name="customer_id" id="customer_id"
+                                                class="selectpicker form-control" data-live-search="true"
+                                                title="Select customer..." style="width: 100px">
+                                                @foreach ($lims_customer_list as $customer)
+                                                    @php
+                                                        $deposit[$customer->id] =
+                                                            $customer->deposit - $customer->expense;
+
+                                                        $points[$customer->id] = $customer->points;
+                                                    @endphp
+                                                    <option data-points={{ $customer->points }}
+                                                        data-credit-limit="{{ $customer->credit_limit }}"
+                                                        value="{{ $customer->id }}"
+                                                        @if ($customer->id == $customer_id) selected @endif>
+                                                        {{ $customer->name }} @if ($customer->wa_number)
+                                                            ({{ $customer->wa_number }})
+                                                        @endif
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                            @if ($customer_active)
+                                                <button type="button" class="btn btn-default btn-sm ml-2" data-toggle="modal"
+                                                    data-target="#addCustomer" title="Add Customer"><svg xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                        stroke="currentColor" class="size-6">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M12 4.5v15m7.5-7.5h-15" />
+                                                    </svg></button>
+                                                <button type="button" class="btn btn-info btn-sm ml-2" id="viewCustomerBtn" 
+                                                    title="View Customer" disabled><svg xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                        stroke="currentColor" class="size-6" style="width: 16px; height: 16px;">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                                    </svg></button>
+                                                <button type="button" class="btn btn-warning btn-sm ml-2" id="editCustomerBtn" 
+                                                    title="Edit Customer" disabled><svg xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                        stroke="currentColor" class="size-6" style="width: 16px; height: 16px;">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                                    </svg></button>
+                                            @endif
+                                            <x-validation-error fieldName="customer_id" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <div class="form-group top-fields">
+                                        <label>{{ __('Invoice No') }}</label>
+                                        <div class="input-group pos">
+                                            <input type="text" id="pos-invoice-no-display" class="form-control"
+                                                readonly placeholder="—" style="background-color: #f5f5f5;" />
+                                            <input type="hidden" id="pos-reference-no" name="reference_no" value="" />
+                                        </div>
+                                    </div>
+                                </div>
+                                {{-- Order Type: Display (default) / Customization (Box/Tray) --}}
+                                <div class="col-md-4 col-6">
+                                    <div class="form-group top-fields">
+                                        <label>{{ __('db.Order Type') }}</label>
+                                        <div class="input-group pos">
+                                            <select name="order_type" id="order_type" class="form-control" style="width:100%;">
+                                                @php
+                                                    $order_type = isset($lims_sale_data) && !empty($lims_sale_data) ? ($lims_sale_data->order_type ?? 1) : 1;
+                                                @endphp
+                                                <option value="1" @if ($order_type == 1) selected @endif>{{ __('db.Display') }}</option>
+                                                <option value="2" @if ($order_type == 2) selected @endif>{{ __('Custom Creation') }}</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="customizetypebox" class="col-12 form-group" style="display:none;">
+                                    <label class="d-block mb-1">{{ __('db.Select Tray or Box') }}</label>
+
+                                    @php
+                                        $has_boxes = !empty($pos_boxes_category_id);
+                                        $has_empty_tray = !empty($pos_empty_tray_category_id);
+                                        $has_customer_tray = !empty($pos_customer_tray_category_id);
+                                    @endphp
+
+                                    @if(!$has_boxes && !$has_empty_tray && !$has_customer_tray)
+                                        {{-- Professional single warning when nothing is configured --}}
+                                        <div class="pos-customize-setup-box mb-0 py-2">
+                                            <strong>Setup required for Customization mode:</strong>
+                                            <ol class="mb-0 pl-3">
+                                                <li>Create <strong>Boxes</strong> category In <strong>Warehouse stores</strong> and add tray/box products.</li>
+                                                <li>Create <strong>Empty Tray</strong> category In <strong>Warehouse stores</strong> and add empty tray products.</li>
+                                                <li>Create <strong>Customer Tray</strong> category In <strong>Warehouse stores</strong> and add customer tray products.</li>
+                                            </ol>
+                                        </div>
+                                    @else
+                                        {{-- Clean horizontal buttons for available categories only --}}
+                                        <div class="d-flex flex-wrap gap-2 align-items-center">
+                                            @if($has_boxes)
+                                                <a href="javascript:void(0);" class="btn btn-outline-secondary btn-sm customize_type" data-customize-type-id="{{ $pos_boxes_category_id }}">BOXES</a>
+                                            @endif
+                                            @if($has_empty_tray)
+                                                <a href="javascript:void(0);" class="btn btn-outline-secondary btn-sm customize_type" data-customize-type-id="{{ $pos_empty_tray_category_id }}">EMPTY TRAY</a>
+                                            @endif
+                                            @if($has_customer_tray)
+                                                <a href="javascript:void(0);" class="btn btn-outline-secondary btn-sm customize_type customize_type_static" data-customize-type-id="{{ $pos_customer_tray_category_id }}">Customer Tray</a>
+                                            @endif
+                                        </div>
+                                    @endif
+                                    <input type="hidden" id="customize_type" name="customize_type" value="" />
+                                </div>
+                                @if (in_array('restaurant', explode(',', $general_setting->modules)))
+                                    <div class="col-md-3 col-6">
+                                        <div class="form-group top-fields">
+                                            <label>{{ __('db.Service') }}</label>
+                                            @php
+                                                if (
+                                                    isset($lims_sale_data) &&
+                                                    !empty($lims_sale_data) &&
+                                                    $lims_sale_data->service_id
+                                                ) {
+                                                    $service_id = $lims_sale_data->service_id;
+                                                }
+                                            @endphp
+                                            @if (!empty($service_id))
+                                                <div class="input-group pos">
+                                                    <select required id="service_id" name="service_id"
+                                                        class="selectpicker form-control" title="Select service...">
+                                                        <option value="1"
+                                                            @if ($service_id == 1) selected @endif>
+                                                            {{ __('db.Dine In') }}</option>
+                                                        <option value="2"
+                                                            @if ($service_id == 2) selected @endif>
+                                                            {{ __('db.Take Away') }}</option>
+                                                        <option value="3"
+                                                            @if ($service_id == 3) selected @endif>
+                                                            {{ __('db.Delivery') }}</option>
+                                                    </select>
+                                                </div>
+                                            @else
+                                                <div class="input-group pos">
+                                                    <select required id="service_id" name="service_id"
+                                                        class="selectpicker form-control" title="Select service...">
+                                                        <option value="1" selected>{{ __('db.Dine In') }}</option>
+                                                        <option value="2">{{ __('db.Take Away') }}</option>
+                                                        <option value="3">{{ __('db.Delivery') }}</option>
+                                                    </select>
+                                                </div>
+                                            @endif
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3 col-6">
+                                        <div class="form-group top-fields">
+                                            <label>{{ __('db.table') }}</label>
+                                            <div class="input-group pos">
+                                                @php
+                                                    if (
+                                                        isset($lims_sale_data) &&
+                                                        !empty($lims_sale_data) &&
+                                                        !empty($lims_sale_data->table_id)
+                                                    ) {
+                                                        $table_id = $lims_sale_data->table_id;
+                                                    }
+                                                @endphp
+                                                <select required id="table_id" name="table_id"
+                                                    class="selectpicker form-control" data-live-search="true"
+                                                    data-live-search-style="begins" title="Select table...">
+                                                    @foreach ($lims_table_list as $table)
+                                                        <option value="{{ $table->id }}"
+                                                            @if (!empty($table_id) && $table->id == $table_id) selected @endif>
+                                                            {{ $table->name }} at {{ $table->floor }} ( ðŸ‘¤
+                                                            {{ $table->number_of_person }})
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-3 col-6">
+                                        <div class="form-group top-fields">
+                                            <label>{{ __('db.Waiter') }}</label>
+                                            <div class="input-group pos">
+                                                @php
+                                                    if (
+                                                        isset($lims_sale_data) &&
+                                                        !empty($lims_sale_data) &&
+                                                        !empty($lims_sale_data->waiter_id)
+                                                    ) {
+                                                        $waiter_id = $lims_sale_data->waiter_id;
+                                                    }
+                                                @endphp
+                                                <select required id="waiter_id" name="waiter_id"
+                                                    class="selectpicker form-control" title="Select waiter...">
+                                                    @if (auth()->user()->service_staff == 1)
+                                                        <option value="{{ auth()->user()->id }}" selected>
+                                                            {{ auth()->user()->name }}</option>
+                                                    @else
+                                                        @foreach ($waiter_list as $waiter)
+                                                            <option value="{{ $waiter->id }}"
+                                                                @if (!empty($waiter_id) && $waiter->id == $waiter_id) selected @endif>
+                                                                {{ $waiter->name }}
+                                                            </option>
+                                                        @endforeach
+                                                    @endif
+                                                </select>
+                                            </div>
+                                        </div>
+                                    </div>
+                                @endif
+                            </div>
+                        </div>
+                        <div class="col-md-1 col-12">
+                            <a class="btn btn-primary btn-block more-options" data-toggle="collapse" href="#moreOptions"
+                                role="button" aria-expanded="false" aria-controls="moreOptions"><svg
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z" />
+                                </svg></a>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="collapse" id="moreOptions">
+                            <div class="card card-body">
+                                <div class="row">
+                                    <?php
+                                    $accountSelection = $role_has_permissions_list->where('name', 'account-selection')->first();
+                                    ?>
+                                    @if ($accountSelection)
+                                        <!-- New Account Selection Field -->
+                                        <div class="col-md-3 col-6">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Account') }}</label>
+                                                <select required name="account_id" id="account_id"
+                                                    class="selectpicker form-control" data-live-search="true">
+                                                    <option value="0" style="color: #A7B49E;">Select an Account
+                                                    </option>
+                                                    @foreach ($lims_account_list as $account)
+                                                        <option @if ($account->is_default == 1) selected @endif
+                                                            value="{{ $account->id }}">{{ $account->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                    @endif
+                                    <div class="col-md-3">
+                                        <label>{{ __('db.Sale Reference No') }} <x-info
+                                                title="Invoice No is auto-generated (same as main Invoice No above)"
+                                                type="info" /></label>
+                                        <div class="form-group">
+                                            <input type="text" id="reference-no" class="form-control" readonly
+                                                placeholder="—" style="background-color: #f5f5f5;" />
+                                        </div>
+                                        <x-validation-error fieldName="reference_no" />
+                                    </div>
+                                    <div class="col-md-4">
+                                        <label>{{ __('db.Currency') }} & {{ __('db.Exchange Rate') }}</label>
+                                        <div class="form-group d-flex">
+                                            <div class="input-group-prepend">
+                                                <select name="currency_id" id="currency"
+                                                    class="form-control selectpicker" data-toggle="tooltip"
+                                                    title="" data-original-title="Sale currency">
+                                                    @foreach ($currency_list as $currency_data)
+                                                        <option value="{{ $currency_data->id }}"
+                                                            data-rate="{{ $currency_data->exchange_rate }}">
+                                                            {{ $currency_data->code }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <input class="form-control" type="text" id="exchange_rate"
+                                                name="exchange_rate" value="{{ $currency->exchange_rate }}">
+                                            <div class="input-group-append">
+                                                <span class="input-group-text"><x-info title="currency exchange rate"
+                                                        type="info" /></span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    @foreach ($custom_fields as $field)
+                                        @if (!$field->is_admin || \Auth::user()->role_id == 1)
+                                            <div class="{{ 'col-md-' . $field->grid_value }}">
+                                                <div class="form-group">
+                                                    <label>{{ $field->name }}</label>
+                                                    @if ($field->type == 'text')
+                                                        <input type="text"
+                                                            name="{{ str_replace(' ', '_', strtolower($field->name)) }}"
+                                                            value="{{ $field->default_value }}" class="form-control"
+                                                            @if ($field->is_required) {{ 'required' }} @endif>
+                                                    @elseif($field->type == 'number')
+                                                        <input type="number"
+                                                            name="{{ str_replace(' ', '_', strtolower($field->name)) }}"
+                                                            value="{{ $field->default_value }}" class="form-control"
+                                                            @if ($field->is_required) {{ 'required' }} @endif>
+                                                    @elseif($field->type == 'textarea')
+                                                        <textarea rows="5" name="{{ str_replace(' ', '_', strtolower($field->name)) }}"
+                                                            value="{{ $field->default_value }}" class="form-control"
+                                                            @if ($field->is_required) {{ 'required' }} @endif></textarea>
+                                                    @elseif($field->type == 'checkbox')
+                                                        <br>
+                                                        <?php $option_values = explode(',', $field->option_value); ?>
+                                                        @foreach ($option_values as $value)
+                                                            <label>
+                                                                <input type="checkbox"
+                                                                    name="{{ str_replace(' ', '_', strtolower($field->name)) }}[]"
+                                                                    value="{{ $value }}"
+                                                                    @if ($value == $field->default_value) {{ 'checked' }} @endif
+                                                                    @if ($field->is_required) {{ 'required' }} @endif>
+                                                                {{ $value }}
+                                                            </label>
+                                                            &nbsp;
+                                                        @endforeach
+                                                    @elseif($field->type == 'radio_button')
+                                                        <br>
+                                                        <?php $option_values = explode(',', $field->option_value); ?>
+                                                        @foreach ($option_values as $value)
+                                                            <label class="radio-inline">
+                                                                <input type="radio"
+                                                                    name="{{ str_replace(' ', '_', strtolower($field->name)) }}"
+                                                                    value="{{ $value }}"
+                                                                    @if ($value == $field->default_value) {{ 'checked' }} @endif
+                                                                    @if ($field->is_required) {{ 'required' }} @endif>
+                                                                {{ $value }}
+                                                            </label>
+                                                            &nbsp;
+                                                        @endforeach
+                                                    @elseif($field->type == 'select')
+                                                        <?php $option_values = explode(',', $field->option_value); ?>
+                                                        <select class="form-control"
+                                                            name="{{ str_replace(' ', '_', strtolower($field->name)) }}"
+                                                            @if ($field->is_required) {{ 'required' }} @endif>
+                                                            @foreach ($option_values as $value)
+                                                                <option value="{{ $value }}"
+                                                                    @if ($value == $field->default_value) {{ 'selected' }} @endif>
+                                                                    {{ $value }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    @elseif($field->type == 'multi_select')
+                                                        <?php $option_values = explode(',', $field->option_value); ?>
+                                                        <select class="form-control"
+                                                            name="{{ str_replace(' ', '_', strtolower($field->name)) }}[]"
+                                                            @if ($field->is_required) {{ 'required' }} @endif
+                                                            multiple>
+                                                            @foreach ($option_values as $value)
+                                                                <option value="{{ $value }}"
+                                                                    @if ($value == $field->default_value) {{ 'selected' }} @endif>
+                                                                    {{ $value }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    @elseif($field->type == 'date_picker')
+                                                        <input type="text"
+                                                            name="{{ str_replace(' ', '_', strtolower($field->name)) }}"
+                                                            value="{{ $field->default_value }}"
+                                                            class="form-control date"
+                                                            @if ($field->is_required) {{ 'required' }} @endif>
+                                                    @endif
+                                                </div>
+                                            </div>
+                                        @endif
+                                    @endforeach
+                                </div>
+                            </div>
+                        </div>
+                        @if ($lims_pos_setting_data->is_table && !in_array('restaurant', explode(',', $general_setting->modules)))
+                            <div class="col-12 pl-0 pr-0">
+                                <div class="form-group">
+                                    <select required id="table_id" name="table_id" class="selectpicker form-control"
+                                        data-live-search="true" data-live-search-style="begins" title="Select table...">
+                                        @foreach ($lims_table_list as $table)
+                                            <option value="{{ $table->id }}">{{ $table->name }}</option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+                        @endif
+                        <div class="col-12 pl-0 pr-0">
+                            <div class="search-box form-group mb-2">
+                                <div class="input-group pos">
+                                    <input style="border: 1px solid #7c5cc4;" type="text" name="product_code_name"
+                                        id="product-search-input" placeholder="Scan/Search product by name/code"
+                                        class="form-control" autofocus />
+                                    <button type="button" class="btn btn-primary" onclick="barcode()"><svg
+                                            xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                            fill="currentColor" class="bi bi-upc" viewBox="0 0 16 16">
+                                            <path
+                                                d="M3 4.5a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0zm2 0a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 .5.5v7a.5.5 0 0 1-.5.5h-1a.5.5 0 0 1-.5-.5zm3 0a.5.5 0 0 1 1 0v7a.5.5 0 0 1-1 0z" />
+                                        </svg></button>
+                                </div>
+                                <div id="product-results-container">
+
+                                </div>
+                                <div id="no-results-message"
+                                    style="background-color: #f5f6f7;color: #666; margin-top: 5px;padding: 3px 5px; display: none;">
+                                    No results found</div>
+                            </div>
+                        </div>
+                        <div class="table-responsive transaction-list">
+                            <table id="myTable" class="table table-hover table-striped order-list table-fixed">
+                                <thead class="d-none d-md-block">
+                                    <tr>
+                                        <th class="customize-parent-col" style="width:36px; @if(!isset($lims_sale_data) || empty($lims_sale_data) || ($lims_sale_data->order_type ?? 1) != 2) display:none; @endif"></th>
+                                        <th class="col-sm-5 col-6">{{ __('db.product') }}</th>
+                                        <th class="col-sm-2 d-none d-md-table-cell">{{ __('db.Price') }}</th>
+                                        <th class="col-sm-2">{{ __('db.Quantity') }}</th>
+                                        <th class="col-sm-3" style="text-align: center;">{{ __('db.Subtotal') }}</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-id">
+
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="row" style="display: none;">
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <input type="hidden" name="total_qty" value="0" />
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <input type="hidden" name="total_discount"
+                                        value="{{ number_format(0, $general_setting->decimal, '.', '') }}" />
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <input type="hidden" name="total_tax"
+                                        value="{{ number_format(0, $general_setting->decimal, '.', '') }}" />
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <input type="hidden" name="total_price"
+                                        value="{{ number_format(0, $general_setting->decimal, '.', '') }}" />
+                                </div>
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <input type="hidden" name="item" value="0" />
+                                    <input type="hidden" name="order_tax"
+                                        value="{{ number_format(0, $general_setting->decimal, '.', '') }}" />
+                                </div>
+                                <x-validation-error fieldName="item" />
+                            </div>
+                            <div class="col-md-2">
+                                <div class="form-group">
+                                    <input type="hidden" name="grand_total"
+                                        value="{{ number_format(0, $general_setting->decimal, '.', '') }}" />
+                                    <input type="hidden" name="used_points" />
+
+                                    @if (in_array('restaurant', explode(',', $general_setting->modules)))
+                                        <input type="hidden" name="sale_status" value="5" />
+                                    @else
+                                        <input type="hidden" name="sale_status" value="1" />
+                                    @endif
+                                    <x-validation-error fieldName="sale_status" />
+
+                                    <input type="hidden" name="coupon_active">
+                                    <input type="hidden" name="coupon_id" value="">
+                                    <input type="hidden" name="coupon_discount" value="0" />
+
+                                    <input type="hidden" name="pos" value="1" />
+
+                                    @if (isset($lims_sale_data) && !empty($lims_sale_data))
+                                        <input type="hidden" name="sale_id" value="{{ $lims_sale_data->id }}" />
+                                        <input type="hidden" name="draft" value="1" />
+                                    @else
+                                        <input type="hidden" name="draft" value="0" />
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-12 totals"
+                            style="background-color:#f5f6f7;border-top: 2px solid #ebe9f1;padding-bottom: 7px;padding-top: 7px;">
+                            <div class="row">
+                                <div class="col-sm-4 col-6">
+                                    <strong class="totals-title">{{ __('db.Items') }}</strong><strong id="item">0
+                                        (0)</strong>
+                                </div>
+                                <div class="col-sm-4 col-6">
+                                    <strong class="totals-title">{{ __('db.Total') }}</strong><strong
+                                        id="subtotal">{{ number_format(0, $general_setting->decimal, '.', '') }}</strong>
+                                </div>
+                                @if ($handle_discount_active)
+                                    <div class="col-sm-4 col-6">
+                                        <strong class="totals-title">{{ __('db.Discount') }} <button type="button"
+                                                class="btn btn-link btn-sm" data-toggle="modal"
+                                                data-target="#order-discount-modal"> <svg
+                                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                                </svg></button></strong><strong
+                                            id="discount">{{ number_format(0, $general_setting->decimal, '.', '') }}</strong>
+                                    </div>
+                                @endif
+                                <div class="col-sm-4 col-6">
+                                    <strong class="totals-title">{{ __('db.Coupon') }} <button type="button"
+                                            class="btn btn-link btn-sm" data-toggle="modal"
+                                            data-target="#coupon-modal"><svg xmlns="http://www.w3.org/2000/svg"
+                                                fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                            </svg></button></strong><strong
+                                        id="coupon-text">{{ number_format(0, $general_setting->decimal, '.', '') }}</strong>
+                                </div>
+                                <div class="col-sm-4 col-6">
+                                    <strong class="totals-title">{{ __('db.Tax') }} <button type="button"
+                                            class="btn btn-link btn-sm" data-toggle="modal" data-target="#order-tax"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                            </svg></button></strong><strong
+                                        id="tax">{{ number_format(0, $general_setting->decimal, '.', '') }}</strong>
+                                </div>
+                                <div class="col-sm-4 col-6">
+                                    <strong class="totals-title">{{ __('db.Shipping') }} <button type="button"
+                                            class="btn btn-link btn-sm" data-toggle="modal"
+                                            data-target="#shipping-cost-modal"><svg xmlns="http://www.w3.org/2000/svg"
+                                                fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                            </svg></button></strong><strong
+                                        id="shipping-cost">{{ number_format(0, $general_setting->decimal, '.', '') }}</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="payment-amount d-none d-md-block">
+                        <h2>{{ __('db.grand total') }} <span
+                                id="grand-total">{{ number_format(0, $general_setting->decimal, '.', '') }}</span></h2>
+                    </div>
+                    <div class="payment-options">
+                        <div class="column-5 more-payment-options">
+                            <div class="btn-group dropup">
+                                <button type="button" class="btn btn-primary btn-custom  dropdown-toggle d-md-none"
+                                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                        stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                            d="m21 7.5-9-5.25L3 7.5m18 0-9 5.25m9-5.25v9l-9 5.25M3 7.5l9 5.25M3 7.5v9l9 5.25m0-9v9" />
+                                    </svg> Pay <span id="grand-total-m"></span>
+                                </button>
+                                <div class="">
+                                    @if (in_array('card', $options))
+                                        <div class="column-5">
+                                            <button style="background: #0984e3" type="button"
+                                                class="btn btn-sm btn-custom payment-btn" data-toggle="modal"
+                                                data-target="#add-payment" id="credit-card-btn" disabled="true"><svg
+                                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                                                </svg> {{ __('db.Card') }}</button>
+                                        </div>
+                                    @endif
+                                    @if (in_array('cash', $options))
+                                        <div class="column-5">
+                                            <button style="background: #00cec9" type="button"
+                                                class="btn btn-sm btn-custom payment-btn" data-toggle="modal"
+                                                data-target="#add-payment" id="cash-btn" disabled="true"><svg
+                                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+                                                </svg> {{ __('db.Cash') }}</button>
+                                        </div>
+                                    @endif
+                                    @if (in_array('razorpay', $options))
+                                        <div class="column-5">
+                                            <button style="background: #2d2d2d" type="button"
+                                                class="btn btn-sm btn-custom payment-btn" data-toggle="modal"
+                                                data-target="#add-payment" id="razorpay-btn" disabled="true">
+                                                <!-- Razorpay SVG Icon -->
+                                                <!-- <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"
+                                                            fill="white" width="20" height="20" style="margin-right: 6px;">
+                                                            <path d="M344.7 80.4 137.6 416h83.8l207.1-335.6h-83.8zm-84.5 151.3-131.8 202h82.3l131.8-202h-82.3z"/>
+                                                        </svg> -->
+                                                Razorpay
+                                            </button>
+                                        </div>
+                                    @endif
+                                    @if (in_array('credit', $options))
+                                        <div class="column-5">
+                                            <button style="background: #f05969" type="button"
+                                                class="btn btn-sm btn-custom payment-btn" data-toggle="modal"
+                                                data-target="#add-payment" id="credit-sale-btn" disabled="true"><svg
+                                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+                                                </svg> {{ __('db.Credit Sale') }}</button>
+                                        </div>
+                                    @endif
+
+                                    <div class="column-5">
+                                        <button style="background: #010429" type="button"
+                                            class="btn btn-sm btn-custom payment-btn" data-toggle="modal"
+                                            data-target="#add-payment" id="multiple-payment-btn" disabled="true"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+                                            </svg> {{ __('db.Multiple Payment') }}</button>
+                                    </div>
+                                    @if (in_array('knet', $options))
+                                        <div class="column-5">
+                                            <button style="background: #6c5ce7" type="button"
+                                                class="btn btn-sm btn-custom payment-btn" data-toggle="modal"
+                                                data-target="#add-payment" id="knet-btn" disabled="true"><svg
+                                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+                                                </svg> KNET</button>
+                                        </div>
+                                    @endif
+                                    @if (in_array('installment', $options))
+                                        <div class="column-5">
+                                            <button type="button" class="btn btn-sm btn-warning" disabled="true"
+                                                id="installmentPlanBtn">
+                                                <i class="bi bi-credit-card"></i> {{ __('db.Installment') }}
+                                            </button>
+                                        </div>
+                                    @endif
+                                    @if (in_array('cheque', $options))
+                                        <div class="column-5">
+                                            <button style="background-color: #fd7272" type="button"
+                                                class="btn btn-sm btn-block btn-custom payment-btn" data-toggle="modal"
+                                                data-target="#add-payment" id="cheque-btn" disabled="true"><svg
+                                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
+                                                </svg> {{ __('db.Cheque') }}</button>
+                                        </div>
+                                    @endif
+                                    @if (in_array('gift_card', $options))
+                                        <div class="column-5">
+                                            <button style="background-color: #5f27cd" type="button"
+                                                class="btn btn-sm btn-block btn-custom payment-btn" data-toggle="modal"
+                                                data-target="#add-payment" id="gift-card-btn" disabled="true"><svg
+                                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M21 11.25v8.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 1 0 9.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1 1 14.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+                                                </svg> {{ __('db.Gift Card') }}</button>
+                                        </div>
+                                    @endif
+                                    @if (in_array('deposit', $options))
+                                        <div class="column-5">
+                                            <button style="background-color: #b33771" type="button"
+                                                class="btn btn-sm btn-block btn-custom payment-btn" data-toggle="modal"
+                                                data-target="#add-payment" id="deposit-btn" disabled="true"><svg
+                                                    xmlns="http://www.w3.org/2000/svg" width="16" height="16"
+                                                    fill="currentColor" class="bi bi-bank" viewBox="0 0 16 16">
+                                                    <path
+                                                        d="m8 0 6.61 3h.89a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.5.5H15v7a.5.5 0 0 1 .485.38l.5 2a.498.498 0 0 1-.485.62H.5a.498.498 0 0 1-.485-.62l.5-2A.5.5 0 0 1 1 13V6H.5a.5.5 0 0 1-.5-.5v-2A.5.5 0 0 1 .5 3h.89zM3.777 3h8.447L8 1zM2 6v7h1V6zm2 0v7h2.5V6zm3.5 0v7h1V6zm2 0v7H12V6zM13 6v7h1V6zm2-1V4H1v1zm-.39 9H1.39l-.25 1h13.72z" />
+                                                </svg> {{ __('db.Deposit') }}</button>
+                                        </div>
+                                    @endif
+                                    @if (in_array('points', $options))
+                                        @if ($lims_reward_point_setting_data && $lims_reward_point_setting_data->is_active)
+                                            <div class="column-5">
+                                                <button style="background-color: #319398" type="button"
+                                                    class="btn btn-sm btn-block btn-custom payment-btn"
+                                                    data-toggle="modal" data-target="#add-payment" id="point-btn"
+                                                    disabled="true"><svg xmlns="http://www.w3.org/2000/svg"
+                                                        fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                                        stroke="currentColor" class="size-6">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z" />
+                                                    </svg> {{ __('db.Points') }}</button>
+                                            </div>
+                                        @endif
+                                    @endif
+                                </div>
+                            </div>
+                        </div>
+                        <?php
+                        $fixed_methods = ['cash', 'card', 'cheque', 'gift_card', 'deposit', 'pesapal', 'knet'];
+                        $payment_methods = explode(',', $lims_pos_setting_data->payment_options);
+                        
+                        $payment_methods = array_diff($payment_methods, $fixed_methods);
+                        $payment_methods = array_values($payment_methods);
+                        ?>
+                        {{-- @if (count($payment_methods))
+                    <div class="column-5">
+                        <div class="btn-group" role="group">
+                            <button id="btn-more" type="button" class="btn btn-sm btn-secondary dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                More
+                            </button>
+                            <div class="dropdown-menu" aria-labelledby="btnGroupDrop1">
+                                @foreach ($payment_methods as $method)
+                                    <button id="pay-method" class="dropdown-item pay-options payment-btn" type="button"  data-toggle="modal" data-target="#add-payment" value="{{ $method }}" disabled="true">{{ ucfirst($method) }}</button>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                    @endif --}}
+                        <div class="column-5">
+                            <button style="background-color: #e28d02" type="button" class="btn btn-sm btn-custom"
+                                id="draft-btn"><svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" />
+                                </svg> {{ __('db.Draft') }}</button>
+                        </div>
+                        <div class="column-5">
+                            <button style="background-color: #d63031;" type="button" class="btn btn-sm btn-custom"
+                                id="cancel-btn" onclick="return confirmCancel()"><svg
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                </svg> {{ __('db.Cancel') }}</button>
+                        </div>
+                        <div class="column-5">
+                            <button style="background-color: #ffc107;" type="button" class="btn btn-sm btn-custom"
+                                data-toggle="modal" data-target="#recentTransaction"><svg
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                        d="M12 6v6h4.5m4.5 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+                                </svg> {{ __('db.Recent Transaction') }}</button>
+                        </div>
+                    </div>
+
+                    <!-- payment modal -->
+                    <div id="add-payment" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 id="exampleModalLabel" class="modal-title">{{ __('db.Finalize Sale') }}</h5>
+                                    <button type="button" data-dismiss="modal" aria-label="Close"
+                                        class="close"><span aria-hidden="true"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18 18 6M6 6l12 12" />
+                                            </svg></span></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-md-10" id="payment-select-row">
+                                            <!-- Sale Note and Greeting Card -->
+                                            <div class="form-group">
+                                                <div class="row">
+                                                    <div class="col-sm-6 col-xs-6">
+                                                        <label>{{ __('db.Sale Note') }}</label>
+                                                        <textarea name="sale_note" id="sale_note" class="form-control kb-text skip" style="height: 40px;" placeholder="{{ __('db.Sale Note') }}" maxlength="250"></textarea>
+                                                    </div>
+                                                    <div class="col-sm-6 col-xs-6">
+                                                        <label>{{ __('db.Greeting card') }}</label>
+                                                        <textarea name="staff_note" id="staffnote" class="form-control kb-text skip" style="height: 40px;" placeholder="{{ __('db.Greeting card') }}" maxlength="250"></textarea>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Order Type and Delivery Type -->
+                                            <div class="form-group">
+                                                <div class="row">
+                                                    <div class="col-sm-6 col-xs-6">
+                                                        <label for="Order Type">{{ __('db.Order Type') }}</label>
+                                                        <select name="delivery_type" class="form-control selectpicker" id="posdeliverytype" required>
+                                                            <option value="" selected>{{ __('db.Select Order Type') }}</option>
+                                                            <option value="factory">Factory</option>
+                                                            <option value="baby_order_shop">Baby Order - Shop</option>
+                                                            <option value="baby_order_factory">Baby Order - Factory</option>
+                                                            <option value="gift_order_shop">Gift Order - Shop</option>
+                                                            <option value="gift_order_factory">Gift Order - Factory</option>
+                                                            <option value="shop_fixing">Shop Fixing</option>
+                                                            <option value="inshop_sales">Inshop Sales</option>
+                                                            <option value="owner">Owner-100% Discount</option>
+                                                            <option value="owner_factory">Owner 100% Discount - Factory</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-sm-6 col-xs-6">
+                                                        <label for="Delivery Type">{{ __('db.Delivery Type') }}</label>
+                                                        <select name="order_mode" class="form-control selectpicker" id="order_mode" required>
+                                                            <option value="" selected>{{ __('db.Select Delivery Type') }}</option>
+                                                            <option value="delivery">Delivery</option>
+                                                            <option value="self_pick_up">Self Pick Up</option>
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <!-- Delivery Date and Time -->
+                                            <div class="form-group" id="deliverycontainer">
+                                                <div class="row">
+                                                    <div class="col-sm-6 col-xs-6">
+                                                        <label for="delivery_date">{{ __('db.Delivery Date') }}</label>
+                                                        <input type="date" name="delivery_date" value="" class="form-control input-tip datetime" id="sldate" placeholder="{{ __('db.Select Date') }}">
+                                                    </div>
+                                                    <div class="col-sm-6 col-xs-6">
+                                                        <label for="delivery_time">{{ __('db.Delivery Time') }}</label>
+                                                        <select name="delivery_time" class="form-control selectpicker" id="posdeliverytime" required>
+                                                            <option value="" selected>{{ __('db.Select Time') }}</option>
+                                                            <option value="09:00 AM - 01:00 PM">09:00 AM - 01:00 PM</option>
+                                                            <option value="10:00 AM - 02:00 PM">10:00 AM - 02:00 PM</option>
+                                                            <option value="11:00 AM - 03:00 PM">11:00 AM - 03:00 PM</option>
+                                                            <option value="12:00 PM - 04:00 PM">12:00 PM - 04:00 PM</option>
+                                                            <option value="01:00 PM - 05:00 PM">01:00 PM - 05:00 PM</option>
+                                                            <option value="02:00 PM - 06:00 PM">02:00 PM - 06:00 PM</option>
+                                                            <option value="03:00 PM - 07:00 PM">03:00 PM - 07:00 PM</option>
+                                                            <option value="04:00 PM - 08:00 PM">04:00 PM - 08:00 PM</option>
+                                                            <option value="05:00 PM - 09:00 PM">05:00 PM - 09:00 PM</option>
+                                                            <option value="06:00 PM - 10:00 PM">06:00 PM - 10:00 PM</option>
+                                                            <option value="07:00 PM - 11:00 PM">07:00 PM - 11:00 PM</option>
+                                                            <option value="08:00 PM - 12:00 AM">08:00 PM - 12:00 AM</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-sm-6 col-xs-6">
+                                                        <label for="delivery_time2">{{ __('db.Delivery Time2') }}</label>
+                                                        <select name="delivery_time2" class="form-control selectpicker" id="posdeliverytime2" required>
+                                                            <option value="" selected>{{ __('db.Select Time') }}</option>
+                                                            <option value="09:00 AM - 01:00 PM">09:00 AM - 01:00 PM</option>
+                                                            <option value="10:00 AM - 02:00 PM">10:00 AM - 02:00 PM</option>
+                                                            <option value="11:00 AM - 03:00 PM">11:00 AM - 03:00 PM</option>
+                                                            <option value="12:00 PM - 04:00 PM">12:00 PM - 04:00 PM</option>
+                                                            <option value="01:00 PM - 05:00 PM">01:00 PM - 05:00 PM</option>
+                                                            <option value="02:00 PM - 06:00 PM">02:00 PM - 06:00 PM</option>
+                                                            <option value="03:00 PM - 07:00 PM">03:00 PM - 07:00 PM</option>
+                                                            <option value="04:00 PM - 08:00 PM">04:00 PM - 08:00 PM</option>
+                                                            <option value="05:00 PM - 09:00 PM">05:00 PM - 09:00 PM</option>
+                                                            <option value="06:00 PM - 10:00 PM">06:00 PM - 10:00 PM</option>
+                                                            <option value="07:00 PM - 11:00 PM">07:00 PM - 11:00 PM</option>
+                                                            <option value="08:00 PM - 12:00 AM">08:00 PM - 12:00 AM</option>
+                                                        </select>
+                                                    </div>
+                                                    <div class="col-sm-6 hide col-xs-6" id="receivername_block">
+                                                        <div class="form-group">
+                                                            <label for="Receiver_Name">{{ __('db.Receiver Name') }}</label>
+                                                            <input name="receiver_name" type="text" id="receiver_name" class="pa form-control kb-pad1 mobile_number" value="">
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-sm-6 hide col-xs-6" id="receivernumber_block">
+                                                        <div class="form-group">
+                                                            <label for="Receiver_Number">{{ __('db.Receiver Number') }}</label>
+                                                            <input name="receiver_number" type="text" id="receiver_number" class="pa form-control kb-pad1 mobile_number" value="">
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            <div class="row">
+                                                <div class="col-md-3 col-6 mt-1 paying-amount-container">
+                                                    <label>{{ __('db.Paying Amount') }} *</label>
+                                                    <input type="text" name="paid_amount[]" value="0"
+                                                        class="form-control paid_amount numkey" step="any">
+                                                </div>
+                                                <div class="col-md-3 col-6 mt-1">
+                                                    <input type="hidden" name="paid_by_id[]">
+                                                    <label>{{ __('db.Paid By') }}</label>
+                                                    <select name="paid_by_id_select[]"
+                                                        class="form-control selectpicker">
+                                                        @if (in_array('cash', $options))
+                                                            <option value="1">Cash</option>
+                                                        @endif
+                                                        @if (in_array('gift_card', $options))
+                                                            <option value="2">Gift Card</option>
+                                                        @endif
+                                                        @if (in_array('card', $options))
+                                                            <option value="3">Credit Card</option>
+                                                        @endif
+                                                        @if (in_array('cheque', $options))
+                                                            <option value="4">Cheque</option>
+                                                        @endif
+                                                        @if (in_array('deposit', $options))
+                                                            <option value="6">Deposit</option>
+                                                        @endif
+                                                        @if ($lims_reward_point_setting_data && $lims_reward_point_setting_data->is_active)
+                                                            <option value="7">Points</option>
+                                                        @endif
+                                                        @if (in_array('razorpay', $options))
+                                                            <option value="razorpay">Razorpay</option>
+                                                        @endif
+
+                                                        @foreach ($options as $option)
+                                                            @if (
+                                                                $option !== 'cash' &&
+                                                                    $option !== 'card' &&
+                                                                    $option !== 'card' &&
+                                                                    $option !== 'cheque' &&
+                                                                    $option !== 'gift_card' &&
+                                                                    $option !== 'deposit' &&
+                                                                    $option !== 'paypal' &&
+                                                                    $option !== 'pesapal')
+                                                                <option value="{{ $option }}">
+                                                                    {{ ucfirst($option) }}</option>
+                                                            @endif
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-3 col-6 mt-1 cash-received-container">
+                                                    <label id="received-paying">{{ __('db.Cash Received') }} <x-info
+                                                            title="Cash handed over to you. example: sale amount is 300. customer gives you 500. cash received: 500 "
+                                                            type="info" /> *</label>
+                                                    <input type="text" name="paying_amount[]"
+                                                        class="form-control paying_amount numkey" required
+                                                        step="any">
+                                                </div>
+                                            </div>
+                                            <div class="row add-more-row mt-2">
+                                                <div class="col-md-12 text-center"><button
+                                                        class="btn btn-info add-more">+
+                                                        {{ __('db.Add More Payment') }}</button></div>
+                                            </div>
+                                            <div id="payment_receiver_id" class="row">
+                                                <div class="col-md-12 mt-1">
+                                                    <label>{{ __('db.Payment Receiver') }}</label>
+                                                    <input type="text" name="payment_receiver"
+                                                        class="form-control">
+                                                </div>
+                                                <div class="form-group col-md-12">
+                                                    <label>{{ __('db.Payment Note') }}</label>
+                                                    <textarea id="payment_note" rows="2" class="form-control" name="payment_note"></textarea>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2 p-2 bg-info text-light pt-4 pb-4 payment-info">
+                                            <div class="mt-4">
+                                                <h2>{{ __('db.Total Payable') }}</h2>
+                                                <p class="total_payable text-light"></p>
+                                            </div>
+                                            <div class="mt-4">
+                                                <h2>{{ __('db.Total Paying') }}</h2>
+                                                <p class="total_paying text-light">0.00</p>
+                                            </div>
+                                            <div class="mt-4">
+                                                <h2>{{ __('db.Change') }}</h2>
+                                                <p class="change text-light">0.00</p>
+                                            </div>
+                                            <div class="mt-4">
+                                                <h2>{{ __('db.Due') }}</h2>
+                                                <p class="due text-light">0.00</p>
+                                            </div>
+                                        </div>
+                                        {{-- points info here --}}
+                                        <div class="points-info col-md-2 bg-info text-light p-2  pt-4 pb-4 ">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-8">
+                                            <div class="mt-3">
+                                                <button id="submit-btn" type="button"
+                                                    class="btn btn-primary">{{ __('db.submit') }}</button>
+                                                @if ($lims_pos_setting_data && $lims_pos_setting_data->show_print_invoice)
+                                                    <div class="form-check d-inline-block ml-3">
+                                                        <input class="form-check-input" type="checkbox"
+                                                            name="print_invoice" id="print_invoice" checked>
+                                                        <label style="color:rgb(136, 136, 136);"
+                                                            class="form-check-label" for="print_invoice">
+                                                            {{ __('db.print_invoice') }}
+                                                        </label>
+                                                    </div>
+                                                @endif
+                                                <div class="form-check d-inline-block ml-3">
+                                                    <input class="form-check-input" type="checkbox"
+                                                        name="send_whatsapp" id="send_whatsapp" checked>
+                                                    <label style="color:rgb(136, 136, 136);" class="form-check-label"
+                                                        for="send_whatsapp">
+                                                        {{ __('db.send_whatsapp_message') }}
+                                                    </label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- order_discount modal -->
+                    <div id="order-discount-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">{{ __('db.Order Discount') }}</h5>
+                                    <button type="button" data-dismiss="modal" aria-label="Close"
+                                        class="close"><span aria-hidden="true"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18 18 6M6 6l12 12" />
+                                            </svg></span></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-md-6 form-group">
+                                            @php
+                                                $selected_discount_type =
+                                                    old('order_discount_type_select') ??
+                                                    ($lims_sale_data->order_discount_type ?? 'Flat');
+                                            @endphp
+                                            <label>{{ __('db.Order Discount Type') }}</label>
+                                            <select id="order-discount-type" name="order_discount_type_select"
+                                                class="form-control">
+                                                <option value="Flat"
+                                                    {{ $selected_discount_type == 'Flat' ? 'selected' : '' }}>
+                                                    {{ __('db.Flat') }}
+                                                </option>
+                                                <option value="Percentage"
+                                                    {{ $selected_discount_type == 'Percentage' ? 'selected' : '' }}>
+                                                    {{ __('db.Percentage') }}
+                                                </option>
+                                            </select>
+                                            <input type="hidden" name="order_discount_type">
+                                        </div>
+                                        <div class="col-md-6 form-group">
+                                            <label>{{ __('db.Value') }}</label>
+                                            <input type="text" name="order_discount_value"
+                                                class="form-control numkey" id="order-discount-val">
+                                            <input type="hidden" name="order_discount" class="form-control"
+                                                id="order-discount">
+                                        </div>
+                                    </div>
+                                    <button type="button" name="order_discount_btn" class="btn btn-primary"
+                                        data-dismiss="modal">{{ __('db.submit') }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- coupon modal -->
+                    <div id="coupon-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">{{ __('db.Coupon Code') }}</h5>
+                                    <button type="button" data-dismiss="modal" aria-label="Close"
+                                        class="close"><span aria-hidden="true"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18 18 6M6 6l12 12" />
+                                            </svg></span></button>
+                                </div>
+                                @php
+                                    $coupon_code = '';
+                                    if (isset($lims_sale_data)) {
+                                        $lims_coupon_data = $lims_coupon_list
+                                            ->where('id', $lims_sale_data->coupon_id)
+                                            ->first();
+                                        $coupon_code = $lims_coupon_data ? $lims_coupon_data->code : '';
+                                    }
+                                @endphp
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <input type="text" id="coupon-code" class="form-control"
+                                            placeholder="Type Coupon Code..." value="{{ $coupon_code }}">
+                                    </div>
+                                    <button type="button" class="btn btn-primary coupon-check"
+                                        data-dismiss="modal">{{ __('db.submit') }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- order_tax modal -->
+                    <div id="order-tax" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">{{ __('db.Order Tax') }}</h5>
+                                    <button type="button" data-dismiss="modal" aria-label="Close"
+                                        class="close"><span aria-hidden="true"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18 18 6M6 6l12 12" />
+                                            </svg></span></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <input type="hidden" name="order_tax_rate">
+                                        <select class="form-control" name="order_tax_rate_select"
+                                            id="order-tax-rate-select">
+                                            <option value="0">No Tax</option>
+                                            @foreach ($lims_tax_list as $tax)
+                                                <option value="{{ $tax->rate }}">{{ $tax->name }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <button type="button" name="order_tax_btn" class="btn btn-primary"
+                                        data-dismiss="modal">{{ __('db.submit') }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- shipping_cost modal -->
+                    <div id="shipping-cost-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">{{ __('db.Shipping Cost') }}</h5>
+                                    <button type="button" data-dismiss="modal" aria-label="Close"
+                                        class="close"><span aria-hidden="true"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18 18 6M6 6l12 12" />
+                                            </svg></span></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="form-group">
+                                        <input type="text" name="shipping_cost" class="form-control numkey"
+                                            id="shipping-cost-val" step="any">
+                                    </div>
+                                    <button type="button" name="shipping_cost_btn" class="btn btn-primary"
+                                        data-dismiss="modal">{{ __('db.submit') }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {!! Form::close() !!}
+
+                    {{-- invoice modal start --}}
+                    <div id="invoice-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <button type="button" data-dismiss="modal" aria-label="Close"
+                                        class="close"><span aria-hidden="true"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18 18 6M6 6l12 12" />
+                                            </svg></span></button>
+                                </div>
+                                <div id="invoice-modal-content" class="modal-body">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {{-- invoice modal end --}}
+
+                    <!-- product edit modal -->
+                    <div id="editModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 id="modal_header" class="modal-title"></h5>
+                                    <button type="button" data-dismiss="modal" aria-label="Close"
+                                        class="close"><span aria-hidden="true"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18 18 6M6 6l12 12" />
+                                            </svg></span></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form>
+                                        <div class="row modal-element">
+                                            <div class="col-md-4 form-group">
+                                                <label>{{ __('db.Quantity') }}</label>
+                                                <input type="text" name="edit_qty" class="form-control numkey">
+                                            </div>
+                                            <div class="col-md-4 form-group">
+                                                <label>{{ __('db.Unit Discount') }}</label>
+                                                <input type="text" name="edit_discount"
+                                                    class="form-control numkey">
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="form-group">
+                                                    <label>{{ __('db.Price Option') }}</strong> </label>
+                                                    <div class="input-group">
+                                                        <select class="form-control selectpicker" name="price_option"
+                                                            class="price-option">
+                                                        </select>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4 form-group">
+                                                <label>{{ __('db.Unit Price') }}</label>
+                                                <input type="text" name="edit_unit_price"
+                                                    class="form-control numkey" step="any">
+                                            </div>
+                                            <?php
+                                            $tax_name_all[] = 'No Tax';
+                                            $tax_rate_all[] = 0;
+                                            foreach ($lims_tax_list as $tax) {
+                                                $tax_name_all[] = $tax->name;
+                                                $tax_rate_all[] = $tax->rate;
+                                            }
+                                            ?>
+                                            <div class="col-md-4 form-group">
+                                                <label>{{ __('db.Tax Rate') }}</label>
+                                                <select name="edit_tax_rate" class="form-control selectpicker">
+                                                    @foreach ($tax_name_all as $key => $name)
+                                                        <option value="{{ $key }}">{{ $name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            <div id="edit_unit" class="col-md-4 form-group">
+                                                <label>{{ __('db.Product Unit') }}</label>
+                                                <select name="edit_unit" class="form-control selectpicker">
+                                                </select>
+                                            </div>
+                                            <!-- <div class="col-md-4 form-group">
+                                                            <label>{{ __('db.Cost') }}</label>
+                                                            <p id="product-cost"></p>
+                                                        </div> -->
+                                        </div>
+                                        <button type="button" name="update_btn"
+                                            class="btn btn-primary">{{ __('db.update') }}</button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- add customer modal -->
+                    <div id="addCustomer" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog">
+                            <div class="alert-container mb-3"></div>
+                            <div class="modal-content">
+                                {!! Form::open(['route' => 'customer.store', 'method' => 'post', 'files' => true, 'id' => 'customer-form']) !!}
+                                <div class="modal-header">
+                                    <h5 id="exampleModalLabel" class="modal-title">{{ __('db.Add Customer') }}</h5>
+                                    <button type="button" data-dismiss="modal" aria-label="Close"
+                                        class="close"><span aria-hidden="true"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18 18 6M6 6l12 12" />
+                                            </svg></span></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p class="italic">
+                                        <small>{{ __('db.The field labels marked with * are required input fields') }}.</small>
+                                    </p>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Customer Group') }}</label>
+                                                <select class="form-control selectpicker" name="customer_group_id">
+                                                    @foreach ($lims_customer_group_all as $customer_group)
+                                                        <option value="{{ $customer_group->id }}">
+                                                            {{ $customer_group->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.name') }}</label>
+                                                <input type="text" name="customer_name" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Email') }}</label>
+                                                <input type="text" name="email" placeholder="example@example.com" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Phone Number') }}</label>
+                                                <input type="text" name="phone_number" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Mobile Number 2') }}</label>
+                                                <input type="text" name="mobile_number_2" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="country-phone-group form-group">
+                                                <label>{{ __('db.WhatsApp Number') }} *</label>
+                                                <div class="d-flex">
+                                                    <select id="country_code" name="country_code" class="form-control w-auto me-2">
+                                                    </select>
+                                                    <input type="tel" id="wa_number" class="form-control" required>
+                                                    <input type="hidden" id="full_phone" name="wa_number" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Customer Type') }}</label>
+                                                <select name="type" class="form-control selectpicker">
+                                                    @foreach(\App\Enums\CustomerTypeEnum::cases() as $case)
+                                                        <option value="{{ $case->value }}">{{ $case->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                       <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Address') }}</label>
+                                                <input type="text" name="address" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Area') }}</label>
+                                                <input type="text" name="area" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.House Number') }}</label>
+                                                <input type="text" name="house_number" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Street') }}</label>
+                                                <input type="text" name="street" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Ave') }}</label>
+                                                <input type="text" name="ave" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Block') }}</label>
+                                                <input type="text" name="block" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.City') }}</label>
+                                                <input type="text" name="city" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Credit Limit') }} <x-info
+                                                        title="Leave it blank for unlimited credit"
+                                                        type="info" /></label>
+                                                <input type="number" name="credit_limit" class="form-control"
+                                                    value="0" step="any" min="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Tax Number') }}</label>
+                                                <input type="text" name="tax_no" class="form-control">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <input type="hidden" name="pos" value="1">
+                                        <button type="button"
+                                            class="btn btn-primary customer-submit-btn">{{ __('db.submit') }}</button>
+
+                                    </div>
+                                </div>
+                                {{ Form::close() }}
+                            </div>
+                        </div>
+                    </div>
+                    <!-- view customer modal -->
+                    <div id="viewCustomer" tabindex="-1" role="dialog" aria-labelledby="viewCustomerLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 id="viewCustomerLabel" class="modal-title">{{ __('db.Customer Details') }}</h5>
+                                    <button type="button" data-dismiss="modal" aria-label="Close"
+                                        class="close"><span aria-hidden="true"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18 18 6M6 6l12 12" />
+                                            </svg></span></button>
+                                </div>
+                                <div class="modal-body" id="viewCustomerBody">
+                                    <div class="text-center">
+                                        <div class="spinner-border" role="status">
+                                            <span class="sr-only">Loading...</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-warning" id="editFromViewBtn">
+                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                                            stroke="currentColor" class="size-6" style="width: 16px; height: 16px; display: inline-block; vertical-align: middle;">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+                                        </svg>
+                                        {{ __('db.Edit Customer') }}
+                                    </button>
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('db.Close') }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- POS product view modal (same structure as products/single or products/combo view action) -->
+                    <div id="posProductViewModal" tabindex="-1" role="dialog" aria-labelledby="posProductViewModalLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog modal-lg">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 id="posProductViewModalLabel" class="modal-title">{{ __('db.Product Details') }}</h5>
+                                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                                </div>
+                                <div class="modal-body" id="posProductViewModalBody">
+                                    <div class="text-center py-4 pos-product-view-loading">
+                                        <div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>
+                                    </div>
+                                    <div id="pos-product-view-content" style="display:none;">
+                                        <div class="row">
+                                            <div class="col-md-5" id="pos-slider-content"></div>
+                                            <div class="col-md-5 offset-md-1" id="pos-product-content"></div>
+                                            <div class="col-md-12 mt-2" id="pos-product-warehouse-section">
+                                                <h5>{{ __('db.Warehouse Quantity') }}</h5>
+                                                <table class="table table-bordered table-hover">
+                                                    <thead id="pos-product-warehouse-thead"></thead>
+                                                    <tbody id="pos-product-warehouse-tbody"></tbody>
+                                                </table>
+                                            </div>
+                                            <div class="col-md-12 mt-2 d-none" id="pos-product-variant-section">
+                                                <h5>{{ __('db.Product Variant Information') }}</h5>
+                                                <table class="table table-bordered table-hover">
+                                                    <thead id="pos-product-variant-thead"></thead>
+                                                    <tbody id="pos-product-variant-tbody"></tbody>
+                                                </table>
+                                            </div>
+                                            <div class="col-md-12 mt-2" id="pos-product-variant-warehouse-section">
+                                                <h5>{{ __('db.Warehouse quantity of product variants') }}</h5>
+                                                <table class="table table-bordered table-hover">
+                                                    <thead id="pos-product-variant-warehouse-thead"></thead>
+                                                    <tbody id="pos-product-variant-warehouse-tbody"></tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <h5 id="pos-combo-header" class="mt-2"></h5>
+                                        <table class="table table-bordered table-hover" id="pos-combo-item-list">
+                                            <thead id="pos-combo-thead"></thead>
+                                            <tbody id="pos-combo-tbody"></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-dismiss="modal">{{ __('db.Close') }}</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- edit customer modal -->
+                    <div id="editCustomer" tabindex="-1" role="dialog" aria-labelledby="editCustomerLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog">
+                            <div class="alert-container-edit mb-3"></div>
+                            <div class="modal-content">
+                                {!! Form::open(['route' => ['customer.update', 0], 'method' => 'put', 'files' => true, 'id' => 'customer-edit-form']) !!}
+                                <input type="hidden" name="customer_id" id="edit_customer_id">
+                                <div class="modal-header">
+                                    <h5 id="editCustomerLabel" class="modal-title">{{ __('db.Edit Customer') }}</h5>
+                                    <button type="button" data-dismiss="modal" aria-label="Close"
+                                        class="close"><span aria-hidden="true"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18 18 6M6 6l12 12" />
+                                            </svg></span></button>
+                                </div>
+                                <div class="modal-body">
+                                    <p class="italic">
+                                        <small>{{ __('db.The field labels marked with * are required input fields') }}.</small>
+                                    </p>
+                                    <div class="row">
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Customer Group') }}</label>
+                                                <select class="form-control selectpicker" name="customer_group_id" id="edit_customer_group_id">
+                                                    @foreach ($lims_customer_group_all as $customer_group)
+                                                        <option value="{{ $customer_group->id }}">
+                                                            {{ $customer_group->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.name') }}</label>
+                                                <input type="text" name="customer_name" id="edit_customer_name" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Email') }}</label>
+                                                <input type="text" name="email" id="edit_email" placeholder="example@example.com" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Phone Number') }}</label>
+                                                <input type="text" name="phone_number" id="edit_phone_number" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Mobile Number 2') }}</label>
+                                                <input type="text" name="mobile_number_2" id="edit_mobile_number_2" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="country-phone-group form-group">
+                                                <label>{{ __('db.WhatsApp Number') }} *</label>
+                                                <div class="d-flex">
+                                                    <select id="edit_country_code" name="country_code" class="form-control w-auto me-2">
+                                                    </select>
+                                                    <input type="tel" id="edit_wa_number" class="form-control" required>
+                                                    <input type="hidden" id="edit_full_phone" name="wa_number" required>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Customer Type') }}</label>
+                                                <select name="type" id="edit_type" class="form-control selectpicker">
+                                                    @foreach(\App\Enums\CustomerTypeEnum::cases() as $case)
+                                                        <option value="{{ $case->value }}">{{ $case->name }}</option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                        </div>
+                                       <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Address') }}</label>
+                                                <input type="text" name="address" id="edit_address" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Area') }}</label>
+                                                <input type="text" name="area" id="edit_area" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.House Number') }}</label>
+                                                <input type="text" name="house_number" id="edit_house_number" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Street') }}</label>
+                                                <input type="text" name="street" id="edit_street" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Ave') }}</label>
+                                                <input type="text" name="ave" id="edit_ave" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Block') }}</label>
+                                                <input type="text" name="block" id="edit_block" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.City') }}</label>
+                                                <input type="text" name="city" id="edit_city" class="form-control">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Credit Limit') }} <x-info
+                                                        title="Leave it blank for unlimited credit"
+                                                        type="info" /></label>
+                                                <input type="number" name="credit_limit" id="edit_credit_limit" class="form-control"
+                                                    value="0" step="any" min="0">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-4">
+                                            <div class="form-group">
+                                                <label>{{ __('db.Tax Number') }}</label>
+                                                <input type="text" name="tax_no" id="edit_tax_no" class="form-control">
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="form-group">
+                                        <button type="button"
+                                            class="btn btn-primary customer-update-btn">{{ __('db.Update') }}</button>
+                                    </div>
+                                </div>
+                                {{ Form::close() }}
+                            </div>
+                        </div>
+                    </div>
+                    <!-- recent transaction modal -->
+                    <div id="recentTransaction" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 id="exampleModalLabel" class="modal-title">{{ __('db.Recent Transaction') }}
+                                        <div class="badge badge-primary">{{ __('db.latest') }} 10</div>
+                                    </h5>
+                                    <button type="button" data-dismiss="modal" aria-label="Close"
+                                        class="close"><span aria-hidden="true"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18 18 6M6 6l12 12" />
+                                            </svg></span></button>
+                                </div>
+                                <div class="modal-body">
+                                    <ul class="nav nav-tabs" role="tablist">
+                                        <li class="nav-item">
+                                            <a class="nav-link active" href="#sale-latest" role="tab"
+                                                data-toggle="tab">{{ __('db.Sale') }}</a>
+                                        </li>
+                                        <li class="nav-item">
+                                            <a class="nav-link" href="#draft-latest" role="tab"
+                                                data-toggle="tab">{{ __('db.Draft') }}</a>
+                                        </li>
+                                    </ul>
+                                    <div class="tab-content">
+                                        <div role="tabpanel" class="tab-pane show active" id="sale-latest">
+                                            <div class="table-responsive">
+                                                <table class="table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>{{ __('db.date') }}</th>
+                                                            <th>{{ __('db.reference') }}</th>
+                                                            <th>{{ __('db.customer') }}</th>
+                                                            <th>{{ __('db.grand total') }}</th>
+                                                            <th>{{ __('db.action') }}</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                        <div role="tabpanel" class="tab-pane fade" id="draft-latest">
+                                            <div class="table-responsive">
+                                                <table class="table">
+                                                    <thead>
+                                                        <tr>
+                                                            <th>{{ __('db.date') }}</th>
+                                                            <th>{{ __('db.reference') }}</th>
+                                                            <th>{{ __('db.customer') }}</th>
+                                                            <th>{{ __('db.grand total') }}</th>
+                                                            <th>{{ __('db.action') }}</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Sale detaisl -->
+                    <div id="get-sale-details" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="container mt-3 pb-2 border-bottom">
+                                    <div class="row">
+                                        <div class="col-md-6 d-print-none">
+                                            <button id="print-btn" type="button" class="btn btn-default btn-sm"><svg
+                                                    xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                    class="size-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M6.72 13.829c-.24.03-.48.062-.72.096m.72-.096a42.415 42.415 0 0 1 10.56 0m-10.56 0L6.34 18m10.94-4.171c.24.03.48.062.72.096m-.72-.096L17.66 18m0 0 .229 2.523a1.125 1.125 0 0 1-1.12 1.227H7.231c-.662 0-1.18-.568-1.12-1.227L6.34 18m11.318 0h1.091A2.25 2.25 0 0 0 21 15.75V9.456c0-1.081-.768-2.015-1.837-2.175a48.055 48.055 0 0 0-1.913-.247M6.34 18H5.25A2.25 2.25 0 0 1 3 15.75V9.456c0-1.081.768-2.015 1.837-2.175a48.041 48.041 0 0 1 1.913-.247m10.5 0a48.536 48.536 0 0 0-10.5 0m10.5 0V3.375c0-.621-.504-1.125-1.125-1.125h-8.25c-.621 0-1.125.504-1.125 1.125v3.659M18 10.5h.008v.008H18V10.5Zm-3 0h.008v.008H15V10.5Z" />
+                                                </svg> {{ __('db.Print') }}</button>
+
+                                            {{ Form::open(['route' => 'sale.sendmail', 'method' => 'post', 'class' => 'sendmail-form']) }}
+                                            <input type="hidden" name="sale_id">
+                                            <button class="btn btn-default btn-sm d-print-none"><svg
+                                                    xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                    viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                    class="size-6">
+                                                    <path stroke-linecap="round" stroke-linejoin="round"
+                                                        d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                                                </svg> {{ __('db.Email') }}</button>
+                                            {{ Form::close() }}
+                                        </div>
+                                        <div class="col-md-6 d-print-none">
+                                            <button type="button" id="close-btn" data-dismiss="modal"
+                                                aria-label="Close" class="close"><span aria-hidden="true"><svg
+                                                        xmlns="http://www.w3.org/2000/svg" fill="none"
+                                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"
+                                                        class="size-6">
+                                                        <path stroke-linecap="round" stroke-linejoin="round"
+                                                            d="M6 18 18 6M6 6l12 12" />
+                                                    </svg></span></button>
+                                        </div>
+                                        <div class="col-md-4 text-left">
+                                            <img src="{{ url('logo', $general_setting->site_logo) }}" width="90px;">
+                                        </div>
+                                        <div class="col-md-4 text-center">
+                                            <h3 id="exampleModalLabel" class="modal-title container-fluid">
+                                                {{ $general_setting->site_title }}</h3>
+                                        </div>
+                                        <div class="col-md-4 text-right">
+                                            <i style="font-size: 15px;">{{ __('db.Sale Details') }}</i>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div id="sale-content" class="modal-body">
+                                </div>
+                                <br>
+                                <table class="table table-bordered product-sale-list">
+                                    <thead>
+                                        <th>#</th>
+                                        <th>{{ __('db.product') }}</th>
+                                        <th>{{ __('db.Batch No') }}</th>
+                                        <th>{{ __('db.qty') }}</th>
+                                        <th>{{ __('db.Returned') }}</th>
+                                        <th>{{ __('db.Unit Price') }}</th>
+                                        <th>{{ __('db.Tax') }}</th>
+                                        <th>{{ __('db.Discount') }}</th>
+                                        <th>{{ __('db.Subtotal') }}</th>
+                                        <th>{{ __('db.Delivered') }}</th>
+                                    </thead>
+                                    <tbody>
+                                    </tbody>
+                                </table>
+                                <div id="sale-footer" class="modal-body"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- today sale modal -->
+                    <div id="today-sale-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 id="exampleModalLabel" class="modal-title">{{ __('db.Today Sale') }}</h5>
+                                    <button type="button" data-dismiss="modal" aria-label="Close"
+                                        class="close"><span aria-hidden="true"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18 18 6M6 6l12 12" />
+                                            </svg></span></button>
+                                </div>
+                                <div class="modal-body">
+                                    <small>{{ __('db.Please review the transaction and payments') }}</small>
+                                    <div class="row">
+                                        <div class="col-md-12">
+                                            <table class="table table-hover">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>{{ __('db.Total Sale Amount') }}:</td>
+                                                        <td class="total_sale_amount text-right"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>{{ __('db.Cash Payment') }}:</td>
+                                                        <td class="cash_payment text-right"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>{{ __('db.Credit Card Payment') }}:</td>
+                                                        <td class="credit_card_payment text-right"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>{{ __('db.Cheque Payment') }}:</td>
+                                                        <td class="cheque_payment text-right"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>{{ __('db.Gift Card Payment') }}:</td>
+                                                        <td class="gift_card_payment text-right"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>{{ __('db.Deposit Payment') }}:</td>
+                                                        <td class="deposit_payment text-right"></td>
+                                                    </tr>
+                                                    @if (in_array('paypal', $options) &&
+                                                            strlen(env('PAYPAL_LIVE_API_USERNAME')) > 0 &&
+                                                            strlen(env('PAYPAL_LIVE_API_PASSWORD')) > 0 &&
+                                                            strlen(env('PAYPAL_LIVE_API_SECRET')) > 0)
+                                                        <tr>
+                                                            <td>{{ __('db.Paypal Payment') }}:</td>
+                                                            <td class="paypal_payment text-right"></td>
+                                                        </tr>
+                                                    @endif
+                                                    <tr>
+                                                        <td>{{ __('db.Total Payment') }}:</td>
+                                                        <td class="total_payment text-right"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>{{ __('db.Total Sale Return') }}:</td>
+                                                        <td class="total_sale_return text-right"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>{{ __('db.Total Expense') }}:</td>
+                                                        <td class="total_expense text-right"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>{{ __('db.Total Cash') }}:</strong></td>
+                                                        <td class="total_cash text-right"></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- today profit modal -->
+                    <div id="today-profit-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                        aria-hidden="true" class="modal fade text-left">
+                        <div role="document" class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 id="exampleModalLabel" class="modal-title">{{ __('db.Today Profit') }}</h5>
+                                    <button type="button" data-dismiss="modal" aria-label="Close"
+                                        class="close"><span aria-hidden="true"><svg
+                                                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                                stroke-width="1.5" stroke="currentColor" class="size-6">
+                                                <path stroke-linecap="round" stroke-linejoin="round"
+                                                    d="M6 18 18 6M6 6l12 12" />
+                                            </svg></span></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="row">
+                                        <div class="col-md-6">
+                                            <select required name="warehouseId" class="form-control">
+                                                <option value="0">{{ __('db.All Warehouse') }}</option>
+                                                @foreach ($lims_warehouse_list as $warehouse)
+                                                    <option value="{{ $warehouse->id }}">{{ $warehouse->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                        <div class="col-md-12 mt-2">
+                                            <table class="table table-hover">
+                                                <tbody>
+                                                    <tr>
+                                                        <td>{{ __('db.Product Revenue') }}:</td>
+                                                        <td class="product_revenue text-right"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>{{ __('db.Product Cost') }}:</td>
+                                                        <td class="product_cost text-right"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td>{{ __('db.Expense') }}:</td>
+                                                        <td class="expense_amount text-right"></td>
+                                                    </tr>
+                                                    <tr>
+                                                        <td><strong>{{ __('db.profit') }} <x-info
+                                                                    title="Revenue - Product Cost - Expense"
+                                                                    type="info" />:</strong></td>
+                                                        <td class="profit text-right"></td>
+                                                    </tr>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- expense modal -->
+        <div id="expense-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+            aria-hidden="true" class="modal fade text-left">
+            <div role="document" class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 id="exampleModalLabel" class="modal-title">{{ __('Add Expense') }}</h5>
+                        <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span
+                                aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+                    </div>
+                    <div class="modal-body">
+                        <p class="italic">
+                            <small>{{ __('The field labels marked with * are required input fields') }}.</small>
+                        </p>
+                        {!! Form::open(['route' => 'expenses.store', 'method' => 'post']) !!}
+                        <?php
+                        $lims_expense_category_list = DB::table('expense_categories')->where('is_active', true)->get();
+                        if (Auth::user()->role_id > 2) {
+                            $lims_warehouse_list = DB::table('warehouses')
+                                ->where([['is_active', true], ['id', Auth::user()->warehouse_id]])
+                                ->get();
+                        } else {
+                            $lims_warehouse_list = DB::table('warehouses')->where('is_active', true)->get();
+                        }
+                        $lims_account_list = \App\Models\Account::where('is_active', true)->get();
+                        ?>
+                        <div class="row">
+                            <div class="col-md-6 form-group">
+                                <label>{{ __('Date') }}</label>
+                                <input type="text" name="created_at" class="form-control date"
+                                    placeholder="{{ __('db.Choose date') }}"
+                                    value="{{ date($general_setting->date_format, strtotime('now')) }}" />
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ __('Expense Category') }} *</label>
+                                <select name="expense_category_id" class="selectpicker form-control" required
+                                    data-live-search="true" data-live-search-style="begins"
+                                    title="Select Expense Category...">
+                                    @foreach ($lims_expense_category_list as $expense_category)
+                                        <option value="{{ $expense_category->id }}">
+                                            {{ $expense_category->name . ' (' . $expense_category->code . ')' }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ __('Warehouse') }} *</label>
+                                <select name="warehouse_id" class="selectpicker form-control" required
+                                    data-live-search="true" data-live-search-style="begins"
+                                    title="Select Warehouse...">
+                                    @foreach ($lims_warehouse_list as $warehouse)
+                                        <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label>{{ __('Amount') }} *</label>
+                                <input type="number" id="expense-amount" name="amount" step="any" required
+                                    class="form-control">
+                            </div>
+                            <div class="col-md-6 form-group">
+                                <label> {{ __('Account') }}</label>
+                                <select class="form-control selectpicker" name="account_id">
+                                    @foreach ($lims_account_list as $account)
+                                        @if ($account->is_default)
+                                            <option selected value="{{ $account->id }}">{{ $account->name }}
+                                                [{{ $account->account_no }}]</option>
+                                        @else
+                                            <option value="{{ $account->id }}">{{ $account->name }}
+                                                [{{ $account->account_no }}]</option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>{{ __('Note') }}</label>
+                            <textarea name="note" rows="3" class="form-control"></textarea>
+                        </div>
+                        <div class="form-group">
+                            <input type="hidden" name="cash_register" value="" />
+                            <button type="submit" class="btn btn-primary">{{ __('submit') }}</button>
+                        </div>
+                        {{ Form::close() }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- end expense modal -->
+
+        <!-- supplier payment modal -->
+        <div id="add-supplier-payment" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+            aria-hidden="true" class="modal fade text-left">
+            <div role="document" class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 id="exampleModalLabel" class="modal-title">{{ __('db.Add Payment') }}</h5>
+                        <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span
+                                aria-hidden="true"><i class="dripicons-cross"></i></span></button>
+                    </div>
+                    <div class="modal-body">
+                        {!! Form::open(['route' => 'supplier.clearDue', 'method' => 'post', 'class' => 'supplier-payment-form']) !!}
+                        <div class="row">
+                            <div class="col-md-6 mt-1">
+                                <label>{{ __('db.Supplier') }} *</label>
+                                <select name="supplier_id" id="supplier_list" class="form-control"
+                                    data-live-search="true" data-live-search-style="begins" title="Select Supplier..."
+                                    required>
+                                    <option value=""></option>
+                                </select>
+                            </div>
+                            <div class="col-md-6 mt-1">
+                                <label>{{ __('db.Due') }}</label>
+                                <input type="number" class="form-control" readonly name="balance">
+                            </div>
+                            <div class="col-md-12 mt-1">
+                                <label>{{ __('db.Amount') }} *</label>
+                                <input type="number" id="supplier-amount" name="amount" step="any"
+                                    class="form-control" required>
+                            </div>
+                            <div class="col-md-12 mt-1">
+                                <label>{{ __('db.Note') }}</label>
+                                <textarea name="note" rows="4" class="form-control"></textarea>
+                            </div>
+                        </div>
+                        <input type="hidden" name="cash_register" value="" />
+                        <button type="submit" class="btn btn-primary">{{ __('db.submit') }}</button>
+                        {{ Form::close() }}
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- end supplier payment modal -->
+
+        @if ($lims_pos_setting_data && $lims_pos_setting_data->cash_register)
+            <!-- add cash register modal -->
+            <div id="cash-register-modal" data-backdrop="static" tabindex="-1" role="dialog"
+                aria-labelledby="exampleModalLabel" aria-hidden="true" class="modal fade text-left">
+                <div role="document" class="modal-dialog">
+                    <div class="modal-content">
+                        {!! Form::open(['route' => 'cashRegister.store', 'method' => 'post']) !!}
+                        <div class="modal-header">
+                            <h5 id="exampleModalLabel" class="modal-title">{{ __('db.Add Cash Register') }}</h5>
+                        </div>
+                        <div class="modal-body">
+                            <p class="italic">
+                                <small>{{ __('db.The field labels marked with * are required input fields') }}.</small>
+                            </p>
+                            <div class="row">
+                                <div class="col-md-6 form-group warehouse-section">
+                                    <label>{{ __('db.Warehouse') }} *</strong> </label>
+                                    <select required name="warehouse_id" class="selectpicker form-control"
+                                        data-live-search="true" data-live-search-style="begins"
+                                        title="Select warehouse...">
+                                        @foreach ($lims_warehouse_list as $warehouse)
+                                            <option value="{{ $warehouse->id }}">{{ $warehouse->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    <x-validation-error fieldName="warehouse_id" />
+                                </div>
+                                <div class="col-md-6 form-group">
+                                    <label>{{ __('db.Cash in Hand') }} *</strong> </label>
+                                    <input type="number" step="any" name="cash_in_hand" required
+                                        class="form-control">
+                                </div>
+                                <div class="col-md-12 form-group">
+                                    <button type="submit" class="btn btn-primary">{{ __('db.submit') }}</button>
+                                </div>
+                            </div>
+                        </div>
+                        {{ Form::close() }}
+                    </div>
+                </div>
+            </div>
+            <!-- cash register details modal -->
+            <div id="register-details-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel"
+                aria-hidden="true" class="modal fade text-left">
+                <div role="document" class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <div>
+                                <h5 id="exampleModalLabel" class="modal-title">{{ __('db.Cash Register Details') }}
+                                </h5>
+                                <small>{{ __('db.Please review the transaction and payments') }}</small>
+                            </div>
+                            <button type="button" data-dismiss="modal" aria-label="Close" class="close"><span
+                                    aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" fill="none"
+                                        viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                    </svg></span></button>
+                        </div>
+                        <div class="modal-body pt-0">
+                            <form action="{{ route('cashRegister.close') }}" method="POST">
+                                @csrf
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <table class="table table-hover">
+                                            <tbody>
+                                                <tr>
+                                                    <td>{{ __('db.Cash in Hand') }}:</td>
+                                                    <td id="cash_in_hand" class="text-right">0</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{{ __('db.Total Sale Amount') }}:</td>
+                                                    <td id="total_sale_amount" class="text-right"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{{ __('db.Total Payment') }}:</td>
+                                                    <td id="total_payment" class="text-right"></td>
+                                                </tr>
+                                                @if (in_array('cash', $options))
+                                                    <tr>
+                                                        <td>{{ __('db.Cash Payment') }}:</td>
+                                                        <td id="cash_payment" class="text-right"></td>
+                                                    </tr>
+                                                @endif
+                                                @if (in_array('card', $options))
+                                                    <tr>
+                                                        <td>{{ __('db.Credit Card Payment') }}:</td>
+                                                        <td id="credit_card_payment" class="text-right"></td>
+                                                    </tr>
+                                                @endif
+                                                @if (in_array('cheque', $options))
+                                                    <tr>
+                                                        <td>{{ __('db.Cheque Payment') }}:</td>
+                                                        <td id="cheque_payment" class="text-right"></td>
+                                                    </tr>
+                                                @endif
+                                                @if (in_array('gift_card', $options))
+                                                    <tr>
+                                                        <td>{{ __('db.Gift Card Payment') }}:</td>
+                                                        <td id="gift_card_payment" class="text-right"></td>
+                                                    </tr>
+                                                @endif
+                                                @if (in_array('deposit', $options))
+                                                    <tr>
+                                                        <td>{{ __('db.Deposit Payment') }}:</td>
+                                                        <td id="deposit_payment" class="text-right"></td>
+                                                    </tr>
+                                                @endif
+                                                @if (in_array('paypal', $options) &&
+                                                        strlen(env('PAYPAL_LIVE_API_USERNAME')) > 0 &&
+                                                        strlen(env('PAYPAL_LIVE_API_PASSWORD')) > 0 &&
+                                                        strlen(env('PAYPAL_LIVE_API_SECRET')) > 0)
+                                                    <tr>
+                                                        <td>{{ __('db.Paypal Payment') }}:</td>
+                                                        <td id="paypal_payment" class="text-right"></td>
+                                                    </tr>
+                                                @endif
+                                                <tr>
+                                                    <td>{{ __('db.Total Sale Return') }}:</td>
+                                                    <td id="total_sale_return" class="text-right"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{{ __('db.Total Expense') }}:</td>
+                                                    <td id="total_expense" class="text-right"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>{{ __('db.Total Supplier Payment') }}:</td>
+                                                    <td id="total_supplier_payment" class="text-right"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><strong>{{ __('db.Total Cash') }}:</strong></td>
+                                                    <td id="total_cash" class="text-right"></td>
+                                                </tr>
+                                                <tr id="closing_row" style="display:none">
+                                                    <td><strong>{{ __('db.Actual Cash') }}:</strong></td>
+                                                    <td class="text-right">
+                                                        <input class="form-control" type="text" name="actual_cash"
+                                                            style="max-width:200px; text-align:right;float:right"
+                                                            value="" min="0" />
+                                                    </td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="col-md-12 text-center" id="closing-section">
+                                        <button id="close_register" type="button"
+                                            class="btn btn-primary">{{ __('db.Close Register') }}</button>
+                                        <input type="hidden" name="closing_balance">
+                                        <input type="hidden" name="cash_register_id">
+                                        <button type="submit" class="btn btn-primary"
+                                            id="submit_register">{{ __('db.Close Register') }}</button>
+
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
+        <!-- ✅ Installment Plan Modal -->
+        <div class="modal fade" id="installmentPlanModal" tabindex="-1" aria-labelledby="installmentPlanModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog modal-md">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title">{{ __('db.Installment Plan') }}</h5>
+
+                        <button id="close-installment-modal-x" type="button" data-dismiss="modal"
+                            aria-label="Close" class="close"><span aria-hidden="true"><svg
+                                    xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
+                                    stroke-width="1.5" stroke="currentColor" class="size-6">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                                </svg></span></button>
+                    </div>
+
+                    <div class="modal-body">
+                        <!-- Enable Installments -->
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="enable_installment"
+                                name="enable_installment">
+                            <label for="enable_installment"
+                                class="form-check-label">{{ __('db.Enable Installment Plan') }}</label>
+                        </div>
+
+                        <!-- Installment Fields (hidden until checked) -->
+                        <div id="installmentFields" class="row" style="display: none;">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ __('db.Plan Name') }}</label>
+                                <input type="text" class="form-control" name="installment_plan[name]"
+                                    value="12 Months" placeholder="e.g., 6 Month Plan">
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ __('db.Price') }}</label>
+                                <input type="number" step="0.01" class="form-control"
+                                    name="installment_plan[price]" id="installment_price" readonly>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ __('db.Additional Amount') }}</label>
+                                <input id="additional_amount" type="number" step="0.01" class="form-control"
+                                    name="installment_plan[additional_amount]" value="0">
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ __('db.Total Amount') }}</label>
+                                <input type="number" step="0.01" class="form-control"
+                                    name="installment_plan[total_amount]" id="installment_total" readonly>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ __('db.Down Payment') }}</label>
+                                <input type="number" step="0.01" class="form-control" id="down_payment_id"
+                                    name="installment_plan[down_payment]" value="0">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">{{ __('db.Months') }}</label>
+                                <input type="number" step="1" class="form-control"
+                                    name="installment_plan[months]" value="12">
+                            </div>
+
+                            <input type="hidden" name="installment_plan[reference_type]" value="sale">
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-primary" id="done-installment-modal"
+                            data-bs-dismiss="modal">Done</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+    <section id="print-layout" class="">
+    </section>
+    <div style="width:100%;max-width:350px;position:fixed;top:5%;left:50%;transform:translateX(-50%);z-index:999">
+        <button type="button" class="btn btn-danger" id="closeScannerBtn" style="display:none"><svg
+                xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
+                stroke="currentColor" class="size-6">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+            </svg></button>
+        <div id="reader" style="width:100%;"></div>
+    </div>
+
+@endsection
+
+@push('scripts')
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/intlTelInput.min.js"></script>
+    <script>
+        const input = document.querySelector("#wa_number");
+        const editInput = document.querySelector("#edit_wa_number");
+        
+        if (input) {
+            window.intlTelInput(input, {
+                initialCountry: "auto",
+                geoIpLookup: function(callback) {
+                    fetch("https://ipapi.co/json")
+                        .then((res) => res.json())
+                        .then((data) => callback(data.country_code))
+                        .catch(() => callback("us"));
+                },
+                utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js"
+            });
+        }
+        
+        // Initialize intlTelInput for edit form when modal is shown
+        $(document).on('shown.bs.modal', '#editCustomer', function() {
+            if (editInput && !window.intlTelInputGlobals.getInstance(editInput)) {
+                window.intlTelInput(editInput, {
+                    initialCountry: "auto",
+                    geoIpLookup: function(callback) {
+                        fetch("https://ipapi.co/json")
+                            .then((res) => res.json())
+                            .then((data) => callback(data.country_code))
+                            .catch(() => callback("us"));
+                    },
+                    utilsScript: "https://cdnjs.cloudflare.com/ajax/libs/intl-tel-input/17.0.19/js/utils.js"
+                });
+            }
+        });
+    </script>
+    <script src="https://unpkg.com/html5-qrcode"></script>
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+    <audio id="audio" src="{{ url('beep/beep-07.mp3') }}" autoplay="false"></audio>
+    <script>
+        function playSound() {
+            var sound = document.getElementById("audio");
+            sound.play();
+        }
+
+        const doneTypingInterval = 200;
+        const $input = $('#product-search-input');
+        const $results = $('#product-results-container');
+        const $noResults = $('#no-results-message');
+
+        function clearResults() {
+            $results.empty().css('padding', '0');
+            $noResults.hide();
+        }
+
+        // Track current filter type globally
+        var currentFilterType = 'product'; // Default to product
+
+        // Customization (Box/Tray): current type id and sort counter for addNewProduct
+        var customSortCounter = 0;
+
+        $(document).ready(function() {
+
+            $('#product-search-input').focus();
+
+            // Order Type: show/hide Box-Tray selection; only one of default grid or customize grid visible
+            // Customize parent-radio column is never hidden: rows that have radio/— keep same view in Display too
+            $('#order_type').on('change', function() {
+                var v = $(this).val();
+                if (v == '2') {
+                    $('#customizetypebox').slideDown(200);
+                    $('.customize_type').removeClass('btn-primary').addClass('btn-outline-secondary');
+                    $('#customize-product-grid-container').hide();
+                    $('#main-product-grid').show();
+                    $('.customize-parent-col').show();
+                    $('.customize-parent-td').show();
+                } else {
+                    $('#customizetypebox').slideUp(200);
+                    $('#customize_type').val('');
+                    $('#customize-product-grid-container').hide();
+                    $('#main-product-grid').show();
+                    customSortCounter = 0;
+                }
+            });
+
+            // Box / Empty Tray / Customer Tray click
+            $(document).on('click', '.customize_type', function(e) {
+                e.preventDefault();
+                var typeId = $(this).data('customize-type-id');
+                $('#customize_type').val(typeId);
+                $('#order_type').val('2');
+                $('#customizetypebox').show();
+                $('.customize_type').removeClass('btn-primary').addClass('btn-outline-secondary');
+                $(this).removeClass('btn-outline-secondary').addClass('btn-primary');
+
+                var $container = $('#customize-product-grid-container');
+                var $mainGrid = $('#main-product-grid');
+                var isStaticCustomerTray = $(this).hasClass('customize_type_static');
+                var customerTrayProductCode = @json($pos_customer_tray_product_code ?? null);
+
+                if (isStaticCustomerTray) {
+                    $container.hide();
+                    $mainGrid.show();
+                    if (!customerTrayProductCode) {
+                        alert('Add at least one product in Customer Tray category.');
+                        return;
+                    }
+                    var customer_id = $('#customer_id').val();
+                    var wh = $('#warehouse_id').val();
+                    if (!customer_id) { alert('Please select Customer!'); return; }
+                    if (!wh) { alert('Please select Warehouse!'); return; }
+                    var product = { code: customerTrayProductCode, qty: 1, pre_qty: 1, imei: null, embedded: 0, batch: '', price: 0, customer_id: customer_id, type: 'product' };
+                    $.ajax({
+                        type: 'GET',
+                        url: '{{ url("sales/lims_product_search") }}',
+                        data: { data: product },
+                        success: function(responseData) {
+                            if (responseData && responseData[0]) {
+                                var productCode = responseData[1];
+                                var sameCodeCount = $('table.order-list tbody tr').filter(function() { return $(this).find('.product-code').val() === productCode; }).length;
+                                addNewProduct(responseData, null, true, sameCodeCount + 1);
+                                $('.customize-parent-col').show();
+                            } else {
+                                alert('Product in Customer Tray category not found or inactive.');
+                            }
+                        },
+                        error: function() {
+                            alert('Could not add Customer Tray.');
+                        }
+                    });
+                } else if (typeId && !isNaN(parseInt(typeId, 10))) {
+                    $container.show();
+                    $mainGrid.hide();
+                    $container.find('.product-grid').html('<div class="loader" style="border:none;min-height:120px"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="24px" height="30px" viewBox="0 0 24 30"><rect x="0" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0" dur="0.6s" repeatCount="indefinite"/></rect><rect x="10" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.2s" dur="0.6s" repeatCount="indefinite"/></rect><rect x="20" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.4s" dur="0.6s" repeatCount="indefinite"/></rect></svg></div>');
+                    var wh = $('#warehouse_id').val();
+                    if (!wh) { alert('Please select Warehouse.'); $container.hide(); $mainGrid.show(); return; }
+                    $.get('{{ url("sales/getproducts") }}/' + wh + '/category/' + typeId + '?pos_customize=1', function(response) {
+                        var tableData = '<div class="product-grid text-center">';
+                        var imageBase = (response.image_base === 'basement') ? '{{ url("/images/basement") }}' : '{{ url("/images/product") }}';
+                        if (response.data && response.data['name']) {
+                            $.each(response.data['name'], function(index) {
+                                var image = response.data['image'][index] || 'zummXD2dvAtI.png';
+                                var price = parseFloat(response.data['price'][index]) || 0;
+                                var formattedPrice = price.toFixed(2);
+                                var productType = (response.data['type'] && response.data['type'][index]) ? response.data['type'][index] : 'product';
+                                tableData += '<div class="product-img sound-btn customize-grid-product" title="' + response.data['name'][index] + '" data-code="' + response.data['code'][index] + '" data-id="' + (response.data['id'] ? response.data['id'][index] : '') + '" data-qty="' + response.data['qty'][index] + '" data-imei="' + (response.data['is_imei'] ? response.data['is_imei'][index] : 0) + '" data-embedded="' + (response.data['is_embeded'] ? response.data['is_embeded'][index] : 0) + '" data-batch="" data-price="' + response.data['price'][index] + '" data-type="' + productType + '"><img src="' + imageBase + '/' + image + '" width="100%" /><p>' + response.data['name'][index] + '</p><span>[' + response.data['code'][index] + ']</span> <span class="d-block" style="font-weight:600;color:#5f27cd;">Price: ' + formattedPrice + '</span> <span class="d-block">Qty: ' + response.data['qty'][index] + '</span></div>';
+                            });
+                        } else {
+                            tableData += '<p class="text-muted py-3">No products in this category</p>';
+                        }
+                        tableData += '</div>';
+                        $container.html(tableData);
+                    }).fail(function() {
+                        $container.find('.product-grid').html('<p class="text-danger py-3">Failed to load products</p>');
+                    });
+                } else {
+                    $container.hide();
+                    $mainGrid.show();
+                }
+            });
+
+            if ($('#order_type').val() == '2') {
+                $('#customizetypebox').show();
+            }
+
+            let typingTimer;
+
+            function searchProducts(search) {
+                $results.css('padding', '0 10px 15px');
+                $results.html(
+                    '<div class="loader " title="4" style="border:none;min-height:300px"><svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" width="24px" height="30px" viewBox="0 0 24 30" style="enable-background:new 0 0 50 50;" xml:space="preserve"><rect x="0" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0" dur="0.6s" repeatCount="indefinite"></animateTransform></rect><rect x="10" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.2s" dur="0.6s" repeatCount="indefinite"></animateTransform></rect><rect x="20" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.4s" dur="0.6s" repeatCount="indefinite"></animateTransform></rect></svg></div>'
+                );
+                $noResults.hide();
+
+                search = btoa(search);
+
+                $.ajax({
+                    url: '{{ url('/sales/search') }}/' + warehouse_id + '/' + search,
+                    type: 'GET',
+                    success: function(data) {
+                        $results.empty();
+                        if (data.length > 0) {
+                            $noResults.hide();
+                            data.forEach(function(product) {
+                                let productHtml = '';
+                                let displayStock = '';
+
+                                if (authUser > 2) {
+                                    displayStock = '';
+                                } else {
+                                    displayStock =
+                                        ` | ${product.qty} {{ __('db.In Stock') }} `;
+                                }
+
+                                var batch_id = product.product_batch_id ? product
+                                    .product_batch_id : '';
+
+                                if (product.is_imei == '1' || product.is_imei === 1 || product
+                                    .is_imei === true) {
+
+                                    // Check if IMEI already exists in the selected products
+                                    let imeiNumbersArray = [];
+                                    let exists = false;
+                                    $('.imei-number').each(function() {
+                                        let val = $(this).val();
+                                        imeiNumbersArray = val.split(",");
+                                        if (                        imeiNumbersArray.includes(productInput.imei)) {
+                                            exists = true;
+                                            return;
+                                        }
+                                    });
+
+                                    if ((exists == false) && product.imei_number.length > 0) {
+                                        productHtml = `
+                                        <div class="product-img" data-code="${product.code}"
+                                                                data-qty="${product.qty}"
+                                                                data-imei="${product.imei_number}"
+                                                                data-embedded="${product.is_embeded}"
+                                                                data-batch="${batch_id}"
+                                                                data-price="${product.price}"
+                                                                data-type="${product.type || 'product'}">
+                                            ${product.name} (${product.code}) | ${product.price} | IMEI: ${product.imei_number}
+                                        </div>
+                                    `;
+                                    } else {
+                                        $noResults.show();
+                                    }
+                                } else if (product.product_batch_id != null) {
+                                    if (parseInt(product.qty) > 0) {
+                                        if (product.expired_date == 0) {
+                                            product.expired_date = "{{ __('db.expired') }}";
+                                            var expired = "expired";
+                                        }
+                                        productHtml = `
+                                        <div class="product-img ${expired}" data-code="${product.code}"
+                                                                            data-qty="${product.qty}"
+                                                                            data-imei="${product.is_imei}"
+                                                                            data-embedded="${product.is_embeded}"
+                                                                            data-batch="${batch_id}"
+                                                                            data-price="${product.price}">
+                                            ${product.name} (${product.code}) - ${product.expired_date} | ${product.price} ${displayStock}
+                                        </div>
+                                    `;
+                                    }
+                                } else {
+                                    productHtml = `
+                                    <div class="product-img" data-code="${product.code}"
+                                                            data-qty="${product.qty}"
+                                                            data-imei="${product.is_imei}"
+                                                            data-embedded="${product.is_embeded}"
+                                                            data-batch="${batch_id}"
+                                                            data-price="${product.price}"
+                                                            data-type="${product.type || 'product'}">
+                                        ${product.name} (${product.code}) | ${product.price} ${displayStock}
+                                    </div>
+                                `;
+                                }
+
+                                $results.append(productHtml);
+                            });
+
+                            $('.product-img').on('click', function() {
+                                clearResults();
+                            });
+
+                            // Auto-click if only one result
+                            if (data.length === 1) {
+
+                                //let product = data[0]; // ✅ define it properly
+
+                                if (click === 0) {
+                                    $('#product-results-container .product-img').first().trigger(
+                                        'click');
+                                }
+
+                                clearResults();
+                                click = 1;
+                            }
+
+                        } else {
+                            clearResults();
+                            $noResults.show();
+                        }
+                    },
+                    error: function() {
+                        $noResults.text("Error searching products.").show();
+                    }
+                });
+            }
+
+            var click = 0;
+
+            // Trigger on input
+            $input.on('input', function() {
+                const value = $(this).val().trim();
+                if (value.length >= 3) {
+                    click = 0;
+                    clearTimeout(typingTimer);
+                    typingTimer = setTimeout(() => searchProducts(value), doneTypingInterval);
+                } else {
+                    clearResults();
+                }
+            });
+
+            // Trigger on paste
+            $input.on('paste', function(e) {
+                const pastedData = (e.originalEvent || e).clipboardData.getData('text');
+                if (pastedData.length >= 3) {
+                    click = 0;
+                    searchProducts(pastedData.trim());
+                }
+            });
+
+            $(document).on('click', function(e) {
+                if (!$(e.target).closest('#product-results-container, #product-search-input').length) {
+                    clearResults();
+                }
+            });
+
+            // Show modal
+            $('#installmentPlanBtn').on('click', function() {
+                $('#installmentPlanModal').modal('show');
+            });
+
+            // Toggle fields visibility when checkbox checked/unchecked
+            $('#enable_installment').on('change', function() {
+                if (this.checked) {
+                    $('#installmentFields').slideDown();
+                    $('#installment_price').val($('input[name="grand_total"]').val());
+                    let installment_total_price = parseFloat($('input[name="grand_total"]').val() + $(
+                        '#additional_amount').val());
+                    $('#installment_total').val(installment_total_price.toFixed(2));
+                    $('input[name="grand_total"]').val(installment_total_price);
+                    $('input[name="total_price"]').val(installment_total_price);
+                } else {
+                    $('#installmentFields').slideUp();
+                }
+            });
+
+            $('#additional_amount').focusout(function() {
+                var grand_total = parseFloat($('input[name="grand_total"]').val());
+                var additional_amount = parseFloat($(this).val()) || 0;
+                var installment_total_price = grand_total + additional_amount;
+                $('#installment_total').val(installment_total_price.toFixed(2));
+            });
+
+            // ✅ When Close button clicked
+            $('#close-installment-modal').on('click', function() {
+                // Uncheck and hide
+                $('#enable_installment').prop('checked', false);
+                $('#installmentFields').slideUp();
+                $('#installmentPlanModal').modal('hide');
+            });
+            $('#close-installment-modal-x').on('click', function() {
+                $('#installmentPlanModal').modal('hide');
+            });
+
+            // ✅ When Done button clicked — just close modal (Bootstrap handles this)
+            $('#done-installment-modal').on('click', function() {
+                $('input[name="grand_total"]').val($('#installment_total').val());
+                $('input[name="total_price"]').val($('#installment_total').val());
+                $('#installmentPlanModal').modal('hide');
+            });
+
+        });
+    </script>
+    <script>
+        const closeScannerBtn = document.getElementById("closeScannerBtn");
+        const scanner = document.getElementById("reader");
+        const html5Qrcode = new Html5Qrcode('reader');
+
+        function barcode() {
+            const qrCodeSuccessCallback = (decodedText, decodedResult) => {
+                if (decodedText) {
+                    document.getElementById('lims_productcodeSearch').value = decodedText;
+                    html5Qrcode.stop();
+                    closeScannerBtn.style.display = "none";
+                }
+            };
+
+            const config = {
+                fps: 30,
+                qrbox: {
+                    width: 300,
+                    height: 100
+                },
+                // ðŸ‘‡ Add this line to support Code128
+                // formatsToSupport: [ Html5QrcodeSupportedFormats.CODE_128 ]
+            };
+
+            html5Qrcode.start({
+                facingMode: "environment"
+            }, config, qrCodeSuccessCallback);
+            closeScannerBtn.style.display = "inline-block";
+        }
+
+        closeScannerBtn.addEventListener("click", function() {
+            closeScannerBtn.style.display = "none";
+            html5Qrcode.stop();
+        });
+    </script>
+
+    <script>
+        var isEditMode = {{ isset($lims_sale_data) ? 1 : 0 }};
+
+        $.ajaxSetup({
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            }
+        });
+
+        ////Start the code is for SaleproSaas///
+        @if (config('database.connections.saleprosaas_landlord'))
+            numberOfInvoice = <?php echo json_encode($numberOfInvoice); ?>;
+            $.ajax({
+                type: 'GET',
+                async: false,
+                url: '{{ route('package.fetchData', $general_setting->package_id) }}',
+                success: function(data) {
+                    if (data['number_of_invoice'] > 0 && data['number_of_invoice'] <= numberOfInvoice) {
+                        location.href = "{{ route('sales.index') }}";
+                    }
+                }
+            });
+        @endif
+        ////End the code is for SaleproSaas///
+
+        ///NOT NEEDED - Check///
+        $("ul#sale").siblings('a').attr('aria-expanded', 'true');
+        $("ul#sale").addClass("show");
+        $("ul#sale #sale-pos-menu").addClass("active");
+        ///NOT NEEDED - Check///
+
+        ///start code for mobile////
+        var isMobile = false;
+        if (($(window).width() < 767)) {
+            isMobile = true;
+        }
+
+        if (isMobile == true) {
+            $('.loading-message').hide();
+            $('#main-product-grid').hide();
+            $('.more-payment-options > div > div').addClass('dropdown-menu');
+            $('#collapseProducts').addClass('collapse');
+            $('#grand-total-m').html($('input[name="grand_total"]').val());
+        }
+
+
+        @if ($lims_pos_setting_data)
+            var public_key = <?php echo json_encode($lims_pos_setting_data->stripe_public_key); ?>;
+        @endif
+        var without_stock = <?php echo json_encode($general_setting->without_stock); ?>;
+        var alert_product = <?php echo json_encode($alert_product); ?>;
+        var currency = <?php echo json_encode($currency); ?>;
+        var valid;
+        var authUser = <?php echo json_encode($authUser); ?>;
+        // array data depend on warehouse
+        var lims_product_array = [];
+        var product_code = [];
+        var product_name = [];
+        var product_qty = [];
+        var product_type = [];
+        var product_id = [];
+        var product_list = [];
+        var qty_list = [];
+
+        // array data with selection
+        var product_price = [];
+        var wholesale_price = [];
+        var cost = [];
+        var product_discount = [];
+        var tax_rate = [];
+        var tax_name = [];
+        var tax_method = [];
+        var unit_name = [];
+        var unit_operator = [];
+        var unit_operation_value = [];
+        var is_imei = [];
+        var is_variant = [];
+        var gift_card_amount = [];
+        var gift_card_expense = [];
+
+        // temporary array
+        var temp_unit_name = [];
+        var temp_unit_operator = [];
+        var temp_unit_operation_value = [];
+
+        var deposit = <?php echo json_encode($deposit); ?>;
+        var points = <?php echo json_encode($points); ?>;
+        var reward_point_setting = <?php echo json_encode($lims_reward_point_setting_data); ?>;
+
+        @if ($lims_pos_setting_data)
+            var product_row_number = <?php echo json_encode($lims_pos_setting_data->product_number); ?>;
+        @endif
+        var rowindex;
+        var customer_group_rate;
+        var row_product_price;
+        var pos;
+        var keyboard_active = <?php echo json_encode($keybord_active); ?>;
+        var role_id = <?php echo json_encode(\Auth::user()->role_id); ?>;
+        var warehouse_id = $('#warehouse_id').val();
+        var coupon_list = <?php echo json_encode($lims_coupon_list); ?>;
+        var currency = <?php echo json_encode($currency); ?>;
+        var currencyChange = false;
+        var all_permission = '<?php echo json_encode($all_permission); ?>';
+        var next_page_url;
+        var lims_customer_list = <?php echo json_encode($lims_customer_list); ?>;
+
+        function escapeHtml(text) {
+            if (text == null || text === '') return '';
+            var div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        function safeBtoa(str) {
+            try { return btoa(str); } catch (e) { return btoa(unescape(encodeURIComponent(str))); }
+        }
+
+        $(window).on('load', async function() {
+            //await getProduct(warehouse_id);
+
+            @if (isset($lims_sale_data) && !empty($lims_sale_data))
+                var existingRefNo = @json($lims_sale_data->reference_no);
+                $('#pos-invoice-no-display').val(existingRefNo);
+                $('#pos-reference-no').val(existingRefNo);
+                $('#reference-no').val(existingRefNo);
+            @else
+                $.get('{{ route('sale.nextPosInvoiceNo') }}', function(res) {
+                    if (res.success && res.data) {
+                        $('#pos-invoice-no-display').val(res.data.display_number);
+                        $('#pos-reference-no').val(res.data.reference_no);
+                        $('#reference-no').val(res.data.reference_no);
+                    }
+                });
+            @endif
+
+            var customer_id = $('#customer_id').val();
+            var cus_gr_rt = await $.get('{{ url('sales/getcustomergroup') }}/' + customer_id);
+            customer_group_rate = (cus_gr_rt / 100);
+
+            @if ($lims_pos_setting_data && $lims_pos_setting_data->cash_register)
+                isCashRegisterAvailable(warehouse_id);
+            @endif
+
+            //Get single products on page load (must run in this script block where populateProduct is defined)
+            currentFilterType = 'product';
+            $.get('{{ url('sales/getproducts') }}/' + warehouse_id + '/product/0', function(response) {
+                populateProduct(response);
+            });
+
+            //Get recents sale when clicking recent transaction button
+            $.get('{{ url('sales/recent-sale') }}', function(data) {
+                populateRecentSale(data);
+            });
+            //Get recents draft when clicking recent transaction button
+            $.get('{{ url('/sales/recent-draft') }}', function(data) {
+                populateRecentDraft(data);
+            });
+
+            if (isEditMode) {
+                processDraftData();
+            }
+
+            saveDataToLocalStorageForCustomerDisplay('clear_no');
+
+        })
+
+        ///category button
+        $('#category-filter').on('click', function(e) {
+            e.stopPropagation();
+            $('.filter-window').show('slide', {
+                direction: 'right'
+            }, 'fast');
+            $('.category').show();
+            $('.products-m').hide();
+            $("#main-product-grid").removeClass('product').removeClass('combo').addClass('category');
+            currentFilterType = 'product'; // Category filter shows products
+        });
+
+        //click on category image on the filter window shown after clicking the category button
+        $(document).on('click', '.category-img', function() {
+            let category_id = $(this).data('category');
+            $('.filter-window').hide('slide', {
+                direction: 'right'
+            }, 'fast');
+            $('#main-grid-search').val('');
+            $("#main-product-grid").children().remove();
+            currentFilterType = 'product'; // Category filter shows products
+            $.get('{{ url('sales/getproducts') }}/' + warehouse_id + '/category/' + category_id, function(
+                response) {
+                populateProduct(response);
+            });
+
+            if (isMobile == true) {
+                $('.filter-window').show('slide', {
+                    direction: 'right'
+                }, 'fast');
+            }
+        });
+
+        ///product button (single products)
+        $('#product-filter').on('click', function(e) {
+            $("#main-product-grid").removeClass('category').removeClass('combo').addClass('product');
+            currentFilterType = 'product';
+            $('#main-grid-search').val('');
+
+            $.get('{{ url('sales/getproducts') }}/' + warehouse_id + '/product/0', function(response) {
+                populateProduct(response);
+            });
+
+            if (isMobile == true) {
+                e.stopPropagation();
+                $(".product_list_mobile.table-container").show();
+                $('.product_list_mobile').html('');
+                let productList = $("#main-product-grid .product-grid").clone();
+                $('.product_list_mobile').html(productList);
+                $('.filter-window').show('slide', { direction: 'right' }, 'fast');
+                $('.category').hide();
+            }
+        });
+
+        ///combo button
+        $('#combo-filter').on('click', function(e) {
+            $("#main-product-grid").removeClass('category').removeClass('product').addClass('combo');
+            currentFilterType = 'combo';
+            $('#main-grid-search').val('');
+
+            $.get('{{ url('sales/getproducts') }}/' + warehouse_id + '/combo/0', function(response) {
+                populateProduct(response);
+            });
+
+            if (isMobile == true) {
+                e.stopPropagation();
+                $(".product_list_mobile.table-container").show();
+                $('.product_list_mobile').html('');
+                let comboList = $("#main-product-grid .product-grid").clone();
+                $('.product_list_mobile').html(comboList);
+                $('.filter-window').show('slide', { direction: 'right' }, 'fast');
+                $('.category').hide();
+            }
+        });
+
+        //close button on filter-window
+        $(document).on('click', '.btn-close', function(e) {
+            $('.filter-window').hide('slide', {
+                direction: 'right'
+            }, 'fast');
+            $("#main-product-grid").removeClass('category').removeClass('product').removeClass('combo');
+            if (isMobile == true) {
+                $("#main-product-grid").hide();
+            }
+        });
+
+        /// Start Load more button function///
+        $(document).on('click', '.load-more', function() {
+            $.ajax({
+                url: next_page_url,
+                type: "get",
+            }).done(function(response) {
+                appendProduct(response);
+            });
+        });
+
+        // Main product grid search: single + combo, same product-img sound-btn style, no type label
+        var mainGridSearchTimer;
+        var mainGridLoaderHtml = '<div class="loader" style="border:none;min-height:120px"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="24px" height="30px" viewBox="0 0 24 30"><rect x="0" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0" dur="0.6s" repeatCount="indefinite"/></rect><rect x="10" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.2s" dur="0.6s" repeatCount="indefinite"/></rect><rect x="20" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.4s" dur="0.6s" repeatCount="indefinite"/></rect></svg></div>';
+        $('#main-grid-search').on('input', function() {
+            var $input = $(this);
+            var q = $.trim($input.val());
+            clearTimeout(mainGridSearchTimer);
+            if (q.length === 0) {
+                $('#main-product-grid').html(mainGridLoaderHtml);
+                $('#product-filter').trigger('click');
+                return;
+            }
+            if (q.length < 2) return;
+            mainGridSearchTimer = setTimeout(function() {
+                var wh = $('#warehouse_id').val();
+                if (!wh) return;
+                $('#main-product-grid').html(mainGridLoaderHtml);
+                var ot = $('#order_type').val() || '1';
+                $.get('{{ url("sales/search") }}/' + wh + '/' + safeBtoa(q) + '?order_type=' + encodeURIComponent(ot), function(data) {
+                    var tableData = '<div class="product-grid">';
+                    if (data && data.length > 0) {
+                        data.forEach(function(p) {
+                            var img = (p.image && String(p.image).trim()) ? String(p.image).trim() : 'zummXD2dvAtI.png';
+                            var price = parseFloat(p.price) || 0;
+                            var formattedPrice = price.toFixed(2);
+                            var pType = (p.type && String(p.type).trim()) ? String(p.type).trim() : 'product';
+                            var nameEsc = escapeHtml(p.name || '');
+                            var codeEsc = escapeHtml(p.code || '');
+                            var pid = (p.id != null && p.id !== '') ? escapeHtml(String(p.id)) : '';
+                            tableData += '<div class="product-img sound-btn" data-product-id="' + pid + '" title="' + nameEsc.replace(/"/g, '&quot;') + '" data-code="' + codeEsc.replace(/"/g, '&quot;') + '" data-qty="' + (p.qty || 0) + '" data-imei="' + (p.is_imei || 0) + '" data-embedded="' + (p.is_embeded || 0) + '" data-batch="" data-price="' + price + '" data-type="' + escapeHtml(pType) + '"><span class="pos-product-view-btn" title="{{ __("db.View") }}" role="button"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg></span><img src="{{ url("/images/product") }}/' + escapeHtml(img) + '" width="100%" /><p>' + nameEsc + '</p><span>[' + codeEsc + ']</span> <span class="d-block" style="font-weight:600;color:#5f27cd;">Price: ' + formattedPrice + '</span> <span class="d-block">Qty: ' + (p.qty || 0) + '</span></div>';
+                        });
+                    } else {
+                        tableData += '<p class="text-muted py-4">No products found.</p>';
+                    }
+                    tableData += '</div>';
+                    $('#main-product-grid').html(tableData);
+                    $('#main-product-grid').show();
+                }).fail(function() {
+                    $('#main-product-grid').html('<div class="product-grid"><p class="text-danger py-4">Search failed.</p></div>');
+                });
+            }, 350);
+        });
+
+        $('#warehouse_id').on('change', function() {
+            warehouse_id = $(this).val();
+            $('#main-grid-search').val('');
+            @if ($lims_pos_setting_data && $lims_pos_setting_data->cash_register)
+                isCashRegisterAvailable(warehouse_id);
+            @endif
+            $('#product-filter').trigger('click');
+
+            saveDataToLocalStorageForCustomerDisplay('clear_no');
+        });
+
+        $('#customer_id').on('change', function() {
+            var customer_id = $(this).val();
+            $.get('{{ url('sales/getcustomergroup') }}/' + customer_id, function(data) {
+                customer_group_rate = (data / 100);
+            });
+            // Enable/disable view and edit buttons based on selection
+            if (customer_id && customer_id !== '') {
+                $('#viewCustomerBtn, #editCustomerBtn').prop('disabled', false);
+            } else {
+                $('#viewCustomerBtn, #editCustomerBtn').prop('disabled', true);
+            }
+        });
+
+        // Initialize button states on page load
+        $(document).ready(function() {
+            var customer_id = $('#customer_id').val();
+            if (customer_id && customer_id !== '') {
+                $('#viewCustomerBtn, #editCustomerBtn').prop('disabled', false);
+            } else {
+                $('#viewCustomerBtn, #editCustomerBtn').prop('disabled', true);
+            }
+        });
+
+        @if ($lims_pos_setting_data && $lims_pos_setting_data->cash_register)
+            function isCashRegisterAvailable(warehouse_id) {
+                $.ajax({
+                    url: '{{ url('cash-register/check-availability') }}/' + warehouse_id,
+                    type: "GET",
+                    success: function(data) {
+                        if (data == 'false') {
+                            //$("#pos-layout").addClass('d-none');
+                            $("#register-details-btn").addClass('d-none');
+                            $('#cash-register-modal select[name=warehouse_id]').val(warehouse_id);
+
+                            if (role_id <= 2)
+                                $("#cash-register-modal .warehouse-section").removeClass('d-none');
+                            else
+                                $("#cash-register-modal .warehouse-section").addClass('d-none');
+
+                            $('#cash-register-modal').modal({
+                                backdrop: 'static',
+                                keyboard: false // Optional: Prevents closing with the Escape key as well
+                            });
+
+                            $('.selectpicker').selectpicker('refresh');
+                            $("#cash-register-modal").modal('show');
+                        } else {
+                            $("#register-details-btn").removeClass('d-none');
+                            $("#register-details-btn").data('id', data);
+                            $('input[name="cash_register"]').val(data);
+                        }
+                    }
+                });
+            }
+        @endif
+
+        function populateProduct(response) {
+            var tableData = '<div class="product-grid">';
+            $.each(response.data['name'], function(index) {
+                if (response.data['image'][index])
+                    image = response.data['image'][index];
+                else
+                    image = 'zummXD2dvAtI.png';
+                var price = parseFloat(response.data['price'][index]) || 0;
+                var formattedPrice = price.toFixed(2);
+                var productType = (response.data['type'] && response.data['type'][index]) ? response.data['type'][index] : (currentFilterType || 'product');
+                var productId = (response.data['id'] && response.data['id'][index] != null) ? response.data['id'][index] : '';
+                tableData += '<div class="product-img sound-btn" data-product-id="' + productId + '" title="' + response.data['name'][index] +
+                    '" data-code = "' + response.data['code'][index] + '" data-qty="' + response.data['qty'][
+                        index
+                    ] + '" data-imei="' + response.data['is_imei'][index] + '" data-embedded="' + response
+                    .data['is_embeded'][index] + '" data-batch="" data-price="' + response.data['price'][index] +
+                    '" data-type="' + productType + '"><span class="pos-product-view-btn" title="{{ __("db.View") }}" role="button"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg></span><img  src="{{ url('/images/product') }}/' + image + '" width="100%" /><p>' + response.data[
+                        'name'][index] + '</p><span>[' + response.data['code'][index] +
+                    ']</span> <span class="d-block" style="font-weight: 600; color: #5f27cd;">Price: ' +
+                    formattedPrice + '</span> <span class="d-block">Qty: ' + response.data['qty'][index] +
+                    '</span></div>';
+            });
+
+            tableData += '</div>';
+
+            next_page_url = response.next_page_url;
+            if (next_page_url) {
+                tableData +=
+                    '<button class="btn btn-primary btn-block load-more"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 13.5 12 21m0 0-7.5-7.5M12 21V3" /></svg></button>';
+            }
+            $("#main-product-grid").html(tableData);
+
+            if (isMobile) {
+                $('.category').hide();
+                $('.products-m').show();
+                $(".product_list_mobile.table-container").show();
+            } else {
+                $("#main-product-grid").show();
+            }
+        }
+
+        function appendProduct(response) {
+            var tableData = '';
+            $.each(response.data['name'], function(index) {
+                if (response.data['image'][index])
+                    image = response.data['image'][index];
+                else
+                    image = 'zummXD2dvAtI.png';
+                var price = parseFloat(response.data['price'][index]) || 0;
+                var formattedPrice = price.toFixed(2);
+                var productType = (response.data['type'] && response.data['type'][index]) ? response.data['type'][index] : (currentFilterType || 'product');
+                var productId = (response.data['id'] && response.data['id'][index] != null) ? response.data['id'][index] : '';
+                tableData += '<div class="product-img sound-btn" data-product-id="' + productId + '" title="' + response.data['name'][index] +
+                    '" data-code = "' + response.data['code'][index] + '" data-qty="' + response.data['qty'][
+                        index
+                    ] + '" data-imei="' + response.data['is_imei'][index] + '" data-embedded="' + response
+                    .data['is_embeded'][index] + '" data-batch="" data-price="' + response.data['price'][index] +
+                    '" data-type="' + productType + '"><span class="pos-product-view-btn" title="{{ __("db.View") }}" role="button"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg></span><img  src="{{ url('/images/product') }}/' + image + '" width="100%" /><p>' + response.data[
+                        'name'][index] + '</p><span>' + response.data['code'][index] +
+                    '</span> <span class="d-block" style="font-weight: 600; color: #5f27cd;">Price: ' +
+                    formattedPrice + '</span> <span class="d-block">Qty: ' + response.data['qty'][index] +
+                    '</span></div>';
+            });
+            $("#main-product-grid .product-grid").append(tableData);
+
+            next_page_url = response.next_page_url;
+            if (!next_page_url) {
+                $('.load-more').remove();
+            }
+        }
+
+        function openPosProductViewModal(productId) {
+            if (!productId) return;
+            var $modal = $('#posProductViewModal');
+            var $body = $('#posProductViewModalBody');
+            $body.find('.pos-product-view-loading').html('<div class="spinner-border text-primary" role="status"><span class="sr-only">Loading...</span></div>').show();
+            $body.find('#pos-product-view-content').hide();
+            $modal.modal('show');
+            $.get('{{ url("products/product-view-data-for-pos") }}/' + productId)
+                .done(function(data) {
+                    if (data.error) {
+                        $body.find('.pos-product-view-loading').hide().html('<p class="text-danger">' + (data.error || 'Product not found') + '</p>');
+                        return;
+                    }
+                    var product = data.product || [];
+                    var product_warehouse = data.product_warehouse || [];
+                    var product_variant_warehouse = data.product_variant_warehouse || [];
+                    var variant_data = data.variant_data || [];
+                    var baseUrl = '{{ url("/images/product") }}';
+                    var imgBase = (product[19] && String(product[19]).trim()) ? String(product[19]).trim() : 'zummXD2dvAtI.png';
+                    var product_images = String(product[19] || '').split(',');
+                    var sliderHtml = '';
+                    if (product_images.length > 1) {
+                        sliderHtml = '<div id="pos-product-img-slider" class="carousel slide" data-ride="carousel"><div class="carousel-inner">';
+                        product_images.forEach(function(im, i) {
+                            var img = (im && String(im).trim()) ? String(im).trim() : 'zummXD2dvAtI.png';
+                            sliderHtml += '<div class="carousel-item' + (i === 0 ? ' active' : '') + '"><img src="' + baseUrl + '/' + img + '" class="d-block w-100" style="max-height:300px;object-fit:contain;" alt=""></div>';
+                        });
+                        sliderHtml += '</div><a class="carousel-control-prev" href="#pos-product-img-slider" data-slide="prev"><span class="carousel-control-prev-icon"></span></a><a class="carousel-control-next" href="#pos-product-img-slider" data-slide="next"><span class="carousel-control-next-icon"></span></a></div>';
+                    } else {
+                        sliderHtml = '<img src="' + baseUrl + '/' + imgBase + '" class="img-fluid" style="max-height:300px;" alt="">';
+                    }
+                    $('#pos-slider-content').html(sliderHtml);
+                    var typeLabel = (product[0] || '').toString();
+                    var htmltext = '<p>{{ __("db.Type") }}: ' + typeLabel + '</p><p>{{ __("db.name") }}: ' + (product[1] || '') + (product[2] && product[2].toString().trim() ? ' / ' + product[2] : '') + '</p><p>{{ __("db.Code") }}: ' + (product[3] || '') + '</p><p>{{ __("db.Brand") }}: ' + (product[4] || '') + '</p><p>{{ __("db.category") }}: ' + (product[5] || '') + '</p><p>{{ __("db.Quantity") }}: ' + (product[18] != null ? String(product[18]) : '0') + '</p><p>{{ __("db.Unit") }}: ' + (product[6] || '') + '</p><p>{{ __("db.Cost") }}: ' + (product[7] || '') + '</p><p>{{ __("db.Price") }}: ' + (product[8] || '') + '</p><p>{{ __("db.Tax") }}: ' + (product[9] || '') + '</p><p>{{ __("db.Tax Method") }}: ' + (product[10] || '') + '</p><p>{{ __("db.Alert Quantity") }}: ' + (product[11] || '') + '</p><p>{{ __("db.Product Details") }}: </p>' + (product[12] || '');
+                    $('#pos-product-content').html(htmltext);
+                    var wh = product_warehouse[0] || [];
+                    var qty = product_warehouse[1] || [];
+                    var batch = product_warehouse[2] || [];
+                    var expired = product_warehouse[3] || [];
+                    var unitCost = product_warehouse[4] || [];
+                    var whHead = '<tr><th>{{ __("db.Warehouse") }}</th><th>{{ __("db.Batch No") }}</th><th>{{ __("db.Expired Date") }}</th><th>{{ __("db.Quantity") }}</th><th>{{ __("db.Unit Cost") }}</th></tr>';
+                    $('#pos-product-warehouse-thead').html(whHead);
+                    var whBody = '';
+                    if (wh && wh.length) {
+                        for (var w = 0; w < wh.length; w++) {
+                            whBody += '<tr><td>' + (wh[w] || '') + '</td><td>' + (batch[w] || 'N/A') + '</td><td>' + (expired[w] || 'N/A') + '</td><td>' + (qty[w] || '') + '</td><td>' + (unitCost[w] || 'N/A') + '</td></tr>';
+                        }
+                    } else {
+                        whBody = '<tr><td colspan="5" class="text-center text-muted">{{ __("db.No warehouse data") }}</td></tr>';
+                    }
+                    $('#pos-product-warehouse-tbody').html(whBody);
+                    $('#pos-product-warehouse-section').show();
+                    var vWh = product_variant_warehouse[0] || [];
+                    var vWhHead = '<tr><th>{{ __("db.Warehouse") }}</th><th>{{ __("db.Variant") }}</th><th>{{ __("db.Quantity") }}</th></tr>';
+                    $('#pos-product-variant-warehouse-thead').html(vWhHead);
+                    var vWhBody = '';
+                    if (vWh && vWh.length) {
+                        var vName = product_variant_warehouse[1] || [];
+                        var vQty = product_variant_warehouse[2] || [];
+                        for (var v = 0; v < vWh.length; v++) {
+                            vWhBody += '<tr><td>' + (vWh[v] || '') + '</td><td>' + (vName[v] || '') + '</td><td>' + (vQty[v] || '') + '</td></tr>';
+                        }
+                    } else {
+                        vWhBody = '<tr><td colspan="3" class="text-center text-muted">{{ __("db.No variant warehouse data") }}</td></tr>';
+                    }
+                    $('#pos-product-variant-warehouse-tbody').html(vWhBody);
+                    $('#pos-product-variant-warehouse-section').toggle(!!(vWh && vWh.length));
+                    if (product[20] && variant_data && variant_data.length > 0) {
+                        var vHead = '<tr><th>{{ __("db.Variant") }}</th><th>{{ __("db.Item Code") }}</th><th>{{ __("db.Additional Cost") }}</th><th>{{ __("db.Additional Price") }}</th><th>{{ __("db.Qty") }}</th></tr>';
+                        $('#pos-product-variant-thead').html(vHead);
+                        var vBody = '';
+                        variant_data.forEach(function(v) {
+                            vBody += '<tr><td>' + (v.name || '') + '</td><td>' + (v.item_code || '') + '</td><td>' + (v.additional_cost || '0') + '</td><td>' + (v.additional_price || '0') + '</td><td>' + (v.qty || '0') + '</td></tr>';
+                        });
+                        $('#pos-product-variant-tbody').html(vBody);
+                        $('#pos-product-variant-section').removeClass('d-none');
+                    } else {
+                        $('#pos-product-variant-section').addClass('d-none');
+                    }
+                    $('#pos-combo-header').text('');
+                    $('#pos-combo-thead').empty();
+                    $('#pos-combo-tbody').empty();
+                    $('#pos-combo-item-list').hide();
+                    if (product[0] === 'Combo Product' && product[14]) {
+                        $('#pos-combo-header').text('{{ __("db.Combo Products") }}');
+                        $('#pos-combo-thead').html('<tr><th>{{ __("db.product") }}</th><th>{{ __("db.Wastage Percent") }}</th><th>{{ __("db.Quantity") }}</th><th>{{ __("db.Price") }}</th></tr>');
+                        var product_list = String(product[14] || '').replace(/"/g, '').split(',').map(function(s) { return String(s).trim(); }).filter(Boolean);
+                        var variant_list = String(product[15] || '').replace(/"/g, '').split(',');
+                        var qty_list = String(product[16] || '').replace(/"/g, '').split(',');
+                        var price_list = String(product[17] || '').replace(/"/g, '').split(',');
+                        var combo_unit = String(product[21] || '').replace(/"/g, '').split(',');
+                        var wastage_percent = String(product[22] || '').replace(/"/g, '').split(',');
+                        var pending = product_list.length;
+                        if (pending === 0) {
+                            $('#pos-combo-tbody').html('<tr><td colspan="4" class="text-muted">{{ __("db.No ingredients") }}</td></tr>');
+                            $('#pos-combo-item-list').show();
+                            $body.find('.pos-product-view-loading').hide();
+                            $body.find('#pos-product-view-content').show();
+                        } else {
+                            product_list.forEach(function(pidRaw, i) {
+                                var qtyStr = qty_list[i] || '';
+                                var priceStr = price_list[i] || '';
+                                var unitStr = combo_unit[i] || '';
+                                var wastageStr = wastage_percent[i] || '';
+                                var idForGet = String(pidRaw).replace(/^p_/i, '');
+                                var isBasement = String(pidRaw).toLowerCase().indexOf('b_') === 0;
+                                if (isBasement || !idForGet) {
+                                    var label = isBasement ? '{{ __("db.Warehouse Store") }}' : ('ID ' + pidRaw);
+                                    $('#pos-combo-tbody').append('<tr><td>' + label + '</td><td>' + wastageStr + '</td><td>' + qtyStr + '(' + unitStr + ')</td><td>' + priceStr + '</td></tr>');
+                                    pending--;
+                                    if (pending <= 0) {
+                                        $('#pos-combo-item-list').show();
+                                        $body.find('.pos-product-view-loading').hide();
+                                        $body.find('#pos-product-view-content').show();
+                                    }
+                                    return;
+                                }
+                                var vid = (variant_list[i] && String(variant_list[i]).trim()) ? variant_list[i] : '0';
+                                $.get('{{ url("products/getdata") }}/' + idForGet + '/' + vid).done(function(qStr, pStr, uStr, wStr) {
+                                    return function(data) {
+                                        var name = (data && data.name) ? data.name : '';
+                                        var code = (data && data.code) ? data.code : '';
+                                        var row = '<tr><td>' + name + ' [' + code + ']</td><td>' + wStr + '</td><td>' + qStr + '(' + uStr + ')</td><td>' + pStr + '</td></tr>';
+                                        $('#pos-combo-tbody').append(row);
+                                        pending--;
+                                        if (pending <= 0) {
+                                            $('#pos-combo-item-list').show();
+                                            $body.find('.pos-product-view-loading').hide();
+                                            $body.find('#pos-product-view-content').show();
+                                        }
+                                    };
+                                }(qtyStr, priceStr, unitStr, wastageStr)).fail(function() {
+                                    $('#pos-combo-tbody').append('<tr><td>ID ' + idForGet + '</td><td>' + wastageStr + '</td><td>' + qtyStr + '(' + unitStr + ')</td><td>' + priceStr + '</td></tr>');
+                                    pending--;
+                                    if (pending <= 0) {
+                                        $('#pos-combo-item-list').show();
+                                        $body.find('.pos-product-view-loading').hide();
+                                        $body.find('#pos-product-view-content').show();
+                                    }
+                                });
+                            });
+                        }
+                    } else {
+                        $body.find('.pos-product-view-loading').hide();
+                        $body.find('#pos-product-view-content').show();
+                    }
+                    if ($('#pos-product-img-slider').length) {
+                        try { $('#pos-product-img-slider').carousel(0); } catch (e) {}
+                    }
+                })
+                .fail(function() {
+                    $body.find('.pos-product-view-loading').hide().html('<p class="text-danger">{{ __("db.Failed to load product details") }}</p>');
+                });
+        }
+
+        $(document).on('click', '.expired', function() {
+            playSound();
+            alert('Product is expired!');
+            return false;
+        });
+
+        // Customization grid (Boxes / Empty Tray): add product as PARENT row; then show default product grid again
+        $(document).on('click', '.customize-grid-product', function(e) {
+            e.stopPropagation();
+            playSound();
+            if ($('#order_type').val() != '2') return;
+            var customer_id = $('#customer_id').val();
+            var warehouse_id = $('#warehouse_id').val();
+            if (!customer_id) { alert('Please select Customer!'); return; }
+            if (!warehouse_id) { alert('Please select Warehouse!'); return; }
+            var data = $(this).data();
+            if (!data.type) data.type = $(this).attr('data-type') || 'product';
+            var product = { code: data.code, qty: data.qty, pre_qty: 1, imei: data.imei || null, embedded: data.embedded || 0, batch: data.batch || '', price: data.price, customer_id: customer_id, type: data.type || 'product' };
+            var $customizeContainer = $('#customize-product-grid-container');
+            var $mainGrid = $('#main-product-grid');
+            $.ajax({
+                type: 'GET',
+                url: '{{ url("sales/lims_product_search") }}',
+                data: { data: product },
+                success: function(responseData) {
+                    if (responseData && responseData[0]) {
+                        var productCode = responseData[1];
+                        var sameCodeCount = $('table.order-list tbody tr').filter(function() { return $(this).find('.product-code').val() === productCode; }).length;
+                        addNewProduct(responseData, null, true, sameCodeCount + 1);
+                        $('.customize-parent-col').show();
+                        $customizeContainer.hide();
+                        $mainGrid.show();
+                        currentFilterType = 'product';
+                        $.get('{{ url("sales/getproducts") }}/' + warehouse_id + '/product/0', function(response) {
+                            populateProduct(response);
+                        });
+                    }
+                }
+            });
+        });
+
+        $(document).on('click', '.product-img', function(e) {
+            if ($(e.target).closest('.pos-product-view-btn').length) {
+                var id = $(this).data('product-id');
+                if (id) openPosProductViewModal(id);
+                return;
+            }
+            if ($(this).hasClass('customize-grid-product')) return;
+
+            playSound();
+
+            clearResults();
+
+            var customer_id = $('#customer_id').val();
+            var warehouse_id = $('#warehouse_id').val();
+            var biller_id = $('#biller_id').val();
+
+            @if (in_array('restaurant', explode(',', $general_setting->modules)))
+                var table_id = $('#table_id').val();
+                var waiter_id = $('#waiter_id').val();
+                var service_id = $('#service_id').val();
+            @endif
+
+            if (isMobile) {
+                $('.filter-window').hide('slide', {
+                    direction: 'right'
+                }, 'fast');
+            }
+            if (!customer_id)
+                alert('Please select Customer!');
+            else if (!warehouse_id)
+                alert('Please select Warehouse!');
+            else if (!biller_id)
+                alert('Please select Biller!');
+            @if (in_array('restaurant', explode(',', $general_setting->modules)))
+                else if (!table_id && service_id == 1) {
+                    alert('Please select Table!');
+                } else if (!waiter_id && service_id == 1) {
+                    alert('Please select Waiter!');
+                }
+            @endif
+            else {
+                var data = $(this).data();
+                // Ensure type is read correctly from data-type attribute
+                if (!data.type) {
+                    data.type = $(this).attr('data-type') || 'product';
+                }
+                productSearch(data);
+            }
+        });
+
+        function processDraftData() {
+            @if (isset($lims_sale_data))
+                var orderType2 = ($('#order_type').val() == '2');
+                // Ensure Customization UI is ready when order_type is Custom Creation
+                if (orderType2) {
+                    $('#customizetypebox').show();
+                    $('.customize-parent-col').show();
+                    $('.customize-parent-td').show();
+                    window.firstDraftParentChecked = false;
+                }
+                customizeParentCounter = 0;
+                let draft_product_data = @json($draft_product_data ?? []);
+                var maxSort = 0;
+                draft_product_data.forEach(function(p) {
+                    if (p.custom_sort != null && p.custom_sort > maxSort) maxSort = parseInt(p.custom_sort, 10);
+                });
+                if (maxSort > 0) customSortCounter = maxSort;
+                draft_product_data.forEach(function(product) {
+                    productSearch(product, true); // isDraftLoad = true to bypass "Select Tray or Box" when restoring
+                });
+            @endif
+        }
+
+        function productSearch(productInput, isDraftLoad) {
+            // --- FLOW: type decides merge vs new row ---
+            // DISPLAY (order_type 1): Product already in cart as DISPLAY? → qty plus on that row. Else → new display row.
+            // CUSTOMIZE (order_type 2): (1) Not a custom/tray product and no radio selected? → alert "Select Tray or Box".
+            //   (2) Radio selected + product already inside that tray? → qty plus on that inside row. Else → new row inside selected parent.
+            if (typeof isDraftLoad === 'undefined') isDraftLoad = false;
+            var item_code = productInput.code;
+            var pre_qty = 0;
+            var flag = true;
+            var selectedParentRowIndices = [];
+            var isCustomizeParentProduct = (productInput.is_customize_parent == 1 || productInput.is_customize_parent === true);
+            if ($('#order_type').val() == '2') {
+                var $tbody = $("table.order-list tbody");
+                var $rows = $tbody.find('tr');
+                var $selectedParent = $rows.has('.customize-parent-radio:checked');
+                if ($selectedParent.length) {
+                    var idx = $rows.index($selectedParent.first());
+                    for (var r = idx; r < $rows.length; r++) {
+                        selectedParentRowIndices.push(r);
+                        if (r > idx && $rows.eq(r).find('.customize-parent-radio').length) break;
+                    }
+                }
+                if (!isDraftLoad && !isCustomizeParentProduct && selectedParentRowIndices.length === 0) {
+                    alert('{{ __("db.Select Tray or Box") }}');
+                    return;
+                }
+            }
+            $(".product-code").each(function(i) {
+                if ($(this).val().trim() != item_code) return;
+                var $row = $('table.order-list tbody tr').eq(i);
+                var orderType = $('#order_type').val();
+                if (orderType == '1') {
+                    if (!$row.hasClass('pos-row-display')) return;
+                } else if (orderType == '2') {
+                    if ($row.hasClass('pos-row-display')) return;
+                    if (selectedParentRowIndices.length > 0 && selectedParentRowIndices.indexOf(i) === -1) return;
+                }
+                rowindex = i;
+                if (productInput.imei != 'null' && productInput.imei != '') {
+                    var imeiNumbers = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .imei-number').val();
+                    var imeiNumbersArray = imeiNumbers ? imeiNumbers.split(",") : [];
+                    if (imeiNumbersArray.includes(productInput.imei)) {
+                        alert('Same imei or serial number is not allowed!');
+                        flag = false;
+                        $('#product-search-input').val('');
+                        return false;
+                    }
+                }
+                pre_qty = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .qty').val();
+                return false;
+            });
+            if (flag) {
+                // When loading draft/edit: use line qty from draft; else default to 1 (productInput.qty = stock qty, not order qty)
+                var useDraftQty = isDraftLoad && (parseFloat(pre_qty) === 0 && productInput.qty != null && productInput.qty !== '' && !isNaN(parseFloat(productInput.qty)));
+                let product = {
+                    code: productInput.code,
+                    qty: productInput.qty,
+                    pre_qty: useDraftQty ? parseFloat(productInput.qty) : (parseFloat(pre_qty) || 0) + 1,
+                    imei: productInput.imei,
+                    embedded: productInput.embedded,
+                    batch: productInput.batch,
+                    price: productInput.price,
+                    customer_id: $('#customer_id').val(),
+                    type: productInput.type || 'product'
+                };
+                //data += '?'+$('#customer_id').val()+'?'+(parseFloat(pre_qty) + 1);
+                $.ajax({
+                    type: 'GET',
+                    async: false,
+                    url: '{{ url('sales/lims_product_search') }}',
+                    data: {
+                        data: product
+                    },
+                    success: function(data) {
+                        // console.log(data)
+                        if (data[23]) {
+                            data[15] = 1;
+                            pre_qty = 0;
+                        }
+                        if (pre_qty > 0 && data[21]) {
+                            var old_batch = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')')
+                                .find('.batch-no').val();
+
+                            if (old_batch && old_batch != data[22]) {
+                                pre_qty = 0;
+                                data[15] = 1;
+                            }
+
+                        }
+                        var flag = 1;
+                        if (pre_qty > 0) {
+                            var qty = parseFloat(data[15]) || 1;
+                            var maxStock = parseFloat(data[19]);
+                            if (!isNaN(maxStock) && maxStock >= 0 && (!data[18] || data[18] == 'null' || data[18] == '')) {
+                                if (qty > maxStock) qty = maxStock;
+                            }
+                            var $rowQty = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .qty');
+                            $rowQty.val(qty);
+                            if (!isNaN(maxStock) && maxStock >= 0) $rowQty.attr('max', maxStock);
+                            //pos = product_code.indexOf(data[1]);
+
+                            product_price[rowindex] = parseFloat(data[2] * currency['exchange_rate']) +
+                                parseFloat(data[2] * currency['exchange_rate'] * customer_group_rate);
+
+                            checkDiscount(String(qty), true);
+                            flag = 0;
+                        }
+                        $("input[name='product_code_name']").val('');
+
+                        if (flag) {
+                            var draftCustomize = null;
+                            var isDisplayRow = !(productInput.customize_type_id != null && productInput.customize_type_id !== '');
+                            if (!isDisplayRow) {
+                                draftCustomize = { customize_type_id: productInput.customize_type_id, custom_sort: productInput.custom_sort };
+                                if (productInput.is_customize_parent !== undefined) draftCustomize.is_customize_parent = productInput.is_customize_parent;
+                            }
+                            var isParentRow = (draftCustomize && draftCustomize.is_customize_parent == 1) ? true : false;
+                            addNewProduct(data, draftCustomize, isParentRow, null, isDisplayRow);
+                        } else if (data[18] != 'null' && data[18] != '') {
+                            var imeiNumbers = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')')
+                                .find('.imei-number').val();
+                            if (imeiNumbers)
+                                imeiNumbers += ',' + data[18];
+                            else
+                                imeiNumbers = data[18];
+                            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find(
+                                '.imei-number').val(imeiNumbers);
+                        }
+                    }
+                });
+            }
+
+        }
+
+        @if (!empty($lims_product_sale_data))
+            const productSale = @json($lims_product_sale_data);
+        @else
+            const productSale = null;
+        @endif
+
+        var customizeParentCounter = 0;
+        function addNewProduct(data, draftCustomize, isParentRow, instanceNumber, isDisplayRow) {
+            if (typeof isParentRow === 'undefined') isParentRow = false;
+            if (typeof isDisplayRow === 'undefined') isDisplayRow = false;
+            $('.payment-btn').removeAttr('disabled');
+            $('#installmentPlanBtn').removeAttr('disabled');
+            var orderType2 = ($('#order_type').val() == '2');
+            if (orderType2 && isParentRow) customizeParentCounter++;
+            // Customize type box: show name + 1, 2, 3 so same product can be distinguished (first = 1, second = 2, etc.)
+            var displayName = data[0];
+            if (orderType2 && isParentRow) {
+                var num = (typeof instanceNumber !== 'undefined' && instanceNumber > 0) ? instanceNumber : customizeParentCounter;
+                displayName = data[0] + ' ' + num;
+            }
+            // Cap qty at in-stock when product has stock limit (no IMEI)
+            var maxStock = parseFloat(data[19]);
+            if (!isNaN(maxStock) && maxStock >= 0 && (!data[18] || data[18] == 'null' || data[18] == '' || data[18] == 0)) {
+                var requestedQty = parseFloat(data[15]) || 1;
+                if (requestedQty > maxStock) data[15] = maxStock;
+            }
+            var rowId = String(data[1]).replace(/[^a-zA-Z0-9_-]/g, '_') + '_' + (isParentRow ? 'p' + customizeParentCounter : Date.now());
+            // Display products (no customize_type_id): pos-row-display; customize parent: pos-row-customize-parent; customize child: pos-row-customize-child
+            var rowClass = isDisplayRow ? 'pos-row-display' : (orderType2 ? (isParentRow ? 'pos-row-customize pos-row-customize-parent' : 'pos-row-customize-child') : 'pos-row-display');
+            var newRow = $('<tr id="' + rowId + '" class=\"' + rowClass + '\">');
+            var cols = '';
+            temp_unit_name = (data[6]).split(',');
+            // Add first td (customize column): parent=radio, child=—, display=empty for alignment when orderType2
+            if (orderType2) {
+                $('.customize-parent-col').show();
+                if (isParentRow) {
+                    var fromDraft = draftCustomize && draftCustomize.is_customize_parent == 1;
+                    var shouldCheck = fromDraft ? !(window.firstDraftParentChecked) : true;
+                    if (fromDraft && shouldCheck) window.firstDraftParentChecked = true;
+                    if (!fromDraft) $('.customize-parent-radio').prop('checked', false);
+                    var radioId = 'custom_parent_' + customizeParentCounter;
+                    cols += '<td class="align-middle text-center customize-parent-td"><label class="d-flex align-items-center justify-content-center mb-0" for="' + radioId + '"><input type="radio" class="customize-parent-radio" name="customize_parent_row" value="' + radioId + '" id="' + radioId + '"' + (shouldCheck ? ' checked' : '') + ' /></label></td>';
+                } else if (isDisplayRow) {
+                    cols += '<td class="align-middle text-center customize-parent-td"></td>';
+                } else {
+                    cols += '<td class="align-middle text-center customize-parent-td">&mdash;</td>';
+                }
+            } else {
+                // Display mode: no extra td (customize column hidden)
+            }
+            //pos = product_code.indexOf(data[1]);
+
+            let stockDisplay = '';
+
+            // Show stock display for standard, combo, raw_material, and warehouse_store products
+            if (data[20] && (data[20].trim() == 'standard' || data[20].trim() == 'combo' || data[20].trim() == 'raw_material' || data[20].trim() == 'warehouse_store')) {
+                if (!data[18] || data[18] == 'null' || data[18] == '0' || data[18] == 0 || data[18] === '') {
+                    stockDisplay = ` | {{ __('db.In Stock') }} : <span class="in-stock">` + data[19] + `</span>`;
+                }
+            }
+
+            var productTitleTdStyle = (isDisplayRow || !orderType2) ? ' style="max-width: 39.333%;"' : '';
+            if (all_permission.includes("cart-product-update")) {
+                cols +=
+                    '<td class="col-sm-4 col-6 product-title"' + productTitleTdStyle + '><strong class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal">' +
+                    displayName +
+                    ' <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg></strong><br><span>' +
+                    data[1] + '</span>' + stockDisplay + ' <strong class="product-price d-none"></strong>';
+            } else {
+                cols += '<td class="col-sm-4 col-6 product-title"' + productTitleTdStyle + '><strong>' + displayName + '<br><span>' + data[1] + '</span>' +
+                    stockDisplay + ' <strong class="product-price d-none"></strong>';
+            }
+
+            // Show batch-no input only for batch-enabled standard products (not for combo)
+            if ((data[12] == 1 || data[12] === true) && data[20] != 'combo') {
+                cols +=
+                    '<br><input style="font-size:13px;padding:3px 25px 3px 10px;height:30px !important" type="text" class="form-control batch-no" value="' +
+                    (data[22] || '') +
+                    '" required/> <input type="hidden" class="product-batch-id" name="product_batch_id[]" value="' + (data[21] || '') + '"/>';
+            } else {
+                cols +=
+                    '<input type="text" class="form-control batch-no d-none" disabled/> <input type="hidden" class="product-batch-id" name="product_batch_id[]"/>';
+            }
+
+            cols += '</td>';
+            cols += '<td class="col-sm-2 product-price d-none d-md-block"></td>';
+            cols += '<td class="col-sm-3" style="min-width:140px"><div class="input-group flex-nowrap">';
+
+            // Show minus button if no IMEI (for all product types including raw_material and warehouse_store)
+            if (!data[18] || data[18] == 'null' || data[18] == '0' || data[18] == 0 || data[18] === '' || (data[20] && (data[20].trim() == 'raw_material' || data[20].trim() == 'warehouse_store'))) {
+                cols += '<div class="input-group-prepend"><button type="button" class="btn btn-outline-secondary minus" style="padding:5px 10px"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M5 12h14" /></svg></button></div>';
+            }
+
+            // Input field
+            cols += '<input type="text" name="qty[]" class="form-control qty numkey input-number text-center" step="any" value="' +
+                data[15] + '" max="' + data[19] + '" required style="min-width:50px">';
+
+            // Show plus button if no IMEI (for all product types including raw_material and warehouse_store)
+            if (!data[18] || data[18] == 'null' || data[18] == '0' || data[18] == 0 || data[18] === '' || (data[20] && (data[20].trim() == 'raw_material' || data[20].trim() == 'warehouse_store'))) {
+                cols += '<div class="input-group-append"><button type="button" class="btn btn-outline-secondary plus" style="padding:5px 10px"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" /></svg></button></div>';
+            }
+
+            cols += '</div></td>';
+
+            cols += '<td class="col-sm-2 sub-total-cell"><span class="sub-total"></span> <button type="button" class="ibtnDel btn btn-danger btn-sm" title="' + {!! json_encode(__('db.Remove')) !!} + '"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" /></svg></button></td>';
+            cols += '<input type="hidden" class="product-code" name="product_code[]" value="' + data[1] + '"/>';
+            cols += '<input type="hidden" class="product-id" name="product_id[]" value="' + data[9] + '"/>';
+            cols += '<input type="hidden" class="product_type" name="product_type[]" value="' + data[20] + '"/>';
+            cols += '<input type="hidden" class="product_price" />';
+            cols += '<input type="hidden" class="sale-unit" name="sale_unit[]" value="' + temp_unit_name[0] + '"/>';
+            cols += '<input type="hidden" class="net_unit_price" name="net_unit_price[]" />';
+            cols += '<input type="hidden" class="discount-value" name="discount[]" />';
+            cols += '<input type="hidden" class="tax-rate" name="tax_rate[]" value="' + data[3] + '"/>';
+            cols += '<input type="hidden" class="tax-value" name="tax[]" />';
+            cols += '<input type="hidden" class="tax-name" value="' + data[4] + '" />';
+            cols += '<input type="hidden" class="tax-method" value="' + data[5] + '" />';
+            cols += '<input type="hidden" class="sale-unit-operator" value="' + data[7] + '" />';
+            cols += '<input type="hidden" class="sale-unit-operation-value" value="' + data[8] + '" />';
+            cols += '<input type="hidden" class="subtotal-value" name="subtotal[]" />';
+            // Customization: store type (Box/Tray) and sort order per row
+            var orderTypeVal = $('#order_type').val();
+            var customizeTypeVal = $('#customize_type').val();
+            var custId = '';
+            var custSort = '';
+            if (draftCustomize && (draftCustomize.customize_type_id || draftCustomize.custom_sort !== undefined)) {
+                custId = (draftCustomize.customize_type_id || '');
+                custSort = (draftCustomize.custom_sort !== undefined && draftCustomize.custom_sort !== null) ? draftCustomize.custom_sort : '';
+            } else if (orderTypeVal == '2' && customizeTypeVal) {
+                customSortCounter = (typeof customSortCounter === 'undefined' ? 0 : customSortCounter) + 1;
+                custId = customizeTypeVal;
+                custSort = customSortCounter;
+            }
+            cols += '<input type="hidden" class="customize-type-id" name="customize_type_id[]" value="' + custId + '"/>';
+            cols += '<input type="hidden" class="custom-sort" name="custom_sort[]" value="' + custSort + '"/>';
+            var isParentVal = (orderType2 && isParentRow) ? '1' : '0';
+            cols += '<input type="hidden" class="is-customize-parent" name="is_customize_parent[]" value="' + isParentVal + '"/>';
+            if (data[18] != 'null' && data[18] != '')
+                cols += '<input type="hidden" class="imei-number" name="imei_number[]" value="' + data[18] + '" />';
+            else
+                cols += '<input type="hidden" class="imei-number" name="imei_number[]" value="" />';
+            if (data[23]) {
+                cols += '<input type="hidden" class="topping_product" name="topping_product[]" value="" />';
+                cols += '<input type="hidden" class="topping-price" name="topping-price" value="" />';
+            }
+
+            newRow.append(cols);
+
+            var $tbody = $("table.order-list tbody");
+            var $rows = $tbody.find('tr');
+            var $selectedParent = $rows.has('.customize-parent-radio:checked');
+            if (orderType2 && !isParentRow && $selectedParent.length) {
+                var idx = $rows.index($selectedParent.first());
+                var lastInGroup = idx;
+                for (var r = idx + 1; r < $rows.length; r++) {
+                    if ($rows.eq(r).find('.customize-parent-radio').length) break;
+                    lastInGroup = r;
+                }
+                $rows.eq(lastInGroup).after(newRow);
+            } else if (orderType2 && isParentRow) {
+                $tbody.append(newRow);
+            } else {
+                var $firstCustomize = $rows.filter('.pos-row-customize, .pos-row-customize-parent, .pos-row-customize-child').first();
+                if ($firstCustomize.length) $firstCustomize.before(newRow);
+                else $tbody.prepend(newRow);
+            }
+
+            if (keyboard_active == 1) {
+                newRow.find('.qty').keyboard({
+                    usePreview: false,
+                    layout: 'custom',
+                    display: {
+                        'accept': '&#10004;',
+                        'cancel': '&#10006;'
+                    },
+                    customLayout: {
+                        'normal': ['1 2 3', '4 5 6', '7 8 9', '0 {dec} {bksp}', '{clear} {cancel} {accept}']
+                    },
+                    restrictInput: true,
+                    preventPaste: true,
+                    autoAccept: true,
+                    css: {
+                        container: 'center-block dropdown-menu',
+                        buttonDefault: 'btn btn-default',
+                        buttonHover: 'btn-primary',
+                        buttonAction: 'active',
+                        buttonDisabled: 'disabled'
+                    },
+                });
+            }
+
+            rowindex = newRow.index();
+
+            product_price.splice(rowindex, 0, parseFloat(data[2] * currency['exchange_rate']) + parseFloat(data[2] *
+                currency['exchange_rate'] * customer_group_rate));
+
+            if (data[16])
+                wholesale_price.splice(rowindex, 0, parseFloat(data[16] * currency['exchange_rate']) + parseFloat(data[16] *
+                    currency['exchange_rate'] * customer_group_rate));
+            else
+                wholesale_price.splice(rowindex, 0, '{{ number_format(0, $general_setting->decimal, '.', '') }}');
+            cost.splice(rowindex, 0, parseFloat(data[17] * currency['exchange_rate']));
+            product_discount.splice(rowindex, 0, '{{ number_format(0, $general_setting->decimal, '.', '') }}');
+            tax_rate.splice(rowindex, 0, parseFloat(data[3]));
+            tax_name.splice(rowindex, 0, data[4]);
+            tax_method.splice(rowindex, 0, data[5]);
+            unit_name.splice(rowindex, 0, data[6]);
+            unit_operator.splice(rowindex, 0, data[7]);
+            unit_operation_value.splice(rowindex, 0, data[8]);
+            is_imei.splice(rowindex, 0, data[13]);
+            is_variant.splice(rowindex, 0, data[14]);
+
+            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.product_price').val(product_price[
+                rowindex]);
+
+            checkQuantity(data[15], true);
+            checkDiscount(data[15], true);
+
+            if (data[16]) {
+                populatePriceOption();
+                $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.edit-product').click();
+            }
+
+            // if(data[18]) {
+            //     $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.imei-number').val(imeiNumbers);
+            // }
+
+            if (data[23] && Array.isArray(data[23]) && data[23].length > 0) {
+                if (productSale && productSale.length > 0) {
+
+                    if (product_discount[rowindex] < 1) {
+                        cur_product_id = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .product-id').val();
+                        @if (isset($draft_product_discount))
+                            if (product_discount[rowindex] < 1) {
+                                draft_discounts = @json($draft_product_discount['discount']);
+                                product_discount[rowindex] = draft_discounts[cur_product_id];
+                            }
+                        @endif
+                    }
+
+                    // Find a match for current data[9] (product_id)
+                    let matchedIndex = productSale.findIndex(p => parseInt(p.product_id) === parseInt(data[9]));
+
+                    if (matchedIndex !== -1) {
+                        let matchedProduct = productSale[matchedIndex];
+
+                        // Parse toppings
+                        let toppings = JSON.parse(matchedProduct.topping_id || '[]');
+
+                        let toppingNames = toppings.map(t => t.name).join(", ");
+                        let totalToppingPrice = toppings.reduce((sum, t) => sum + parseFloat(t.price), 0);
+
+                        newRow.find('.product-title').append(`<br><small>Includes: ${toppingNames}</small>`);
+                        newRow.find('.topping_product').val(matchedProduct.topping_id);
+                        newRow.find('.topping-price').val(totalToppingPrice.toFixed({{ $general_setting->decimal }}));
+
+                        const currentPrice = parseFloat(newRow.find('.product-price').text()) || 0;
+                        const newPrice = currentPrice + totalToppingPrice;
+                        newPrice -= product_discount[rowindex];
+                        newRow.find('.product-price').text(newPrice.toFixed({{ $general_setting->decimal }}));
+                        newRow.find('.sub-total').text(newPrice.toFixed({{ $general_setting->decimal }}));
+
+                        // Remove used item from array
+                        productSale.splice(matchedIndex, 1);
+
+                        calculateTotal();
+                    }
+
+                } else {
+
+                    openToppingsModal(data, [], rowindex);
+
+                    function openToppingsModal(data, selectedToppings = [], rowIndex = null) {
+                        let modalContent = '<form id="product-selection-form">';
+                        data[23].forEach(product => {
+                            const selected = selectedToppings.find(t => t.id == product.id);
+                            const isChecked = selected ? 'checked' : '';
+                            const qty = selected ? selected.qty : 1;
+
+                            modalContent += `
+                            <div class="form-check d-flex align-items-center mb-1">
+                                <div>
+                                    <input class="form-check-input" type="checkbox" name="productOption" id="product_${product.id}" value="${product.id}" data-name="${product.name}" data-price="${product.price}" ${isChecked}>
+                                    <label class="form-check-label" for="product_${product.id}">
+                                        ${product.name} (${product.code}) - ${product.price}
+                                    </label>
+                                </div>
+                                <input type="number" name="quantity_${product.id}" id="quantity_${product.id}" class="form-control form-control-sm" style="width: 80px;" value="${qty}">
+                            </div>`;
+                        });
+                        modalContent += '</form>';
+
+                        const modalHTML = `
+                        <div class="modal fade" id="productSelectionModal" tabindex="-1" role="dialog" aria-labelledby="productSelectionModalLabel" aria-hidden="true" data-rowindex="${rowIndex}">
+                            <div class="modal-dialog" role="document">
+                                <div class="modal-content">
+                                    <div class="modal-header">
+                                        <h5 class="modal-title" id="productSelectionModalLabel">{{ __('db.Select Additional Products') }}</h5>
+                                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                            <span aria-hidden="true">&times;</span>
+                                        </button>
+                                    </div>
+                                    <div class="modal-body">${modalContent}</div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
+                                        <button type="button" class="btn btn-primary" id="confirmSelection">Confirm</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>`;
+
+                        // Remove existing modal if any, then append and show new
+                        $("#productSelectionModal").remove();
+                        $("body").append(modalHTML);
+                        $("#productSelectionModal").modal('show');
+                    }
+
+                    // Handle selection confirmation
+                    $("#confirmSelection").on('click', function() {
+                        let selectedToppings = [];
+                        let totalAdditionalPrice = 0;
+
+                        if (product_discount[rowindex] < 1) {
+                            cur_product_id = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) +
+                                ') .product-id').val();
+                            @if (isset($draft_product_discount))
+                                if (product_discount[rowindex] < 1) {
+                                    draft_discounts = @json($draft_product_discount['discount']);
+                                    product_discount[rowindex] = draft_discounts[cur_product_id];
+                                }
+                            @endif
+                        }
+
+                        $("input[name='productOption']:checked").each(function() {
+                            const qty = parseFloat($(`#quantity_${$(this).val()}`).val() ||
+                                1); // define qty first
+
+                            const topping = {
+                                id: $(this).val(),
+                                name: $(this).data('name'),
+                                qty: qty,
+                                price: parseFloat($(this).data('price')) * qty
+                            };
+
+                            selectedToppings.push(topping);
+                            totalAdditionalPrice += topping.price;
+                        });
+
+                        if (selectedToppings.length > 0) {
+                            // Convert the selected toppings array to JSON
+                            const selectedToppingsJson = JSON.stringify(selectedToppings);
+
+                            // Append toppings to the main product row
+                            const selectedProductNames = selectedToppings.map(t => `${t.name} (${t.qty})`).join(
+                                ', ');
+
+                            newRow.find('.product-title').append(
+                                `<br><small>Includes: ${selectedProductNames}</small>`);
+
+                            newRow.find('.topping_product').val(selectedToppingsJson); // Store JSON in hidden field
+
+                            // Update the total price
+                            const currentPrice = parseFloat(newRow.find('.product-price').text()) || 0;
+                            let newPrice = currentPrice + totalAdditionalPrice;
+                            newPrice -= product_discount[rowindex];
+                            newRow.find('.product-price').text(newPrice.toFixed({{ $general_setting->decimal }}));
+                            newRow.find('.sub-total').text(newPrice.toFixed({{ $general_setting->decimal }}));
+                            newRow.find('.topping-price').val(totalAdditionalPrice.toFixed(
+                                {{ $general_setting->decimal }}));
+                        }
+
+                        $("#productSelectionModal").modal('hide');
+                        $(".modal-backdrop").remove();
+                        $("#productSelectionModal").remove();
+                        calculateTotal();
+                    });
+
+                    // Stop further processing until the modal is resolved
+                    return;
+                }
+            }
+        }
+
+        $('#currency').val(currency['id']);
+
+        $('#currency').change(function() {
+            var rate = $(this).find(':selected').data('rate');
+            var currency_id = $(this).val();
+            $('#exchange_rate').val(rate);
+            //$('input[name="currency_id"]').val(currency_id);
+            currency['exchange_rate'] = rate;
+            $("table.order-list tbody .product-id").each(function(index) {
+                rowindex = index;
+                currencyChange = true;
+                cur_product_id = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) +
+                    ') .product-id').val();
+                var qty = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.qty')
+                    .val();
+                var price = parseFloat($('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')')
+                    .find('.product_price').val());
+
+                checkDiscount(qty, true, price);
+                couponDiscount();
+            });
+        });
+
+        $(document).on("click", "#print-btn", function() {
+            var divContents = document.getElementById("get-sale-details").innerHTML;
+            var a = window.open('');
+            a.document.write('<html>');
+            a.document.write('<body>');
+            a.document.write(
+                '<style>body{line-height: 1.15;-webkit-text-size-adjust: 100%;}.d-print-none{display:none}.text-left{text-align:left}.text-center{text-align:center}.text-right{text-align:right}.row{width:100%;margin-right: -15px;margin-left: -15px;}.col-md-12{width:100%;display:block;padding: 5px 15px;}.col-md-6{width: 50%;float:left;padding: 5px 15px;}table{width:100%;margin-top:30px;}th{text-aligh:left}td{padding:10px}table,th,td{border: 1px solid black; border-collapse: collapse;}</style><style>@media print {.modal-dialog { max-width: 1000px;} }</style>'
+            );
+            a.document.write(divContents);
+            a.document.write('</body></html>');
+            a.document.close();
+            a.print();
+            setTimeout(function() {
+                a.close();
+            }, 10);
+        });
+
+        function convertDate(isoDate) {
+            var date = new Date(isoDate);
+            var day = String(date.getDate()).padStart(2, '0');
+            var month = String(date.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+            var year = date.getFullYear();
+
+            if ('{{ $general_setting->date_format }}' == 'd-m-Y') {
+                return day + '-' + month + '-' + year;
+            } else if ('{{ $general_setting->date_format }}' == 'd/m/Y') {
+                return day + '/' + month + '/' + year;
+            } else if ('{{ $general_setting->date_format }}' == 'd.m.Y') {
+                return day + '.' + month + '.' + year;
+            } else if ('{{ $general_setting->date_format }}' == 'm-d-Y') {
+                return month + '-' + day + '-' + year;
+            } else if ('{{ $general_setting->date_format }}' == 'm/d/Y') {
+                return month + '/' + day + '/' + year;
+            } else if ('{{ $general_setting->date_format }}' == 'm.d.Y') {
+                return month + '.' + day + '.' + year;
+            } else if ('{{ $general_setting->date_format }}' == 'Y-m-d') {
+                return year + '-' + month + '-' + day;
+            } else if ('{{ $general_setting->date_format }}' == 'Y/m/d') {
+                return year + '/' + month + '/' + day;
+            } else if ('{{ $general_setting->date_format }}' == 'Y.m.d') {
+                return year + '.' + month + '.' + day;
+            }
+
+        }
+
+        if (keyboard_active == 1) {
+
+            $("input.numkey:text").keyboard({
+                usePreview: false,
+                layout: 'custom',
+                display: {
+                    'accept': '&#10004;',
+                    'cancel': '&#10006;'
+                },
+                customLayout: {
+                    'normal': ['1 2 3', '4 5 6', '7 8 9', '0 {dec} {bksp}', '{clear} {cancel} {accept}']
+                },
+                restrictInput: true, // Prevent keys not in the displayed keyboard from being typed in
+                preventPaste: true, // prevent ctrl-v and right click
+                autoAccept: true,
+                css: {
+                    // input & preview
+                    // keyboard container
+                    container: 'center-block dropdown-menu', // jumbotron
+                    // default state
+                    buttonDefault: 'btn btn-default',
+                    // hovered button
+                    buttonHover: 'btn-primary',
+                    // Action keys (e.g. Accept, Cancel, Tab, etc);
+                    // this replaces "actionClass" option
+                    buttonAction: 'active'
+                },
+            });
+
+            $('input[type="text"]').keyboard({
+                usePreview: false,
+                autoAccept: true,
+                autoAcceptOnEsc: true,
+                css: {
+                    // input & preview
+                    // keyboard container
+                    container: 'center-block dropdown-menu', // jumbotron
+                    // default state
+                    buttonDefault: 'btn btn-default',
+                    // hovered button
+                    buttonHover: 'btn-primary',
+                    // Action keys (e.g. Accept, Cancel, Tab, etc);
+                    // this replaces "actionClass" option
+                    buttonAction: 'active',
+                    // used when disabling the decimal button {dec}
+                    // when a decimal exists in the input area
+                    buttonDisabled: 'disabled'
+                },
+                change: function(e, keyboard) {
+                    keyboard.$el.val(keyboard.$preview.val())
+                    keyboard.$el.trigger('propertychange')
+                }
+            });
+
+            $('textarea').keyboard({
+                usePreview: false,
+                autoAccept: true,
+                autoAcceptOnEsc: true,
+                css: {
+                    // input & preview
+                    // keyboard container
+                    container: 'center-block dropdown-menu', // jumbotron
+                    // default state
+                    buttonDefault: 'btn btn-default',
+                    // hovered button
+                    buttonHover: 'btn-primary',
+                    // Action keys (e.g. Accept, Cancel, Tab, etc);
+                    // this replaces "actionClass" option
+                    buttonAction: 'active',
+                    // used when disabling the decimal button {dec}
+                    // when a decimal exists in the input area
+                    buttonDisabled: 'disabled'
+                },
+                change: function(e, keyboard) {
+                    keyboard.$el.val(keyboard.$preview.val())
+                    keyboard.$el.trigger('propertychange')
+                }
+            });
+
+            $('#lims_productcodeSearch').keyboard().autocomplete().addAutocomplete({
+                // add autocomplete window positioning
+                // options here (using position utility)
+                position: {
+                    of: '#lims_productcodeSearch',
+                    my: 'top+18px',
+                    at: 'center',
+                    collision: 'flip'
+                }
+            });
+        }
+        // Add More Button of Multiple Payment Modal
+        $('.add-more').on("click", function(e) {
+            e.preventDefault();
+
+            var htmlText = `<div class="row new-row">
+                            <div class="col-md-3 col-6 mt-2 paying-amount-container">
+                                <label>{{ __('db.Paying Amount') }} *</label>
+                                <input type="text" name="paid_amount[]" value="0" class="form-control paid_amount numkey" step="any">
+                            </div>
+                            <div class="col-md-3 col-6 mt-2">
+                                <input type="hidden" name="paid_by_id[]">
+                                <label>{{ __('db.Paid By') }}</label>
+                                <select name="paid_by_id_select[]" class="form-control selectpicker">
+                                    @if (in_array('cash', $options))
+                                    <option value="1">Cash</option>
+                                    @endif
+                                    @if (in_array('gift_card', $options))
+                                    <option value="2">Gift Card</option>
+                                    @endif
+                                    @if (in_array('card', $options))
+                                    <option value="3">Credit Card</option>
+                                    @endif
+                                    @if (in_array('cheque', $options))
+                                    <option value="4">Cheque</option>
+                                    @endif
+                                    @if (in_array('paypal', $options) &&
+                                            strlen(env('PAYPAL_LIVE_API_USERNAME')) > 0 &&
+                                            strlen(env('PAYPAL_LIVE_API_PASSWORD')) > 0 &&
+                                            strlen(env('PAYPAL_LIVE_API_SECRET')) > 0)
+                                    <option value="5">Paypal</option>
+                                    @endif
+                                    @if (in_array('deposit', $options))
+                                    <option value="6">Deposit</option>
+                                    @endif
+                                    @if ($lims_reward_point_setting_data && $lims_reward_point_setting_data->is_active)
+                                    <option value="7">Points</option>
+                                    @endif
+                                    @foreach ($options as $option)
+                                        @if (
+                                            $option !== 'cash' &&
+                                                $option !== 'card' &&
+                                                $option !== 'card' &&
+                                                $option !== 'cheque' &&
+                                                $option !== 'gift_card' &&
+                                                $option !== 'deposit' &&
+                                                $option !== 'paypal' &&
+                                                $option !== 'pesapal')
+                                            <option value="{{ $option }}">{{ ucfirst($option) }}</option>
+                                        @endif
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-3 col-5 mt-2 cash-received-container">
+                                <label>{{ __('db.Cash Received') }} <x-info title="Cash handed over to you. example: sale amount is 300. customer gives you 500. cash received: 500 " type="info" /> *</label>
+                                <input type="text" name="paying_amount[]" class="form-control paying_amount numkey" required step="any">
+                            </div>
+                            <div class="col-1 mt-2">
+                                <button class="btn btn-danger remove-row mt-4">X</button>
+                            </div></div>`;
+            $('.add-more-row').before(htmlText);
+            var total_paid_amount = 0;
+            $('.paid_amount').each(function() {
+                var value = parseFloat($(this).val()) || 0;
+                total_paid_amount += value;
+
+            });
+            var more_to_pay = ($("#grand-total").text() - total_paid_amount).toFixed(
+                {{ $general_setting->decimal }});
+            $('.paid_amount:last').val(more_to_pay);
+            $('.paying_amount:last').val(more_to_pay);
+            $('.selectpicker').selectpicker('refresh');
+            if ($('.qc').length) {
+                $('.qc').data('initial', 1); // Update the data attribute
+            }
+            calculatePayingAmount();
+        });
+
+        $(document).on("click", ".remove-row", function() {
+            $(this).parent().parent().remove();
+            calculatePayingAmount();
+            updateChange();
+        });
+
+        $('.customer-submit-btn').on("click", function() {
+            var iti = window.intlTelInputGlobals.getInstance(input);
+            var full_number = iti.getNumber();
+            $('#full_phone').val(full_number);
+
+            $.ajax({
+                type: 'POST',
+                url: "{{ route('customer.store') }}",
+                data: $("#customer-form").serialize(),
+                success: function(response) {
+                    key = response['id'];
+                    value = response['name'] + ' [' + response['phone_number'] + ']';
+                    $('select[name="customer_id"]').append('<option value="' + key + '">' + value +
+                        '</option>');
+                    $('select[name="customer_id"]').val(key);
+                    $('.selectpicker').selectpicker('refresh');
+                    $("#addCustomer").modal('hide');
+                    // Enable view and edit buttons
+                    $('#viewCustomerBtn, #editCustomerBtn').prop('disabled', false);
+                    
+                    // Add new customer data to global customerData array from form
+                    if (typeof window.customerData === 'undefined') {
+                        window.customerData = {};
+                    }
+                    window.customerData[key] = {
+                        'name': response['name'] || '',
+                        'email': $('#customer-form input[name="email"]').val() || '',
+                        'phone_number': response['phone_number'] || '',
+                        'wa_number': response['wa_number'] || '',
+                        'address': $('#customer-form input[name="address"]').val() || '',
+                        'area': $('#customer-form input[name="area"]').val() || '',
+                        'city': $('#customer-form input[name="city"]').val() || '',
+                        'credit_limit': $('#customer-form input[name="credit_limit"]').val() || '0',
+                        'customer_group_id': $('#customer-form select[name="customer_group_id"]').val() || '',
+                        'customer_group': $('#customer-form select[name="customer_group_id"] option:selected').text() || '',
+                        'type': $('#customer-form select[name="type"]').val() || '',
+                        'tax_no': $('#customer-form input[name="tax_no"]').val() || '',
+                        'mobile_number_2': $('#customer-form input[name="mobile_number_2"]').val() || '',
+                        'house_number': $('#customer-form input[name="house_number"]').val() || '',
+                        'street': $('#customer-form input[name="street"]').val() || '',
+                        'ave': $('#customer-form input[name="ave"]').val() || '',
+                        'block': $('#customer-form input[name="block"]').val() || '',
+                    };
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+
+                        // Clear old alerts
+                        $('.alert-container').html('');
+
+                        // Loop through all errors and create a separate alert for each message
+                        $.each(errors, function(field, messages) {
+                            $.each(messages, function(index, message) {
+                                $('.alert-container').append(`
+                                <div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
+                                    ${message}
+                                </div>
+                            `);
+                            });
+                        });
+                    }
+                }
+            });
+        });
+
+        // View Customer Button Handler
+        $('#viewCustomerBtn').on('click', function() {
+            var customer_id = $('#customer_id').val();
+            if (!customer_id) {
+                alert('Please select a customer first');
+                return;
+            }
+
+            $('#viewCustomerBody').html('<div class="text-center"><div class="spinner-border" role="status"><span class="sr-only">Loading...</span></div></div>');
+            $('#viewCustomer').modal('show');
+
+            // Fetch customer data from the selected option and customer list
+            var selectedOption = $('#customer_id option:selected');
+            var customer_name = selectedOption.text().split('(')[0].trim();
+            
+            // Get customer data from PHP array (passed to view)
+            @php
+                $customer_data_array = [];
+                foreach($lims_customer_list as $cust) {
+                    $customer_data_array[$cust->id] = [
+                        'name' => $cust->name,
+                        'email' => $cust->email ?? '',
+                        'phone_number' => $cust->phone_number ?? '',
+                        'wa_number' => $cust->wa_number ?? '',
+                        'address' => $cust->address ?? '',
+                        'area' => $cust->area ?? '',
+                        'city' => $cust->city ?? '',
+                        'credit_limit' => $cust->credit_limit ?? '0',
+                        'customer_group' => $cust->customerGroup->name ?? '',
+                        'customer_group_id' => $cust->customer_group_id ?? '',
+                        'type' => $cust->type ?? '',
+                        'tax_no' => $cust->tax_no ?? '',
+                        'mobile_number_2' => $cust->mobile_number_2 ?? '',
+                        'house_number' => $cust->house_number ?? '',
+                        'street' => $cust->street ?? '',
+                        'ave' => $cust->ave ?? '',
+                        'block' => $cust->block ?? '',
+                    ];
+                }
+            @endphp
+
+            // Use global customerData array or initialize if not exists
+            if (typeof window.customerData === 'undefined') {
+                window.customerData = @json($customer_data_array);
+            }
+            var data = window.customerData[customer_id] || {};
+            
+            // If data not found, try to get from selected option
+            if (!data || Object.keys(data).length === 0) {
+                var selectedOption = $('#customer_id option:selected');
+                var optionText = selectedOption.text();
+                data = {
+                    'name': optionText.split('(')[0].trim(),
+                    'phone_number': optionText.match(/\[(.*?)\]/) ? optionText.match(/\[(.*?)\]/)[1] : '',
+                };
+            }
+
+            var html = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.name') }}:</strong></h6>
+                        <p>${data.name || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.Email') }}:</strong></h6>
+                        <p>${data.email || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.Phone Number') }}:</strong></h6>
+                        <p>${data.phone_number || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.Mobile Number 2') }}:</strong></h6>
+                        <p>${data.mobile_number_2 || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.WhatsApp Number') }}:</strong></h6>
+                        <p>${data.wa_number || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.Address') }}:</strong></h6>
+                        <p>${data.address || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.Area') }}:</strong></h6>
+                        <p>${data.area || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.City') }}:</strong></h6>
+                        <p>${data.city || '-'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.Credit Limit') }}:</strong></h6>
+                        <p>${data.credit_limit || '0'}</p>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><strong>{{ __('db.Customer Group') }}:</strong></h6>
+                        <p>${data.customer_group || '-'}</p>
+                    </div>
+                </div>
+            `;
+            $('#viewCustomerBody').html(html);
+            $('#editFromViewBtn').data('customer-id', customer_id);
+        });
+
+        // Edit Customer Button Handler
+        $('#editCustomerBtn').on('click', function() {
+            var customer_id = $('#customer_id').val();
+            if (!customer_id) {
+                alert('Please select a customer first');
+                return;
+            }
+
+            // Use global customerData array
+            if (typeof window.customerData === 'undefined') {
+                @php
+                    $customer_data_array = [];
+                    foreach($lims_customer_list as $cust) {
+                        $customer_data_array[$cust->id] = [
+                            'name' => $cust->name,
+                            'email' => $cust->email ?? '',
+                            'phone_number' => $cust->phone_number ?? '',
+                            'wa_number' => $cust->wa_number ?? '',
+                            'address' => $cust->address ?? '',
+                            'area' => $cust->area ?? '',
+                            'city' => $cust->city ?? '',
+                            'credit_limit' => $cust->credit_limit ?? '0',
+                            'customer_group_id' => $cust->customer_group_id ?? '',
+                            'type' => $cust->type ?? '',
+                            'tax_no' => $cust->tax_no ?? '',
+                            'mobile_number_2' => $cust->mobile_number_2 ?? '',
+                            'house_number' => $cust->house_number ?? '',
+                            'street' => $cust->street ?? '',
+                            'ave' => $cust->ave ?? '',
+                            'block' => $cust->block ?? '',
+                        ];
+                    }
+                @endphp
+                window.customerData = @json($customer_data_array);
+            }
+            var data = window.customerData[customer_id] || {};
+
+            $('#edit_customer_id').val(customer_id);
+            $('#edit_customer_name').val(data.name || '');
+            $('#edit_email').val(data.email || '');
+            $('#edit_phone_number').val(data.phone_number || '');
+            $('#edit_mobile_number_2').val(data.mobile_number_2 || '');
+            $('#edit_address').val(data.address || '');
+            $('#edit_area').val(data.area || '');
+            $('#edit_house_number').val(data.house_number || '');
+            $('#edit_street').val(data.street || '');
+            $('#edit_ave').val(data.ave || '');
+            $('#edit_block').val(data.block || '');
+            $('#edit_city').val(data.city || '');
+            $('#edit_credit_limit').val(data.credit_limit || '0');
+            $('#edit_tax_no').val(data.tax_no || '');
+            $('#edit_customer_group_id').val(data.customer_group_id || '');
+            $('#edit_type').val(data.type || '');
+
+            // Handle WhatsApp number
+            if (data.wa_number) {
+                $('#edit_wa_number').val(data.wa_number);
+                $('#edit_full_phone').val(data.wa_number);
+            }
+
+            // Clear any previous alerts
+            $('.alert-container-edit').html('');
+
+            $('.selectpicker').selectpicker('refresh');
+            $('#editCustomer').modal('show');
+        });
+
+        // Edit from View Button Handler
+        $('#editFromViewBtn').on('click', function() {
+            var customer_id = $(this).data('customer-id') || $('#customer_id').val();
+            $('#viewCustomer').modal('hide');
+            $('#editCustomerBtn').click();
+        });
+
+        // Customer Update Handler
+        $('.customer-update-btn').on('click', function() {
+            var customer_id = $('#edit_customer_id').val();
+            var iti_edit = window.intlTelInputGlobals.getInstance(document.getElementById('edit_wa_number'));
+            var full_number_edit = iti_edit ? iti_edit.getNumber() : $('#edit_wa_number').val();
+            $('#edit_full_phone').val(full_number_edit);
+
+            // Update form action URL
+            var form = $('#customer-edit-form');
+            form.attr('action', "{{ url('customer') }}/" + customer_id);
+
+            $.ajax({
+                type: 'PUT',
+                url: "{{ url('customer') }}/" + customer_id,
+                data: $("#customer-edit-form").serialize(),
+                success: function(response) {
+                    // Update the select option with new data
+                    var customer_name = $('#edit_customer_name').val();
+                    var phone_number = $('#edit_phone_number').val();
+                    var option_text = customer_name;
+                    if (phone_number) {
+                        option_text += ' (' + phone_number + ')';
+                    }
+
+                    // Update the selected option
+                    $('#customer_id option:selected').text(option_text);
+                    $('.selectpicker').selectpicker('refresh');
+
+                    // Keep the same customer selected
+                    $('#customer_id').val(customer_id);
+                    $('.selectpicker').selectpicker('refresh');
+
+                    // Update customerData array with new data
+                    if (typeof window.customerData === 'undefined') {
+                        window.customerData = {};
+                    }
+                    window.customerData[customer_id] = {
+                        'name': customer_name,
+                        'email': $('#edit_email').val() || '',
+                        'phone_number': phone_number,
+                        'wa_number': $('#edit_full_phone').val() || '',
+                        'address': $('#edit_address').val() || '',
+                        'area': $('#edit_area').val() || '',
+                        'city': $('#edit_city').val() || '',
+                        'credit_limit': $('#edit_credit_limit').val() || '0',
+                        'customer_group_id': $('#edit_customer_group_id').val() || '',
+                        'customer_group': $('#edit_customer_group_id option:selected').text() || '',
+                        'type': $('#edit_type').val() || '',
+                        'tax_no': $('#edit_tax_no').val() || '',
+                        'mobile_number_2': $('#edit_mobile_number_2').val() || '',
+                        'house_number': $('#edit_house_number').val() || '',
+                        'street': $('#edit_street').val() || '',
+                        'ave': $('#edit_ave').val() || '',
+                        'block': $('#edit_block').val() || '',
+                    };
+
+                    $("#editCustomer").modal('hide');
+                    alert('Customer updated successfully');
+                },
+                error: function(xhr) {
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+
+                        // Clear old alerts
+                        $('.alert-container-edit').html('');
+
+                        // Loop through all errors and create a separate alert for each message
+                        $.each(errors, function(field, messages) {
+                            $.each(messages, function(index, message) {
+                                $('.alert-container-edit').append(`
+                                <div class="alert alert-danger alert-dismissible fade show text-center" role="alert">
+                                    ${message}
+                                </div>
+                            `);
+                            });
+                        });
+                    } else {
+                        alert('Error updating customer');
+                    }
+                }
+            });
+        });
+
+        $("li#notification-icon").on("click", function(argument) {
+            $.get('{{ url('notifications/mark-as-read') }}', function(data) {
+                $("span.notification-number").text(alert_product);
+            });
+        });
+        @if ($lims_pos_setting_data && $lims_pos_setting_data->cash_register)
+            $("#register-details-btn").data('id');
+
+            $("#register-details-btn").on("click", function(e) {
+                e.preventDefault();
+                $('#closing_row').hide();
+                $('#submit_register').hide();
+                $('#close_register').show();
+                var cash_register_id = $(this).data('id');
+                $.ajax({
+                    url: '{{ url('cash-register/getDetails') }}/' + cash_register_id,
+                    type: "GET",
+                    success: function(data) {
+                        $('#register-details-modal #cash_in_hand').text(data['cash_in_hand']);
+                        $('#register-details-modal #total_sale_amount').text(data['total_sale_amount']);
+                        $('#register-details-modal #total_payment').text(data['total_payment']);
+                        $('#register-details-modal #cash_payment').text(data['cash_payment']);
+                        $('#register-details-modal #credit_card_payment').text(data[
+                            'credit_card_payment']);
+                        $('#register-details-modal #cheque_payment').text(data['cheque_payment']);
+                        $('#register-details-modal #gift_card_payment').text(data['gift_card_payment']);
+                        $('#register-details-modal #deposit_payment').text(data['deposit_payment']);
+                        $('#register-details-modal #paypal_payment').text(data['paypal_payment']);
+                        $('#register-details-modal #total_sale_return').text(data['total_sale_return']);
+                        $('#register-details-modal #total_expense').text(data['total_expense']);
+                        $('#register-details-modal #total_cash').text(data['total_cash']);
+                        $('#register-details-modal input[name=actual_cash]').val(data['total_cash']);
+                        $('#register-details-modal input[name=closing_balance]').val(data[
+                            'total_cash']);
+                        $('#register-details-modal #total_supplier_payment').text(data[
+                            'total_supplier_payment']);
+                        $('#register-details-modal input[name=cash_register_id]').val(cash_register_id);
+
+                        $('#register-details-modal').modal('show');
+                    }
+                });
+            });
+
+            $("#close_register").on("click", function(e) {
+                $('#closing_row').show();
+                $('#submit_register').show();
+                $(this).hide();
+            });
+        @endif
+
+        $("#today-sale-btn").on("click", function(e) {
+            e.preventDefault();
+            $.ajax({
+                url: '{{ url('sales/today-sale') }}',
+                type: "GET",
+                success: function(data) {
+                    $('#today-sale-modal .total_sale_amount').text(data['total_sale_amount']);
+                    $('#today-sale-modal .total_payment').text(data['total_payment']);
+                    $('#today-sale-modal .cash_payment').text(data['cash_payment']);
+                    $('#today-sale-modal .credit_card_payment').text(data['credit_card_payment']);
+                    $('#today-sale-modal .cheque_payment').text(data['cheque_payment']);
+                    $('#today-sale-modal .gift_card_payment').text(data['gift_card_payment']);
+                    $('#today-sale-modal .deposit_payment').text(data['deposit_payment']);
+                    $('#today-sale-modal .paypal_payment').text(data['paypal_payment']);
+                    $('#today-sale-modal .total_sale_return').text(data['total_sale_return']);
+                    $('#today-sale-modal .total_expense').text(data['total_expense']);
+                    $('#today-sale-modal .total_cash').text(data['total_cash']);
+                }
+            });
+            $('#today-sale-modal').modal('show');
+        });
+
+        $("#today-profit-btn").on("click", function(e) {
+            e.preventDefault();
+            calculateTodayProfit(0);
+        });
+
+        $("#today-profit-modal select[name=warehouseId]").on("change", function() {
+            calculateTodayProfit($(this).val());
+        });
+
+        function calculateTodayProfit(warehouse_id) {
+            $.ajax({
+                url: '{{ url('sales/today-profit') }}/' + warehouse_id,
+                type: "GET",
+                success: function(data) {
+                    $('#today-profit-modal .product_revenue').text(data['product_revenue']);
+                    $('#today-profit-modal .product_cost').text(data['product_cost']);
+                    $('#today-profit-modal .expense_amount').text(data['expense_amount']);
+                    $('#today-profit-modal .profit').text(data['profit']);
+                }
+            });
+            $('#today-profit-modal').modal('show');
+        }
+
+        if (keyboard_active == 1) {
+            $('#lims_productcodeSearch').bind('keyboardChange', function(e, keyboard, el) {
+                var customer_id = $('#customer_id').val();
+                var warehouse_id = $('#warehouse_id').val();
+                var biller_id = $('#biller_id').val();
+
+                @if (in_array('restaurant', explode(',', $general_setting->modules)))
+                    var table_id = $('#table_id').val();
+                    var waiter_id = $('#waiter_id').val();
+                    var service_id = $('#service_id').val();
+                @endif
+
+                temp_data = $('#lims_productcodeSearch').val();
+                if (!customer_id) {
+                    $('#lims_productcodeSearch').val(temp_data.substring(0, temp_data.length - 1));
+                    alert('Please select Customer!');
+                } else if (!warehouse_id) {
+                    $('#lims_productcodeSearch').val(temp_data.substring(0, temp_data.length - 1));
+                    alert('Please select Warehouse!');
+                } else if (!biller_id) {
+                    $('#lims_productcodeSearch').val(temp_data.substring(0, temp_data.length - 1));
+                    alert('Please select Biller!');
+                }
+                @if (in_array('restaurant', explode(',', $general_setting->modules)))
+                    else if (!table_id && service_id == 1) {
+                        $('#lims_productcodeSearch').val(temp_data.substring(0, temp_data.length - 1));
+                        alert('Please select Table!');
+                    } else if (!waiter_id && service_id == 1) {
+                        $('#lims_productcodeSearch').val(temp_data.substring(0, temp_data.length - 1));
+                        alert('Please select Waiter!');
+                    }
+                @endif
+            });
+        } else {
+            $('#lims_productcodeSearch').on('input', function() {
+                var customer_id = $('#customer_id').val();
+                var warehouse_id = $('#warehouse_id').val();
+                var biller_id = $('#biller_id').val();
+
+                @if (in_array('restaurant', explode(',', $general_setting->modules)))
+                    var table_id = $('#table_id').val();
+                    var waiter_id = $('#waiter_id').val();
+                    var service_id = $('#service_id').val();
+                @endif
+
+                temp_data = $('#lims_productcodeSearch').val();
+                if (!customer_id) {
+                    $('#lims_productcodeSearch').val(temp_data.substring(0, temp_data.length - 1));
+                    alert('Please select Customer!');
+                } else if (!warehouse_id) {
+                    $('#lims_productcodeSearch').val(temp_data.substring(0, temp_data.length - 1));
+                    alert('Please select Warehouse!');
+                } else if (!biller_id) {
+                    $('#lims_productcodeSearch').val(temp_data.substring(0, temp_data.length - 1));
+                    alert('Please select Warehouse!');
+                }
+                @if (in_array('restaurant', explode(',', $general_setting->modules)))
+                    else if (!table_id && service_id == 1) {
+                        $('#lims_productcodeSearch').val(temp_data.substring(0, temp_data.length - 1));
+                        alert('Please select Table!');
+                    } else if (!waiter_id && service_id == 1) {
+                        $('#lims_productcodeSearch').val(temp_data.substring(0, temp_data.length - 1));
+                        alert('Please select Waiter!');
+                    }
+                @endif
+            });
+        }
+
+        $(document).on('click', '.view-sale', function(e) {
+            e.preventDefault();
+            sale_id = $(this).val();
+
+            $.ajax({
+                url: '{{ url('sales/get-sale') }}/' + sale_id,
+                type: 'GET',
+                success: function(sale) {
+                    saleDetails(sale);
+                },
+                error: function(xhr, status, error) {
+                    alert('Error: ' + error);
+                }
+            });
+            $('#recentTransaction').modal('hide')
+        });
+
+        $(document).on('click', '#close-btn', function() {
+            $('#recentTransaction').modal('show')
+        });
+
+        function saleDetails(sale) {
+
+            var htmltext = '<strong>{{ __('db.date') }}: </strong>' + sale[0] +
+                '<br><strong>{{ __('db.reference') }}: </strong>' + sale[1] +
+                '<br><strong>{{ __('db.Warehouse') }}: </strong>' + sale[27] +
+                '<br><strong>{{ __('db.Sale Status') }}: </strong>' + sale[2] +
+                '<br><strong>{{ __('db.Currency') }}: </strong>' + sale[31];
+
+            if (sale[32])
+                htmltext += '<br><strong>{{ __('db.Exchange Rate') }}: </strong>' + sale[32] + '<br>';
+            else
+                htmltext += '<br><strong>{{ __('db.Exchange Rate') }}: </strong>N/A<br>';
+            if (sale[33])
+                htmltext += '<strong>{{ __('db.Table') }}: </strong>' + sale[33] + '<br>';
+            if (sale[30])
+                htmltext += '<strong>{{ __('db.Attach Document') }}: </strong><a href="documents/sale/' + sale[30] +
+                '">Download</a><br>';
+
+            htmltext += '<br><div class="row"><div class="col-md-6"><strong>{{ __('db.From') }}:</strong><br>' + sale[3] +
+                '<br>' + sale[4] + '<br>' + sale[5] + '<br>' + sale[6] + '<br>' + sale[7] + '<br>' + sale[8] +
+                '</div><div class="col-md-6"><div class="float-right"><strong>{{ __('db.To') }}:</strong><br>' + sale[
+                    9] + '<br>' + sale[10] + '<br>' + sale[11] + '<br>' + sale[12] + '</div></div></div>';
+
+            $.get('{{ url('sales/product_sale') }}/' + sale[13], function(data) {
+                $(".product-sale-list tbody").remove();
+                var name_code = data[0];
+                var qty = data[1];
+                var unit_code = data[2];
+                var tax = data[3];
+                var tax_rate = data[4];
+                var discount = data[5];
+                var subtotal = data[6];
+                var batch_no = data[7];
+                var return_qty = data[8];
+                var is_delivered = data[9];
+                // Check if data[10] exists
+                var toppings = data[10] ? data[10] : [];
+                var total_qty = 0;
+                var newBody = $("<tbody>");
+
+                $.each(name_code, function(index) {
+                    var newRow = $("<tr>");
+                    var cols = '';
+                    cols += '<td><strong>' + (index + 1) + '</strong></td>';
+                    cols += '<td>' + name_code[index];
+
+                    // Append topping names if toppings[index] exists
+                    if (toppings[index]) {
+                        try {
+                            // Parse and extract topping names
+                            var toppingData = JSON.parse(toppings[index]);
+                            var toppingNames = toppingData.map(topping => topping.name).join(', ');
+                            cols += ' (' + toppingNames + ')';
+                        } catch (error) {
+                            console.error('Error parsing toppings for index', index, toppings[index],
+                                error);
+                        }
+                    }
+
+                    cols += '</td>';
+                    cols += '<td>' + batch_no[index] + '</td>';
+                    cols += '<td>' + qty[index] + ' ' + unit_code[index] + '</td>';
+                    cols += '<td>' + return_qty[index] + '</td>';
+                    // Calculate unit price
+                    var unitPrice = parseFloat(subtotal[index] / qty[index]).toFixed(
+                        {{ $general_setting->decimal }});
+
+                    // Calculate topping prices if toppings[index] exists
+                    var toppingPrices = '';
+                    if (toppings[index]) {
+                        try {
+                            var toppingData = JSON.parse(toppings[index]); // Parse topping data
+                            toppingPrices = toppingData
+                                .map(topping => parseFloat(topping.price).toFixed(
+                                    {{ $general_setting->decimal }}
+                                )) // Extract and format each topping price
+                                .join(' + '); // Join prices with '+'
+                        } catch (error) {
+                            console.error('Error calculating topping prices for index', index, toppings[
+                                index], error);
+                        }
+                    }
+
+                    cols += '<td>' + unitPrice + ' (' + toppingPrices + ')</td>';
+                    cols += '<td>' + tax[index] + '(' + tax_rate[index] + '%)' + '</td>';
+                    cols += '<td>' + discount[index] + '</td>';
+                    // Update subtotal to include topping prices
+                    var toppingPricesRowTotal = 0;
+                    if (toppings[index]) {
+                        try {
+                            var toppingData = JSON.parse(toppings[index]);
+                            toppingPricesRowTotal = toppingData.reduce((sum, topping) => sum + parseFloat(
+                                topping.price), 0);
+                        } catch (error) {
+                            console.error('Error calculating topping prices for index', index, toppings[
+                                index], error);
+                        }
+                    }
+                    subtotal[index] = parseFloat(subtotal[index]) + toppingPricesRowTotal;
+                    cols += '<td>' + subtotal[index].toFixed({{ $general_setting->decimal }}) + '</td>';
+                    cols += '<td>' + is_delivered[index] + '</td>';
+                    total_qty += parseFloat(qty[index]);
+                    newRow.append(cols);
+                    newBody.append(newRow);
+                });
+
+                var newRow = $("<tr>");
+                cols = '';
+                cols += '<td colspan=3><strong>{{ __('db.Total') }}:</strong></td>';
+                cols += '<td>' + total_qty + '</td>';
+                cols += '<td colspan=2></td>';
+                cols += '<td>' + sale[14] + '</td>';
+                cols += '<td>' + sale[15] + '</td>';
+                cols += '<td>' + sale[16] + '</td>';
+                cols += '<td></td>';
+                newRow.append(cols);
+                newBody.append(newRow);
+
+                var newRow = $("<tr>");
+                cols = '';
+                cols += '<td colspan=9><strong>{{ __('db.Order Tax') }}:</strong></td>';
+                cols += '<td>' + sale[17] + '(' + sale[18] + '%)' + '</td>';
+                newRow.append(cols);
+                newBody.append(newRow);
+
+                var newRow = $("<tr>");
+                cols = '';
+                cols += '<td colspan=9><strong>{{ __('db.Order Discount') }}:</strong></td>';
+                cols += '<td>' + sale[19] + '</td>';
+                newRow.append(cols);
+                newBody.append(newRow);
+                if (sale[28]) {
+                    var newRow = $("<tr>");
+                    cols = '';
+                    cols += '<td colspan=9><strong>{{ __('db.Coupon Discount') }} [' + sale[28] +
+                        ']:</strong></td>';
+                    cols += '<td>' + sale[29] + '</td>';
+                    newRow.append(cols);
+                    newBody.append(newRow);
+                }
+
+                var newRow = $("<tr>");
+                cols = '';
+                cols += '<td colspan=9><strong>{{ __('db.Shipping Cost') }}:</strong></td>';
+                cols += '<td>' + sale[20] + '</td>';
+                newRow.append(cols);
+                newBody.append(newRow);
+
+                var newRow = $("<tr>");
+                cols = '';
+                cols += '<td colspan=9><strong>{{ __('db.grand total') }}:</strong></td>';
+                cols += '<td>' + sale[21] + '</td>';
+                newRow.append(cols);
+                newBody.append(newRow);
+
+                var newRow = $("<tr>");
+                cols = '';
+                cols += '<td colspan=9><strong>{{ __('db.Paid Amount') }}:</strong></td>';
+                cols += '<td>' + sale[22] + '</td>';
+                newRow.append(cols);
+                newBody.append(newRow);
+
+                var newRow = $("<tr>");
+                cols = '';
+                cols += '<td colspan=9><strong>{{ __('db.Due') }}:</strong></td>';
+                cols += '<td>' + parseFloat(sale[21] - sale[22]).toFixed({{ $general_setting->decimal }}) +
+                    '</td>';
+                newRow.append(cols);
+                newBody.append(newRow);
+
+                $("table.product-sale-list").append(newBody);
+            });
+            var htmlfooter = '<p><strong>{{ __('db.Sale Note') }}:</strong> ' + sale[23] +
+                '</p><p><strong>{{ __('db.Staff Note') }}:</strong> ' + sale[24] +
+                '</p><strong>{{ __('db.Created By') }}:</strong><br>' + sale[25] + '<br>' + sale[26];
+            $('#sale-content').html(htmltext);
+            $('#sale-footer').html(htmlfooter);
+            $('#get-sale-details').modal('show');
+        }
+
+
+        function populateRecentSale(data) {
+            var tableData = '';
+            $.each(data, function(index, sale) {
+                tableData += '<tr>';
+                tableData += '<td>' + convertDate(sale.created_at) + '</td>';
+                tableData += '<td>' + sale.reference_no + '</td>';
+                tableData += '<td>' + sale.name + '</td>';
+                tableData += '<td>' + sale.grand_total + '</td>';
+
+                tableData += '<td>'
+
+                // if (all_permission.includes("sales-edit")) {
+                tableData +=
+                    '<button  type="button" class="btn btn-success btn-sm view-sale" title="View" data-toggle="modal" data-target="#get-sale-details" value="' +
+                    sale.id +
+                    '"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg></button>&nbsp';
+                // }
+                if (all_permission.includes("sales-edit")) {
+                    tableData += '<a href="{{ url('pos') }}/' + sale.id +
+                        '" class="btn btn-warning btn-sm" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg></a>&nbsp';
+                }
+                if (all_permission.includes("sales-delete")) {
+                    tableData += '<form class="d-inline" action="{{ url('/sales') }}/' + sale.id +
+                        '" method ="POST"><input name="_method" type="hidden" value="DELETE">@csrf';
+                    tableData +=
+                        '<button type="submit" class="btn btn-danger btn-sm" onclick="return confirmDelete()" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg></button>';
+                    tableData += '</form>';
+                }
+                tableData += '</td>'
+
+                tableData += '</tr>';
+            });
+
+            $("#sale-latest tbody").html(tableData);
+        }
+
+        function populateRecentDraft(data) {
+            var tableData = '';
+
+            $.each(data, function(index, draft) {
+                tableData += '<tr>';
+                tableData += '<td>' + convertDate(draft.created_at) + '</td>';
+                tableData += '<td>' + draft.reference_no + '</td>';
+                tableData += '<td>' + draft.name + '</td>';
+                tableData += '<td>' + draft.grand_total + '</td>';
+
+                tableData += '<td>'
+
+                if (all_permission.includes("sales-edit")) {
+                    tableData += '<a href="{{ url('/pos') }}/' + draft.id +
+                        '" class="btn btn-warning btn-sm" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg></a>&nbsp';
+                }
+
+                if (all_permission.includes("sales-delete")) {
+                    tableData += '<form class="d-inline" action="{{ url('/sales') }}/' + draft.id +
+                        '" method ="POST"><input name="_method" type="hidden" value="DELETE">@csrf';
+                    tableData +=
+                        '<button type="submit" class="btn btn-danger btn-sm" onclick="return confirmDelete()" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0" /></svg></button>';
+                    tableData += '</form>';
+                }
+                tableData += '</td>'
+
+                tableData += '</tr>';
+            });
+
+            $("#draft-latest tbody").html(tableData);
+        }
+
+        $("#myTable").on('click', '.plus', function() {
+            rowindex = $(this).closest('tr').index();
+            var qty = parseFloat($('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .qty').val());
+            var max_qty = parseFloat($('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .qty').attr(
+                'max'));
+            if (!qty)
+                qty = 1;
+            else if (max_qty && qty >= max_qty) {
+                alert("Quantity cannot exceed available stock (" + max_qty + ").");
+                return;
+            } else
+                qty = parseFloat(qty) + 1;
+            if (is_variant[rowindex]) {
+                checkQuantity(String(qty), true);
+            } else {
+                checkDiscount(qty, true);
+            }
+        });
+
+        $("#myTable").on('click', '.minus', function() {
+            rowindex = $(this).closest('tr').index();
+            var qty = parseFloat($('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .qty').val()) - 1;
+            if (qty > 0) {
+                $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .qty').val(qty);
+
+                if (is_variant[rowindex])
+                    checkQuantity(String(qty), true);
+                else
+                    checkDiscount(qty, '3');
+            } else {
+                qty = 1;
+            }
+
+        });
+
+        $("select[name=price_option]").on("change", function() {
+            $("#editModal input[name=edit_unit_price]").val($(this).val());
+        });
+
+        $("#myTable").on("change", ".batch-no", function() {
+            rowindex = $(this).closest('tr').index();
+            var product_id = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.product-id')
+                .val();
+            var warehouse_id = $('#warehouse_id').val();
+            $.get('{{ url('check-batch-availability') }}/' + product_id + '/' + $(this).val() + '/' +
+                warehouse_id,
+                function(data) {
+                    if (data['message'] != 'ok') {
+                        alert(data['message']);
+                        $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.batch-no').val(
+                            '');
+                        $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find(
+                            '.product-batch-id').val('');
+                    } else {
+                        $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find(
+                            '.product-batch-id').val(data['product_batch_id']);
+                        code = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find(
+                            '.product-code').val();
+                        //pos = product_code.indexOf(code);
+                        product_qty[pos] = data['qty'];
+                    }
+                });
+        });
+
+        let previousqty = '';
+
+        $("#myTable").on('focus', '.qty', function() {
+            previousqty = $(this).val();
+        });
+
+        //Change quantity
+        $("#myTable").on('focusout', '.qty', function() {
+
+            let $input = $(this);
+            let value = $.trim($input.val());
+            let max = parseFloat($input.attr('max'));
+            let rowindex = $input.closest('tr').index();
+
+            // --- 1) Empty or non-numeric check
+            if (value === "" || isNaN(value)) {
+                $input.val(1);
+                alert("Quantity must be a number.");
+                return;
+            }
+
+            value = parseFloat(value);
+
+            // --- 2) Must be greater than 0
+            if (value <= 0) {
+                $input.val(1);
+                alert("Quantity must be greater than 0.");
+                return;
+            }
+
+            // --- 3) Max attribute validation
+            if (!isNaN(max) && value > max) {
+                $input.val(max);
+                alert("Quantity cannot exceed available stock (" + max + ").");
+                return;
+            }
+
+            // --- 4) Safe to continue with valid value
+            $input.val(value);
+
+            if (is_variant[rowindex]) {
+                checkQuantity(value, true);
+            } else {
+                checkDiscount(value, 'input');
+            }
+        });
+
+
+        $("#myTable").on('click', '.qty', function() {
+            rowindex = $(this).closest('tr').index();
+        });
+
+        //Delete product: display = that row only; customize parent = parent + all its children; customize child = that row only. Then recalc.
+        $("table.order-list tbody").on("click", ".ibtnDel", function(event) {
+            event.preventDefault();
+            event.stopPropagation();
+            playSound();
+            var $tr = $(this).closest('tr');
+            var clickedIndex = $tr.index();
+            var $tbody = $("table.order-list tbody");
+            var $rows = $tbody.find('tr');
+            var indicesToRemove = [];
+            if ($tr.hasClass('pos-row-display')) {
+                indicesToRemove = [clickedIndex];
+            } else if ($tr.hasClass('pos-row-customize-parent') || $tr.find('.customize-parent-radio').length) {
+                for (var r = clickedIndex; r < $rows.length; r++) {
+                    indicesToRemove.push(r);
+                    if (r > clickedIndex && $rows.eq(r).find('.customize-parent-radio').length) break;
+                }
+            } else {
+                indicesToRemove = [clickedIndex];
+            }
+            indicesToRemove.sort(function(a, b) { return b - a; });
+            for (var i = 0; i < indicesToRemove.length; i++) {
+                var idx = indicesToRemove[i];
+                product_price.splice(idx, 1);
+                wholesale_price.splice(idx, 1);
+                product_discount.splice(idx, 1);
+                tax_rate.splice(idx, 1);
+                tax_name.splice(idx, 1);
+                tax_method.splice(idx, 1);
+                unit_name.splice(idx, 1);
+                unit_operator.splice(idx, 1);
+                unit_operation_value.splice(idx, 1);
+                if (typeof cost !== 'undefined') cost.splice(idx, 1);
+                if (typeof is_imei !== 'undefined') is_imei.splice(idx, 1);
+                if (typeof is_variant !== 'undefined') is_variant.splice(idx, 1);
+                $rows.eq(idx).remove();
+            }
+            var $remaining = $tbody.find('tr');
+            rowindex = $remaining.length > 0 ? 0 : -1;
+            calculateTotal();
+            if ($remaining.length < 1) {
+                $('.payment-btn').attr('disabled', true);
+                $('#installmentPlanBtn').attr('disabled', true);
+            }
+        });
+
+
+        //Edit product
+        $("table.order-list").on("click", ".edit-product", function() {
+            rowindex = $(this).closest('tr').index();
+            edit();
+        });
+
+        //Update product
+        $('button[name="update_btn"]').on("click", function() {
+            if (is_imei[rowindex]) {
+                var imeiNumbers = '';
+                $("#editModal .imei-numbers").each(function(i) {
+                    if (i)
+                        imeiNumbers += ',' + $(this).val();
+                    else
+                        imeiNumbers = $(this).val();
+                });
+                $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.imei-number').val(
+                    imeiNumbers);
+            }
+
+            var edit_discount = $('input[name="edit_discount"]').val();
+            var edit_qty = $('input[name="edit_qty"]').val();
+            var edit_unit_price = $('input[name="edit_unit_price"]').val();
+
+            if (parseFloat(edit_discount) > parseFloat(edit_unit_price)) {
+                alert('Invalid Discount Input!');
+                return;
+            }
+
+            if (edit_qty < 0) {
+                $('input[name="edit_qty"]').val(1);
+                edit_qty = 1;
+                alert("Quantity can't be less than 0");
+            }
+
+            var tax_rate_all = <?php echo json_encode($tax_rate_all); ?>;
+
+            tax_rate[rowindex] = parseFloat(tax_rate_all[$('select[name="edit_tax_rate"]').val()]);
+            tax_name[rowindex] = $('select[name="edit_tax_rate"] option:selected').text();
+
+            var product_type = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find(
+                '.product_type').val();
+
+            product_discount[rowindex] = $('input[name="edit_discount"]').val();
+            if (product_type == 'standard') {
+
+                row_unit_operator = $('#edit_unit select').find(':selected').data('operator');
+                row_unit_operation_value = $('#edit_unit select').find(':selected').data('operation-value');
+
+                if (row_unit_operator == '*') {
+                    product_price[rowindex] = $('input[name="edit_unit_price"]').val() * row_unit_operation_value;
+                } else {
+                    product_price[rowindex] = $('input[name="edit_unit_price"]').val() / row_unit_operation_value;
+                }
+                var position = $('select[name="edit_unit"]').val();
+                var temp_operator = temp_unit_operator[position];
+                var temp_operation_value = temp_unit_operation_value[position];
+                $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.sale-unit').val(
+                    temp_unit_name[position]);
+                temp_unit_name.splice(position, 1);
+                temp_unit_operator.splice(position, 1);
+                temp_unit_operation_value.splice(position, 1);
+
+                temp_unit_name.unshift($('select[name="edit_unit"] option:selected').text());
+                temp_unit_operator.unshift(temp_operator);
+                temp_unit_operation_value.unshift(temp_operation_value);
+
+                unit_name[rowindex] = temp_unit_name.toString() + ',';
+                unit_operator[rowindex] = temp_unit_operator.toString() + ',';
+                unit_operation_value[rowindex] = temp_unit_operation_value.toString() + ',';
+
+            } else {
+                product_price[rowindex] = $('input[name="edit_unit_price"]').val();
+            }
+            checkDiscount(edit_qty, false);
+
+            $('#editModal').modal('hide');
+        });
+
+        $('button[name="order_discount_btn"]').on("click", function() {
+            calculateGrandTotal();
+        });
+
+        $('button[name="shipping_cost_btn"]').on("click", function() {
+            calculateGrandTotal();
+        });
+
+        $('button[name="order_tax_btn"]').on("click", function() {
+            calculateGrandTotal();
+        });
+
+        $(".coupon-check").on("click", function() {
+            couponDiscount();
+        });
+
+        function updatePayingAmountWithDownPayment() {
+            var downPayment = parseFloat($('input[name="installment_plan[down_payment]"]').val()) || 0;
+            var grandTotal = parseFloat($('#grand-total').text()) || 0;
+            if (downPayment > grandTotal) {
+                alert('Down payment cannot exceed grand total.');
+                $('input[name="installment_plan[down_payment]"]').val(grandTotal.toFixed(
+                    {{ $general_setting->decimal }}));
+                downPayment = grandTotal;
+            }
+            return downPayment;
+        }
+
+        $(".payment-btn").on("click", function() {
+            playSound();
+
+            const decimalPlaces = {{ $general_setting->decimal ?? 2 }};
+
+            if ($('#enable_installment').is(':checked')) {
+                let downPayment = parseFloat(updatePayingAmountWithDownPayment()) || 0;
+
+                $('.paid_amount')
+                    .val(downPayment.toFixed(decimalPlaces));
+                $('.paying_amount')
+                    .val(downPayment.toFixed(decimalPlaces))
+                    .prop('readonly', true);
+            } else {
+                let grandTotal = parseFloat($('#grand-total').text()) || 0;
+
+                $('.paid_amount')
+                    .val(grandTotal.toFixed(decimalPlaces));
+                $('.paying_amount')
+                    .val(grandTotal.toFixed(decimalPlaces))
+                    .prop('readonly', false);
+            }
+
+            $('.qc').data('initial', 1);
+        });
+
+        $("#draft-btn").on("click", function() {
+            playSound();
+            $('input[name="sale_status"]').val(3);
+            $('input[name="paying_amount"]').prop('required', false);
+            $('input[name="paid_amount"]').prop('required', false);
+            var rownumber = $('table.order-list tbody tr:last').index();
+            if (rownumber < 0) {
+                alert("Please insert product to order table!");
+            } else
+                $('.payment-form').submit();
+        });
+
+        // Ensure order_type (Display=1 / Customization=2) is always sent on submit - no mismatch with POS structure
+        $('.payment-form').on('submit', function() {
+            var ot = $('#order_type').val();
+            if (ot === '' || ot === undefined || ot === null) $('#order_type').val('1');
+        });
+
+        $("#submit-btn").on("click", function(e) {
+            e.preventDefault();
+
+            // Payment modal validation (reference: Order Type, Delivery Type, Delivery Date, Delivery Time required)
+            if (!$('#posdeliverytype').val() || $('#posdeliverytype').val() === '') {
+                alert('{{ __('db.Please select an Order Type') }}');
+                return;
+            }
+            if (!$('#order_mode').val() || $('#order_mode').val() === '') {
+                alert('{{ __('db.Please select a Delivery Type') }}');
+                return;
+            }
+            if (!$('#sldate').val() || $('#sldate').val().trim() === '') {
+                alert('{{ __('db.Please select a Delivery Date') }}');
+                return;
+            }
+            if (!$('#posdeliverytime').val() || $('#posdeliverytime').val() === '') {
+                alert('{{ __('db.Please select a Delivery Time') }}');
+                return;
+            }
+
+            const paymentType = $('select[name="paid_by_id_select[]"]').val();
+            const form = $('.payment-form');
+            const csrf = $('meta[name="csrf-token"]').attr('content');
+
+            // ✅ Gather installment data (if enabled)
+            if ($("#enable_installment").is(":checked")) {
+                const installmentData = {
+                    enabled: true,
+                    name: $('input[name="installment_plan[name]"]').val(),
+                    price: $('input[name="installment_plan[price]"]').val(),
+                    additional_amount: $('input[name="installment_plan[additional_amount]"]').val(),
+                    total_amount: $('input[name="installment_plan[total_amount]"]').val(),
+                    down_payment: $('input[name="installment_plan[down_payment]"]').val(),
+                    months: $('input[name="installment_plan[months]"]').val(),
+                    reference_type: $('input[name="installment_plan[reference_type]"]').val()
+                };
+
+                // 🟢 Append installment plan fields to the form before submitting
+                $.each(installmentData, function(key, value) {
+                    if (value !== undefined && value !== null && value !== "") {
+                        $('<input>').attr({
+                            type: "hidden",
+                            name: "installment_plan[" + key + "]",
+                            value: value
+                        }).appendTo(form);
+                    }
+                });
+
+                // Also include enable_installment flag
+                $('<input>').attr({
+                    type: "hidden",
+                    name: "enable_installment",
+                    value: "1"
+                }).appendTo(form);
+            } else {
+                $('<input>').attr({
+                    type: "hidden",
+                    name: "enable_installment",
+                    value: "0"
+                }).appendTo(form);
+
+            }
+
+            if (paymentType === 'razorpay') {
+                // ✅ 1. Validate required Razorpay fields
+                let isValid = true;
+                $('.razorpay.remove-element [required]').each(function() {
+                    if (!$(this).val().trim()) {
+                        $(this).addClass('is-invalid');
+                        isValid = false;
+                    } else {
+                        $(this).removeClass('is-invalid');
+                    }
+                });
+
+                if (!isValid) {
+                    alert('Please fill all required Razorpay fields.');
+                    return;
+                }
+
+                // ✅ 2. Prepare payment data
+                let data = {
+                    name: $('input[name="customer_name"]').val(),
+                    email: $('input[name="customer_email"]').val(),
+                    phone: $('input[name="customer_phone"]').val(),
+                    amount: $('.paying_amount').val(),
+                    _token: csrf,
+                };
+
+                // ✅ 3. Create Razorpay order (via backend)
+                $.post("/razorpay/pay", data, function(res) {
+                    const options = {
+                        key: res.key, // from backend
+                        amount: res.amount, // in paise
+                        currency: "INR",
+                        name: "{{ config('site_title') }}",
+                        description: "Order Payment",
+                        image: "{{ asset('logo/' . config('site_logo')) }}",
+                        order_id: res.order_id,
+                        prefill: {
+                            name: data.name,
+                            email: data.email,
+                            contact: data.phone
+                        },
+                        theme: {
+                            color: "#0C9DDA"
+                        },
+                        handler: function(response) {
+                            // ✅ Verify payment on success
+                            $.post("/razorpay/verify", {
+                                _token: csrf,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature
+                            }, function(verifyRes) {
+                                if (verifyRes.status === 'success') {
+                                    $('<input>').attr({
+                                        type: 'hidden',
+                                        name: 'razorpay_payment_id',
+                                        value: response.razorpay_payment_id
+                                    }).appendTo(form);
+                                    $('<input>').attr({
+                                        type: 'hidden',
+                                        name: 'razorpay_order_id',
+                                        value: response.razorpay_order_id
+                                    }).appendTo(form);
+                                    $('<input>').attr({
+                                        type: 'hidden',
+                                        name: 'razorpay_signature',
+                                        value: response.razorpay_signature
+                                    }).appendTo(form);
+                                    form.off('submit').submit();
+                                } else {
+                                    alert('Payment verification failed!');
+                                }
+                            });
+                        },
+                        modal: {
+                            ondismiss: function() {
+                                alert("UPI payment cancelled.");
+                            }
+                        },
+                        // 🟢 Only show UPI option
+                        method: {
+                            upi: true,
+                            card: false,
+                            netbanking: false,
+                            wallet: false,
+                            emi: false,
+                            paylater: false
+                        },
+                        upi: {
+                            flow: "intent"
+                        }
+                    };
+
+                    const rzp = new Razorpay(options);
+                    rzp.open();
+
+                    rzp.on('payment.failed', function(response) {
+                        alert("Payment failed: " + response.error.description);
+                    });
+                });
+
+            } else {
+                // Underpaid confirmation (reference: confirm when total paid < grand total)
+                var totalPaying = parseFloat($('.total_paying').text()) || 0;
+                var grandTotal = parseFloat($('#grand-total').text()) || 0;
+                if (totalPaying < grandTotal) {
+                    if (!confirm('{{ __("db.Paid amount is less than the payable amount. Press OK to submit the sale.") }}')) {
+                        return;
+                    }
+                }
+                form.off('submit').submit();
+            }
+        });
+
+        $("#gift-card-btn").on("click", function() {
+            appendRemoveElement('gift-card');
+        });
+
+        $("#credit-card-btn").on("click", function() {
+            appendRemoveElement('credit-card');
+        });
+
+        $("#cheque-btn").on("click", function() {
+            appendRemoveElement('cheque');
+        });
+
+        $("#cash-btn").on("click", function() {
+            appendRemoveElement('cash');
+        });
+
+        $("#razorpay-btn").on("click", function() {
+            appendRemoveElement('razorpay');
+        });
+
+        $("#credit-sale-btn").on("click", function() {
+            appendRemoveElement('credit-sale');
+        });
+
+        $("#moneipoint-btn").on("click", function() {
+            appendRemoveElement('moneipoint');
+        });
+
+        $("#multiple-payment-btn").on("click", function() {
+            appendRemoveElement('multiplepay');
+        });
+
+        $("#deposit-btn").on("click", function() {
+            appendRemoveElement('deposit');
+        });
+
+        $("#point-btn").on("click", function() {
+            appendRemoveElement('points');
+        });
+
+        $("#knet-btn").on("click", function() {
+            appendRemoveElement('knet');
+        });
+
+        $(".pay-options").on("click", function() {
+            appendRemoveElement($(this).val(), true);
+        });
+
+        function changeLabelText(labelText) {
+            $("#received-paying").text(labelText);
+        }
+
+        function checkCreditLimit() {
+            var selectedOption = $('#customer_id option:selected');
+            var credit_limit = selectedOption.data('credit-limit');
+            var due = parseFloat($('.due').text());
+            if (credit_limit !== null && credit_limit !== '' && due > credit_limit) {
+                alert('{{ __('db.Credit limit exceeded! Customer credit limit:') }} ' + credit_limit);
+                $('#submit-btn').prop('disabled', true);
+            } else {
+                $('#submit-btn').prop('disabled', false);
+            }
+
+        }
+
+        function appendRemoveElement(className, payOption = false) {
+            $('.payment-info').show();
+            $('.points-info').hide();
+            $('#print_invoice').prop('checked', true);
+            ismultiplepayment = 0;
+            $('.remove-element').remove();
+            $('.selectpicker').selectpicker('refresh');
+            $('select[name="paid_by_id_select[]"]').parent().parent().addClass('d-none');
+            $('.paid_amount').parent().addClass('d-none');
+            $('.paying_amount').parent().addClass('d-none');
+            $('.add-more').parent().addClass('d-none');
+            if ($('#enable_installment').is(':checked')) {
+                var downPayment = updatePayingAmountWithDownPayment();
+                $('.total_paying').text(downPayment);
+                $('.total_payable').text($('input[name="installment_plan[total_amount]"]').val());
+            } else {
+                $('.total_paying').text($('#grand-total').text());
+                $('.total_payable').text($('#grand-total').text());
+            }
+            $('.due').text(0);
+            $('.new-row').remove();
+            $('#submit-btn').prop('disabled', false);
+            updateChange();
+
+            $("#received-paying").html(
+                `Cash Received <x-info title="Cash handed over to you. example: sale amount is 300. customer gives you 500. cash received: 500 " type="info" />`
+            );
+            if (payOption) {
+                $("#received-paying").text("Paying Amount");
+
+                let $select = $('select[name="paid_by_id_select[]"]');
+                if ($select.find(`option[value="${className}"]`).length === 0) {
+                    $select.append(`<option value="${className}">${className}</option>`);
+                }
+                $select.val(className);
+
+                $('.paying_amount').parent().addClass('col-md-12').removeClass('col-md-3 d-none');
+                $('.paying_amount').addClass('cash_paying_amount');
+            }
+
+            var appendElement = '';
+            if (className == 'cash') {
+                $('select[name="paid_by_id_select[]"]').val(1);
+                $('.paying_amount').parent().addClass('col-md-12').removeClass('col-md-3 d-none');
+                $('.paying_amount').addClass('cash_paying_amount');
+            } else if (className == 'razorpay') {
+                $('select[name="paid_by_id_select[]"]').val('razorpay');
+
+                let customer_id = $('select[name="customer_id"]').val();
+                let customer = lims_customer_list.find(c => c.id == customer_id);
+
+                // fallback if customer not found
+                let name = customer ? customer.name : '';
+                let email = customer ? customer.email : '';
+                let phone = customer ? customer.phone_number : '';
+
+                if (customer.type === 'walkin') {
+                    name = email = phone = '';
+                }
+
+                appendElement = `
+                <div class="form-group col-md-4 razorpay remove-element">
+                    <label>{{ __('db.customer') }} *</label>
+                    <input type="text" name="customer_name" class="form-control" value="${name}" required>
+                </div>
+                <div class="form-group col-md-4 razorpay remove-element">
+                    <label>{{ __('Customer Email') }}</label>
+                    <input type="email" name="customer_email" class="form-control" value="${email}" required>
+                </div>
+                <div class="form-group col-md-4 razorpay remove-element">
+                    <label>{{ __('Customer Phone') }} *</label>
+                    <input type="text" name="customer_phone" class="form-control" value="${phone}" required>
+                </div>
+            `;
+
+
+                changeLabelText('Amount');
+                $('#payment_receiver_id').attr('hidden', true);
+                $('#print_invoice').prop('checked', false);
+                $('.paying_amount').parent().addClass('col-md-12').removeClass('col-md-3 d-none');
+                $('.paying_amount').addClass('cash_paying_amount');
+                $('.paying_amount').prop('readonly', true);
+            } else if (className == 'credit-sale') {
+                $('select[name="paid_by_id_select[]"]').val(1);
+                $('.paying_amount').parent().addClass('col-md-12').removeClass('col-md-3 d-none');
+                $('.paying_amount').addClass('cash_paying_amount');
+                $('.paying_amount').val(0);
+                $('.due').text($('#grand-total').text());
+                $('.total_paying').text(0);
+                checkCreditLimit();
+            } else if (className == 'gift-card') {
+                $('select[name="paid_by_id_select[]"]').val(2);
+                appendElement = `<div class="form-group col-md-12 gift-card remove-element">
+                                <label> {{ __('db.Gift Card') }} *</label>
+                                <input type="hidden" name="gift_card_id">
+                                <select id="gift_card_id_select" name="gift_card_id_select" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Gift Card..."></select>
+                            </div>`;
+                $.ajax({
+                    url: '{{ url('sales/get_gift_card') }}',
+                    type: "GET",
+                    dataType: "json",
+                    success: function(data) {
+                        $('#add-payment select[name="gift_card_id_select"]').empty();
+                        $.each(data, function(index) {
+                            gift_card_amount[data[index]['id']] = data[index]['amount'];
+                            gift_card_expense[data[index]['id']] = data[index]['expense'];
+                            $('#add-payment select[name="gift_card_id_select"]').append(
+                                '<option value="' + data[index]['id'] + '">' + data[index][
+                                    'card_no'
+                                ] + '</option>');
+                        });
+                        $('.selectpicker').selectpicker('refresh');
+                        $('.selectpicker').selectpicker();
+                        $('#gift_card_id_select').selectpicker('toggle');
+                    }
+                });
+            } else if (className == 'credit-card') {
+                $('select[name="paid_by_id_select[]"]').val(3);
+                appendElement = `<div class="form-group col-md-12 credit-card remove-element">
+                                <div class="row">
+                                    <div class="col-md-5">
+                                        <label>Card Number</label>
+                                        <input class="form-control" name="card_number" class="card_name">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label>Card Holder Name</label>
+                                        <input class="form-control" name="card_holder_name">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label>Card Type</label>
+                                        <select class="form-control" name="card_type">
+                                            <option>Visa</option>
+                                            <option>Master Card</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>`;
+            } else if (className == 'cheque') {
+                $('select[name="paid_by_id_select[]"]').val(4);
+                appendElement = `<div class="form-group col-md-12 cheque remove-element">
+                            <label>{{ __('db.Cheque Number') }} *</label>
+                            <input type="text" name="cheque_no" class="form-control" value="" required>
+                        </div>`;
+
+            } else if (className == 'deposit') {
+                $('select[name="paid_by_id_select[]"]').val(6);
+                let customerId = $('#customer_id').val();
+                let paidAmount = parseFloat($('input[name="paid_amount[]"]').val() || 0);
+                let customerDeposit = parseFloat(deposit[customerId] || 0);
+
+                // If the deposit is 0 or less, the modal will not be shown
+                if (customerDeposit <= 0 || isNaN(customerDeposit)) {
+                    alert('This customer has no deposit balance!');
+                    $('#add-payment').modal('hide');
+                    return;
+                }
+
+                // If the paid amount is greater than the deposit → show the multiple payment option
+                if (paidAmount > customerDeposit) {
+                    alert('Amount exceeds customer deposit! Opening multiple payment option.');
+                    console.log('Deposit limit:', customerDeposit);
+                    appendRemoveElement('multiplepay'); // multiple payment modal ওপেন করার ফাংশন
+                }
+                // If there is enough deposit balance, the deposit modal will be shown.
+                else {
+                    $('#add-payment').modal('show');
+                }
+            } else if (className == 'points') {
+                $('select[name="paid_by_id_select[]"]').val(7);
+                redeemPoints();
+            } else if (className == 'knet') {
+                $('select[name="paid_by_id_select[]"]').val('knet');
+                $('.paying_amount').parent().addClass('col-md-12').removeClass('col-md-3 d-none');
+                $('.paying_amount').addClass('cash_paying_amount');
+                changeLabelText('Amount');
+            } else if (className == 'multiplepay') {
+                ismultiplepayment = 1;
+                $('select[name="paid_by_id_select[]"]').val(1);
+                $('select[name="paid_by_id_select[]"]').parent().parent().removeClass('d-none');
+                $('.paid_amount').parent().removeClass('d-none');
+                $('.paying_amount').parent().removeClass('col-md-12 d-none').addClass('col-md-3');
+                $('.paying_amount').removeClass('cash_paying_amount')
+                $('.add-more').parent().removeClass('d-none');
+            }
+            $("#payment-select-row .row:eq(0)").append(appendElement);
+
+        }
+        // Trigger pointCalculation on body click anywhere
+        if (reward_point_setting['is_active']) {
+            $(document).on('click', 'body', function(e) {
+                // Optional: prevent firing when clicking inside modal to avoid recursion
+                if (!$(e.target).closest(
+                        '#add-payment, input[name="paid_amount[]"], #customer_id, select[name="paid_by_id_select[]"]'
+                    ).length) {
+                    updatePointBtnStatus();
+                }
+            });
+        }
+
+        // 1️⃣ Only check points and update button tooltip on body click
+        function updatePointBtnStatus() {
+            let $pointBtn = $('#point-btn');
+            let paid_amount = parseFloat($('#subtotal').text() || 0);
+            let customerPoints = parseFloat($('#customer_id option:selected').data('points')) || 0;
+            let minOrderTotal = reward_point_setting['min_order_total_for_redeem'] || 0;
+            let perPoint = reward_point_setting['redeem_amount_per_unit_rp'] || 1;
+            let maxPoints = reward_point_setting['max_redeem_point'] || 0;
+
+            let required_points = Math.ceil(paid_amount / perPoint);
+
+            // Default: disable button
+            $pointBtn.prop('disabled', true);
+
+            // Build tooltip message
+            let tooltipMessage = `Point Info:
+        Customer Points: ${customerPoints}
+        Required Points: ${required_points}
+        Order Total: ${paid_amount}
+        Minimum Order Total for Redeem: ${minOrderTotal}
+        Maximum Order Total for Redeem: ${maxPoints}`;
+
+            if (paid_amount <= 0) {
+                tooltipMessage += `\n⚠️ Please enter a paid amount.`;
+            } else if (minOrderTotal > 0 && paid_amount < minOrderTotal) {
+                tooltipMessage += `\n⚠️ Order total must be at least ${minOrderTotal} to redeem points.`;
+            } else if (required_points > customerPoints) {
+                tooltipMessage += `\n⚠️ Not enough points to redeem.`;
+            } else if (maxPoints < required_points || maxPoints <= 0) {
+                tooltipMessage += `\n⚠️ You can redeem a maximum of ${maxPoints} points.`;
+            } else {
+                // Enable button if all conditions pass
+                $pointBtn.prop('disabled', false);
+                tooltipMessage = "Click to redeem points";
+            }
+
+            $pointBtn.attr('title', tooltipMessage);
+        }
+
+        // 2️⃣ Full calculation when point button clicked
+        function redeemPoints() {
+            $('.payment-info').hide();
+            let $pointBtn = $('#point-btn');
+            let paid_amount = parseFloat($('#subtotal').text() || 0);
+            let customerPoints = parseFloat($('#customer_id option:selected').data('points')) || 0;
+            let minPoints = reward_point_setting['min_redeem_point'] || 0;
+            let maxPoints = reward_point_setting['max_redeem_point'] || 0;
+            let minOrderTotal = reward_point_setting['min_order_total_for_redeem'] || 0;
+            let perPoint = reward_point_setting['redeem_amount_per_unit_rp'] || 1;
+
+            let required_points = Math.ceil(paid_amount / perPoint);
+
+            // Apply min/max limits
+            // if (minPoints > 0 && required_points < minPoints) required_points = minPoints;
+            // if (maxPoints > 0 && required_points > maxPoints) required_points = maxPoints;
+
+            if (required_points > customerPoints) required_points = customerPoints;
+
+            let remaining_points = customerPoints - required_points;
+            let total_bill = parseFloat($('#grand-total').text()) || 0;
+
+            // Update modal info
+            $('.points-info').html(`
+            <div class="mt-4">
+                <h2>Points Info</h2>
+                <hr/>
+                <p class="text-light total_bill"><strong>Total Bill:</strong> ${total_bill}</p>
+            </div>
+            <div class="mt-4">
+                <h2>Customer Points</h2>
+                <p class="text-light customer_points">${customerPoints}</p>
+            </div>
+            <div class="mt-4">
+                <h2>Used Points</h2>
+                <p class="text-light used_points">${required_points}</p>
+                <input type="hidden" name="redeem_point" value="${required_points}" />
+            </div>
+            <div class="mt-4">
+                <h2>Remaining Points</h2>
+                <p class="text-light remaining_points">${remaining_points}</p>
+            </div>
+        `);
+            $('.points-info').show();
+
+            $("input[name='used_points']").val(required_points);
+        }
+
+        $(document).on("change", 'select[name="paid_by_id_select[]"]', function() {
+            updateChange();
+            var id = $(this).val();
+            var appendElement = '';
+            $(".payment-form").off("submit");
+            $(this).parent().parent().siblings('.cash-received-container').addClass('d-none');
+            $(this).parent().parent().siblings('.gift-card').remove();
+            $(this).parent().parent().siblings('.credit-card').remove();
+            $(this).parent().parent().siblings('.cheque').remove();
+            //cash
+            if (id == 1) {
+                $(this).parent().parent().siblings('.cash-received-container').removeClass('d-none');
+            }
+            //gift
+            else if (id == 2) {
+                appendElement = `<div class="form-group col-md-10 gift-card remove-element">
+                                <label> {{ __('db.Gift Card') }} *</label>
+                                <input type="hidden" name="gift_card_id">
+                                <select id="gift_card_id_select" name="gift_card_id_select" class="selectpicker form-control" data-live-search="true" data-live-search-style="begins" title="Select Gift Card..."></select>
+                            </div>`;
+                $(this).closest('.col-md-3').after(appendElement);
+
+                $.ajax({
+                    url: '{{ url('sales/get_gift_card') }}',
+                    type: "GET",
+                    dataType: "json",
+                    success: function(data) {
+                        $('#add-payment select[name="gift_card_id_select"]').empty();
+                        $.each(data, function(index) {
+                            gift_card_amount[data[index]['id']] = data[index]['amount'];
+                            gift_card_expense[data[index]['id']] = data[index]['expense'];
+                            $('#add-payment select[name="gift_card_id_select"]').append(
+                                '<option value="' + data[index]['id'] + '">' + data[index][
+                                    'card_no'
+                                ] + '</option>');
+                        });
+                        $('.selectpicker').selectpicker('refresh');
+                        $('.selectpicker').selectpicker();
+                    }
+                });
+            }
+            //credit
+            else if (id == 3) {
+                appendElement = `<div class="form-group col-md-10 credit-card remove-element">
+                                <div class="row">
+                                    <div class="col-md-5">
+                                        <label>Card Number</label>
+                                        <input class="form-control" name="card_number" class="card_name">
+                                    </div>
+                                    <div class="col-md-5">
+                                        <label>Card Holder Name</label>
+                                        <input class="form-control" name="card_holder_name">
+                                    </div>
+                                    <div class="col-md-2">
+                                        <label>Card Type</label>
+                                        <select class="form-control" name="card_type">
+                                            <option>Visa</option>
+                                            <option>Master Card</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>`;
+                $(this).closest('.col-md-3').after(appendElement);
+            }
+            //cheque
+            else if (id == 4) {
+                appendElement = `<div class="form-group col-md-10 cheque remove-element">
+                            <label>{{ __('db.Cheque Number') }} *</label>
+                            <input type="text" name="cheque_no" class="form-control" value="" required>
+                        </div>`;
+                $(this).closest('.col-md-3').after(appendElement);
+            }
+
+            //deposit
+            else if (id == 6) {
+
+            }
+            //point
+            else if (id == 7) {
+                pointCalculation();
+            }
+        });
+
+        $(document).on("change", '#add-payment select[name="gift_card_id_select"]', function() {
+            var balance = gift_card_amount[$(this).val()] - gift_card_expense[$(this).val()];
+            $('#add-payment input[name="gift_card_id"]').val($(this).val());
+            if (ismultiplepayment == 0) {
+                if ($('input[name="paid_amount[]"]').val() > balance) {
+                    $('#submit-btn').prop('disabled', true);
+                    alert('Amount exceeds card balance! Gift Card balance: ' + balance);
+                } else {
+                    $('#submit-btn').prop('disabled', false);
+                }
+            } else {
+                // $(this).parent().parent().siblings('.paying-amount-container').children('.paid_amount').val(balance);
+                updateChange();
+            }
+
+        });
+
+        function change(paying_amount, paid_amount) {
+            $("#change").text(parseFloat(paying_amount - paid_amount).toFixed({{ $general_setting->decimal }}));
+        }
+
+        // Event listener for changes to paid_amount
+        $(document).on("keyup", '.paid_amount', function() {
+            let paid_amount = parseFloat($(this).val()) || 0;
+            if (paid_amount < 0) {
+                $(this).val(0);
+            }
+            // Call the change function to update the change amount for this specific row
+            calculatePayingAmount();
+            updateChange();
+        });
+        // Event listener for changes to paid_amount
+        $(document).on("keyup", '.paying_amount', function() {
+            let paying_amount = parseFloat($(this).val()) || 0;
+            if (paying_amount < 0) {
+                $(this).val(0);
+            }
+            updateChange();
+        });
+
+        $(document).on("blur", '.cash_paying_amount', function() {
+            let paying_amount = parseFloat($(this).val()) || 0;
+            let grandTotal = parseFloat($("#grand-total").text()) || 0;
+            let paid_amount = 0;
+            if (paying_amount < grandTotal) {
+                $('.paid_amount').val(paying_amount);
+                $('.total_paying').text(paying_amount);
+                $('.due').text(grandTotal - paying_amount);
+
+                paid_amount = $('.paid_amount').val();
+
+                checkCreditLimit();
+            } else if (paying_amount > grandTotal) {
+                $('.paid_amount').val(grandTotal);
+                $('.total_paying').text(grandTotal);
+                $('.due').text(0);
+
+                paid_amount = $('.paid_amount').val();
+            } else if (paying_amount == grandTotal) {
+                $('.paid_amount').val(grandTotal);
+                $('.total_paying').text(grandTotal);
+                $('.due').text(0);
+                paid_amount = $('.paid_amount').val();
+            }
+
+            if (paying_amount < 0) {
+                $(this).val(0);
+            }
+            updateChange();
+        });
+
+        // Update the change text for the specific row
+        function updateChange() {
+            let change = 0;
+            $('select[name="paid_by_id_select[]"]').each(function() {
+                if ($(this).val() == '1') {
+                    let $row = $(this).closest('.row');
+                    let paying_amount = parseFloat($row.find('.paying_amount').val()) || 0;
+                    let paid_amount = parseFloat($row.find('.paid_amount').val()) || 0;
+                    change += paying_amount - paid_amount;
+                }
+            });
+            $('.change').text((change).toFixed({{ $general_setting->decimal }}));
+
+            saveDataToLocalStorageForCustomerDisplay('clear_no');
+        }
+
+        // Function to calculate the total and update the total_payable
+        function calculatePayingAmount() {
+
+            let total = 0;
+            let due = 0;
+            let grandTotal = parseFloat($("#grand-total").text()) || 0;
+
+            // Loop through each paying_amount field and sum their values
+            $('.paid_amount').each(function() {
+                let value = $(this).val();
+
+                // Check if the value is a valid number
+                if ($.isNumeric(value)) {
+                    total += parseFloat(value);
+                    due = grandTotal - total;
+                }
+            });
+            // Update the total_payable with the total
+            $('.total_paying').text(total);
+            $('.due').text(due);
+            checkCreditLimit();
+        }
+
+        function confirmDelete() {
+            if (confirm("Are you sure want to delete?")) {
+                return true;
+            }
+            return false;
+        }
+
+        $('.transaction-btn-plus').on("click", function() {
+            $(this).addClass('d-none');
+            $('.transaction-btn-close').removeClass('d-none');
+        });
+
+        $('.transaction-btn-close').on("click", function() {
+            $(this).addClass('d-none');
+            $('.transaction-btn-plus').removeClass('d-none');
+        });
+
+        $('.coupon-btn-plus').on("click", function() {
+            $(this).addClass('d-none');
+            $('.coupon-btn-close').removeClass('d-none');
+        });
+
+        $('.coupon-btn-close').on("click", function() {
+            $(this).addClass('d-none');
+            $('.coupon-btn-plus').removeClass('d-none');
+        });
+
+        $(document).on('click', '.qc-btn', function(e) {
+            if ($(this).data('amount')) {
+                if ($('.qc').data('initial')) {
+                    $('input[name="paying_amount"]').val($(this).data('amount').toFixed(
+                        {{ $general_setting->decimal }}));
+                    $('.qc').data('initial', 0);
+                } else {
+                    $('input[name="paying_amount"]').val((parseFloat($('input[name="paying_amount"]').val()) + $(
+                        this).data('amount')).toFixed({{ $general_setting->decimal }}));
+                }
+
+            } else
+                $('input[name="paying_amount"]').val(
+                    '{{ number_format(0, $general_setting->decimal, '.', '') }}');
+            change($('input[name="paying_amount"]').val(), $('input[name="paid_amount"]').val());
+        });
+
+        function populatePriceOption() {
+            var product_price = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.product_price')
+                .val();
+            var current_price = $('#editModal input[name=edit_unit_price]').val();
+
+            if (parseFloat(current_price) == parseFloat(product_price).toFixed({{ $general_setting->decimal }})) {
+                $('#editModal select[name=price_option]').empty();
+                if (wholesale_price[rowindex] > 0)
+                    $('#editModal select[name=price_option]').append('<option value="' + wholesale_price[rowindex] + '">' +
+                        wholesale_price[rowindex] + '</option>');
+                $('#editModal select[name=price_option]').append('<option selected value="' + product_price + '">' +
+                    product_price + '</option>');
+            } else {
+                $('#editModal select[name=price_option]').empty();
+                if (wholesale_price[rowindex] > 0)
+                    $('#editModal select[name=price_option]').append('<option selected value="' + wholesale_price[
+                        rowindex] + '">' + wholesale_price[rowindex] + '</option>');
+                $('#editModal select[name=price_option]').append('<option value="' + product_price + '">' + product_price +
+                    '</option>');
+            }
+            $('.selectpicker').selectpicker('refresh');
+        }
+
+        function edit() {
+            $(".imei-section").remove();
+            if (is_imei[rowindex]) {
+
+                var imeiNumbers = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.imei-number')
+                    .val();
+
+                if (imeiNumbers.length) {
+                    imeiArrays = [...new Set(imeiNumbers.split(","))];
+                    htmlText = `<div class="col-md-8 form-group imei-section">
+                            <label>IMEI or Serial Numbers</label>
+                            <div class="table-responsive">
+                                <table id="imei-table" class="table table-hover">
+                                    <tbody>`;
+                    for (var i = 0; i < imeiArrays.length; i++) {
+                        htmlText +=
+                            `<tr>
+                                    <td>
+                                        <input type="text" class="form-control imei-numbers" name="imei_numbers[]" value="` +
+                            imeiArrays[i] + `" />
+                                    </td>
+                                    <td>
+                                        <button type="button" class="imei-del btn btn-sm btn-danger">X</button>
+                                    </td>
+                                </tr>`;
+                    }
+                    htmlText += `</tbody>
+                                </table>
+                            </div>
+                        </div>`;
+                    $("#editModal .modal-element").append(htmlText);
+                }
+            }
+            populatePriceOption();
+            // $("#product-cost").text(cost[rowindex]);
+            var row_product_name_code = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find(
+                'td:nth-child(1) > strong:nth-child(1)').text();
+            $('#modal_header').text(row_product_name_code);
+
+            var qty = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.qty').val();
+            $('input[name="edit_qty"]').val(qty);
+
+            cur_product_id = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .product-id').val();
+            // @if (isset($draft_product_discount))
+            //     if (product_discount[rowindex] < 1) {
+            //         draft_discounts = @json($draft_product_discount['discount']);
+            //         product_discount[rowindex] = draft_discounts[cur_product_id];
+            //     }
+            // @endif
+
+            $('input[name="edit_discount"]').val(parseFloat(product_discount[rowindex]).toFixed(
+                {{ $general_setting->decimal }}));
+
+            var tax_name_all = <?php echo json_encode($tax_name_all); ?>;
+            pos = tax_name_all.indexOf(tax_name[rowindex]);
+            $('select[name="edit_tax_rate"]').val(pos);
+
+            var row_product_code = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.product-code')
+                .val();
+            var product_type = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.product_type').val();
+            if (product_type == 'standard') {
+                unitConversion();
+                temp_unit_name = (unit_name[rowindex]).split(',');
+                temp_unit_name.pop();
+                temp_unit_operator = (unit_operator[rowindex]).split(',');
+                temp_unit_operator.pop();
+                temp_unit_operation_value = (unit_operation_value[rowindex]).split(',');
+                temp_unit_operation_value.pop();
+
+                $('select[name="edit_unit"]').empty();
+                $.each(temp_unit_name, function(key, value) {
+                    $('select[name="edit_unit"]').append('<option data-operator="' + temp_unit_operator[key] +
+                        '" data-operation-value="' + temp_unit_operation_value[key] + '" value="' + key + '">' +
+                        value + '</option>');
+                });
+                $("#edit_unit").show();
+            } else {
+                row_product_price = product_price[rowindex];
+                $("#edit_unit").hide();
+            }
+            $('input[name="edit_unit_price"]').val(row_product_price.toFixed({{ $general_setting->decimal }}));
+            $('.selectpicker').selectpicker('refresh');
+        }
+
+        //Delete imei
+        $(document).on("click", "table#imei-table tbody .imei-del", function() {
+            // Decrease qty
+            var edit_qty = parseFloat($('input[name="edit_qty"]').val());
+            edit_qty = (edit_qty - 1);
+            $('input[name="edit_qty"]').val(edit_qty);
+
+            // Check number of remaining IMEI for the same product
+            let imeis = $('#tbody-id tr:nth-child(' + (rowindex + 1) + ')').find('.imei-number').val();
+
+            let target = $(this).closest("tr").find('.imei-numbers').val();
+
+            // Remove the row
+            $(this).closest("tr").remove();
+
+            // 1. Convert to array (remove spaces just in case)
+            let arr = imeis.split(',').map(s => s.trim());
+
+            // 2. Filter out the target IMEI
+            arr = arr.filter(i => i !== target);
+
+            // 3. Convert back to string
+            let updated = arr.join(',');
+
+            // Set the updated value back
+            $('#tbody-id tr:nth-child(' + (rowindex + 1) + ')').find('.imei-number').val(updated);
+
+            if (edit_qty == 0) {
+                $('#editModal').modal('hide');
+                $('#tbody-id tr:eq(' + rowindex + ')').remove();
+            }
+
+            $('#tbody-id tr:nth-child(' + (rowindex + 1) + ')').find('.qty').val(edit_qty);
+            checkDiscount(edit_qty, false);
+            calculateTotal();
+        });
+
+        function couponDiscount() {
+            var rownumber = $('table.order-list tbody tr:last').index();
+            if (rownumber < 0) {
+                alert("Please insert product to order table!")
+            } else if ($("#coupon-code").val() != '') {
+                valid = 0;
+                $.each(coupon_list, function(key, value) {
+                    if ($("#coupon-code").val() == value['code']) {
+                        valid = 1;
+                        todyDate = <?php echo json_encode(date('Y-m-d')); ?>;
+                        if (parseFloat(value['quantity']) <= parseFloat(value['used']))
+                            alert('This Coupon is no longer available');
+                        else if (todyDate > value['expired_date'])
+                            alert('This Coupon has expired!');
+                        else if (value['type'] == 'fixed') {
+                            if (parseFloat($('input[name="grand_total"]').val()) >= value['minimum_amount']) {
+                                $('input[name="grand_total"]').val($('input[name="grand_total"]').val() - (value[
+                                    'amount'] * currency['exchange_rate']));
+                                $('#grand-total').text(parseFloat($('input[name="grand_total"]').val()).toFixed(
+                                    {{ $general_setting->decimal }}));
+                                $('#grand-total-m').text(parseFloat($('input[name="grand_total"]').val()).toFixed(
+                                    {{ $general_setting->decimal }}));
+                                if (!isEditMode && !$('input[name="coupon_active"]').val()) {
+                                    alert('Congratulation! You got ' + (value['amount'] * currency[
+                                        'exchange_rate']) + ' ' + currency['code'] + ' discount');
+                                }
+                                $(".coupon-check").prop("disabled", true);
+                                $("#coupon-code").prop("disabled", true);
+                                $('input[name="coupon_active"]').val(1);
+                                $("#coupon-modal").modal('hide');
+                                $('input[name="coupon_id"]').val(value['id']);
+                                $('input[name="coupon_discount"]').val(value['amount'] * currency['exchange_rate']);
+                                $('#coupon-text').text(parseFloat(value['amount'] * currency['exchange_rate'])
+                                    .toFixed({{ $general_setting->decimal }}));
+                            } else
+                                alert('Grand Total is not sufficient for discount! Required ' + value[
+                                    'minimum_amount'] + ' ' + currency['code']);
+                        } else {
+                            var grand_total = $('input[name="grand_total"]').val();
+                            var coupon_discount = grand_total * (value['amount'] / 100);
+                            grand_total = grand_total - coupon_discount;
+                            $('input[name="grand_total"]').val(grand_total);
+                            $('#grand-total').text(parseFloat(grand_total).toFixed(
+                                {{ $general_setting->decimal }}));
+                            $('#grand-total-m').text(parseFloat(grand_total).toFixed(
+                                {{ $general_setting->decimal }}));
+                            if (!isEditMode && !$('input[name="coupon_active"]').val()) {
+                                alert('Congratulation! You got ' + value['amount'] + '% discount');
+                            }
+                            $(".coupon-check").prop("disabled", true);
+                            $("#coupon-code").prop("disabled", true);
+                            $('input[name="coupon_active"]').val(1);
+                            $("#coupon-modal").modal('hide');
+                            $('input[name="coupon_id"]').val(value['id']);
+                            $('input[name="coupon_discount"]').val(coupon_discount);
+                            $('#coupon-text').text(parseFloat(coupon_discount).toFixed(
+                                {{ $general_setting->decimal }}));
+                        }
+                    }
+                });
+                if (!valid)
+                    alert('Invalid coupon code!');
+            }
+
+            saveDataToLocalStorageForCustomerDisplay('clear_no');
+        }
+
+        function checkDiscount(qty, flag, price = 0) {
+            var customer_id = $('#customer_id').val();
+            var warehouse_id = $('#warehouse_id').val();
+            var product_id = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .product-id').val();
+
+            $.ajax({
+                type: 'GET',
+                async: false,
+                url: '{{ url('/') }}/sales/check-discount?qty=' + qty + '&customer_id=' + customer_id +
+                    '&product_id=' + product_id + '&warehouse_id=' + warehouse_id,
+                success: function(data) {
+                    if (product_price[rowindex].length == 0) {
+                        product_price[rowindex] = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) +
+                            ') .product_price').val();
+                    }
+                    if (price > 0) {
+                        product_price[rowindex] = price;
+                        product_price[rowindex] = parseFloat(product_price[rowindex] * currency[
+                            'exchange_rate']) + parseFloat(product_price[rowindex] * currency[
+                            'exchange_rate'] * customer_group_rate);
+                    }
+
+                    var productDiscount = parseFloat($('#discount').text());
+
+                    if (flag == true)
+                        $('#discount').text(productDiscount + data[2]);
+                    else if (flag == false)
+                        $('#discount').text(productDiscount - data[2] * qty);
+                    else if (flag == 'input')
+                        $('#discount').text(productDiscount - data[2] * previousqty + data[2] * qty);
+                    else
+                        $('#discount').text(productDiscount - data[2]);
+                }
+            });
+
+            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .qty').val(qty);
+            flag = true;
+            checkQuantity(String(qty), flag);
+        }
+
+        function checkQuantity(sale_qty, flag) {
+            var row_product_code = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.product-code')
+                .val();
+            var qty = parseFloat($('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.qty').attr('max'));
+            var product_type = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.product_type').val();
+            var imeiNumbers = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.imei-number').val();
+            if (without_stock == 'no') {
+                if (product_type.trim() == 'standard' || product_type.trim() == 'combo') {
+                    var operator = unit_operator[rowindex].split(',');
+                    var operation_value = unit_operation_value[rowindex].split(',');
+                    if (operator[0] == '*')
+                        total_qty = sale_qty * operation_value[0];
+                    else if (operator[0] == '/')
+                        total_qty = sale_qty / operation_value[0];
+                    if (total_qty > qty) {
+                        if (imeiNumbers.length) {
+                            // console.log(sale_qty);
+                            // sale_qty = (sale_qty + 1);
+                        } else {
+                            alert('Quantity exceeds stock quantity!');
+
+                            if (flag) {
+                                sale_qty = (sale_qty - 1);
+                                checkQuantity(sale_qty, true);
+                            } else {
+                                edit();
+                                return;
+                            }
+                        }
+
+                        if (sale_qty == 0) {
+                            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').remove();
+                        }
+                    }
+                    $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.qty').val(sale_qty);
+                }
+            } else
+                $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.qty').val(sale_qty);
+            if (!flag) {
+                $('#editModal').modal('hide');
+                $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.qty').val(sale_qty);
+            }
+            calculateRowProductData(sale_qty);
+        }
+
+        function unitConversion() {
+            var row_unit_operator = unit_operator[rowindex].slice(0, unit_operator[rowindex].indexOf(","));
+            var row_unit_operation_value = unit_operation_value[rowindex].slice(0, unit_operation_value[rowindex].indexOf(
+                ","));
+
+            if (row_unit_operator == '*') {
+                row_product_price = product_price[rowindex] * row_unit_operation_value;
+            } else {
+                row_product_price = product_price[rowindex] / row_unit_operation_value;
+            }
+        }
+
+        function calculateRowProductData(quantity) {
+            // if (product_discount[rowindex] < 1) {
+            //     cur_product_id = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .product-id').val();
+            //     // @if (isset($draft_product_discount))
+            //     //     if (product_discount[rowindex] < 1) {
+            //     //         draft_discounts = @json($draft_product_discount['discount']);
+            //     //         product_discount[rowindex] = draft_discounts[cur_product_id];
+            //     //         console.log(product_discount[rowindex]);
+            //     //         if(product_discount[rowindex] == undefined || product_discount[rowindex] == null) {
+            //     //             checkDiscount(1, false);
+            //     //         }
+            //     //     }
+            //     // @endif
+            // }
+
+            if (product_type[pos] == 'standard')
+                unitConversion();
+            else
+                row_product_price = product_price[rowindex];
+            if (tax_method[rowindex] == 1) {
+                var net_unit_price = row_product_price - product_discount[rowindex];
+                var tax = net_unit_price * quantity * (tax_rate[rowindex] / 100);
+                var sub_total = (net_unit_price * quantity) + tax;
+
+                if (parseFloat(quantity))
+                    var sub_total_unit = sub_total / quantity;
+                else
+                    var sub_total_unit = sub_total;
+            } else {
+                var sub_total_unit = row_product_price - product_discount[rowindex];
+                var net_unit_price = (100 / (100 + tax_rate[rowindex])) * sub_total_unit;
+                var tax = (sub_total_unit - net_unit_price) * quantity;
+                var sub_total = sub_total_unit * quantity;
+            }
+
+            var topping_price = ($('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.topping-price')
+                .val() * quantity) || 0;
+
+            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.discount-value').val((product_discount[
+                rowindex] * quantity).toFixed({{ $general_setting->decimal }}));
+            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.tax-rate').val(tax_rate[rowindex]
+                .toFixed({{ $general_setting->decimal }}));
+            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.net_unit_price').val(net_unit_price
+                .toFixed({{ $general_setting->decimal }}));
+            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.tax-value').val(tax.toFixed(
+                {{ $general_setting->decimal }}));
+            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.product-price').text(sub_total_unit
+                .toFixed({{ $general_setting->decimal }}));
+            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.sub-total').text((sub_total +
+                topping_price).toFixed({{ $general_setting->decimal }}));
+            $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.subtotal-value').val((sub_total +
+                topping_price).toFixed({{ $general_setting->decimal }}));
+
+            calculateTotal();
+        }
+
+        function calculateTotal() {
+            //Sum of quantity
+            var total_qty = 0;
+            $("table.order-list tbody .qty").each(function(index) {
+                if ($(this).val() == '') {
+                    total_qty += 0;
+                } else {
+                    total_qty += parseFloat($(this).val());
+                }
+            });
+            $('input[name="total_qty"]').val(total_qty);
+
+            //Sum of discount
+            var total_discount = 0;
+            $("table.order-list tbody .discount-value").each(function() {
+                total_discount += parseFloat($(this).val());
+            });
+
+            $('input[name="total_discount"]').val(total_discount.toFixed({{ $general_setting->decimal }}));
+
+            //Sum of tax
+            var total_tax = 0;
+            $(".tax-value").each(function() {
+                total_tax += parseFloat($(this).val());
+            });
+
+            $('input[name="total_tax"]').val(total_tax.toFixed({{ $general_setting->decimal }}));
+
+            //Sum of subtotal
+            var total = 0;
+            $(".sub-total").each(function() {
+                total += parseFloat($(this).text());
+            });
+
+            if ($('enable_installment').is(':checked')) {
+                $('input[name="total_price"]').val($('input[name="installment_plan[total_amount]"]').val());
+            } else {
+                $('input[name="total_price"]').val(total.toFixed({{ $general_setting->decimal }}));
+            }
+
+            calculateGrandTotal();
+        }
+
+        function calculateGrandTotal() {
+            var item = $('table.order-list tbody tr:last').index();
+            if (item == -1) {
+                $('#order-discount-val').val(0);
+            }
+            var total_qty = parseFloat($('input[name="total_qty"]').val());
+            var subtotal = parseFloat($('input[name="total_price"]').val());
+            var order_tax = parseFloat($('select[name="order_tax_rate_select"]').val());
+            var order_discount_type = $('select[name="order_discount_type_select"]').val();
+            var order_discount_value = parseFloat($('input[name="order_discount_value"]').val());
+
+            @if (isset($lims_sale_data))
+                if (order_discount_value === null || isNaN(order_discount_value) || order_discount_value < 1) {
+                    order_discount_type = @json($lims_sale_data->order_discount_type);
+                    order_discount_value = parseFloat(@json($lims_sale_data->order_discount_value));
+                }
+            @endif
+
+            if (!order_discount_value)
+                order_discount_value = {{ number_format(0, $general_setting->decimal, '.', '') }};
+
+            if (order_discount_type == 'Flat') {
+                if (!currencyChange) {
+                    var order_discount = parseFloat(order_discount_value);
+                } else
+                    var order_discount = parseFloat(order_discount_value * currency['exchange_rate']);
+            } else
+                var order_discount = parseFloat(subtotal * (order_discount_value / 100));
+
+            $("#discount").text(order_discount_value.toFixed({{ $general_setting->decimal }}));
+            $('input[name="order_discount"]').val(order_discount);
+            $('#order-discount-val').val(order_discount_value);
+            $('input[name="order_discount_type"]').val(order_discount_type);
+            if (!currencyChange)
+                var shipping_cost = parseFloat($('input[name="shipping_cost"]').val());
+            else
+                var shipping_cost = parseFloat($('input[name="shipping_cost"]').val() * currency['exchange_rate']);
+            if (!shipping_cost)
+                shipping_cost = {{ number_format(0, $general_setting->decimal, '.', '') }};
+
+            item = ++item + '(' + total_qty + ')';
+            order_tax = (subtotal - order_discount) * (order_tax / 100);
+            var grand_total = (subtotal + order_tax + shipping_cost) - order_discount;
+            $('input[name="grand_total"]').val(grand_total.toFixed({{ $general_setting->decimal }}));
+
+            if ($("#coupon-code").val() != '')
+                couponDiscount();
+            if (!currencyChange)
+                var coupon_discount = parseFloat($('input[name="coupon_discount"]').val());
+            else
+                var coupon_discount = parseFloat($('input[name="coupon_discount"]').val() * currency['exchange_rate']);
+            if (!coupon_discount)
+                coupon_discount = {{ number_format(0, $general_setting->decimal, '.', '') }};
+            grand_total -= coupon_discount;
+
+            $('#item').text(item);
+            $('input[name="item"]').val($('table.order-list tbody tr:last').index() + 1);
+            $('#subtotal').text(subtotal.toFixed({{ $general_setting->decimal }}));
+            $('#tax').text(order_tax.toFixed({{ $general_setting->decimal }}));
+            $('input[name="order_tax"]').val(order_tax.toFixed({{ $general_setting->decimal }}));
+            $('#shipping-cost').text(shipping_cost.toFixed({{ $general_setting->decimal }}));
+            $('input[name="shipping_cost"]').val(shipping_cost);
+            $('#grand-total').text(grand_total.toFixed({{ $general_setting->decimal }}));
+            $('#grand-total-m').text(grand_total.toFixed({{ $general_setting->decimal }}));
+            $('input[name="grand_total"]').val(grand_total.toFixed({{ $general_setting->decimal }}));
+            currencyChange = false;
+
+            saveDataToLocalStorageForCustomerDisplay('clear_no');
+        }
+
+
+
+        function cancel(rownumber) {
+            while (rownumber >= 0) {
+                product_price.pop();
+                wholesale_price.pop();
+                product_discount.pop();
+                tax_rate.pop();
+                tax_name.pop();
+                tax_method.pop();
+                unit_name.pop();
+                unit_operator.pop();
+                unit_operation_value.pop();
+                $('table.order-list tbody tr:last').remove();
+                rownumber--;
+            }
+            $('input[name="shipping_cost"]').val('');
+            $('input[name="order_discount_value"]').val('');
+            $('select[name="order_tax_rate_select"]').val(0);
+            calculateTotal();
+        }
+
+        function confirmCancel() {
+            playSound();
+            if (confirm("Are you sure want to cancel?")) {
+                cancel($('table.order-list tbody tr:last').index());
+            }
+            return false;
+        }
+
+        $(document).on('submit', '.payment-form', function(e) {
+                    e.preventDefault();
+
+                    $("table.order-list tbody .qty").each(function(index) {
+                        if ($(this).val() == '') {
+                            alert('One of products has no quantity!');
+                        }
+                    });
+
+                    var rownumber = $('table.order-list tbody tr:last').index();
+                    if (rownumber < 0) {
+                        alert("Please insert product to order table!")
+                    } else if (parseFloat($('input[name="total_qty"]').val()) <= 0) {
+                        alert('Product quantity is 0');
+                    } else {
+                        if ($('input[name="sale_status"]').val() == 1) {
+                            $("#submit-btn").prop('disabled', true).html(
+                                '<span class="spinner-border text-light" role="status"></span>');
+                        }
+
+                        $('input[name="paid_by_id"]').val($('select[name="paid_by_id_select"]').val());
+                        $('select[name="paid_by_id_select[]"]').each(function(index) {
+                            $('input[name="paid_by_id[]"]').eq(index).val($(this).val());
+                        });
+                        $('input[name="order_tax_rate"]').val($('select[name="order_tax_rate_select"]').val());
+
+                        $.ajax({
+                                url: $('.payment-form').attr('action'), // The form's action URL
+                                type: $('.payment-form').attr('method'), // The form's method (GET or POST)
+                                data: $('.payment-form').serialize(), // Serialize the form data
+                                success: function(response) {
+
+                                    @if (in_array('restaurant', explode(',', $general_setting->modules)))
+                                        if ($('input[name="sale_status"]').val() == 1 || $(
+                                                'input[name="sale_status"]').val() == 5) {
+                                        @else
+                                            if ($('input[name="sale_status"]').val() == 1) {
+                                            @endif
+
+                                            var head = $('head').html();
+                                            $('.ui-helper-hidden-accessible').css('display', 'none');
+
+                                            let whatsappChecked = $('#send_whatsapp').is(':checked');
+                                            let printChecked = $('#print_invoice').is(':checked');
+                                            if (whatsappChecked) {
+                                                let customer_id = $('select[name="customer_id"]').val();
+                                                let customer = lims_customer_list.find(c => c.id == customer_id);
+                                                let whatsapp_number = customer?.wa_number?.replace(/\D/g, '') || '';
+                                                let link = "{{ url('sales/gen_invoice') }}/" + response;
+                                                console.log('1');
+                                                console.log(whatsapp_number);
+                                                if (whatsapp_number != '') {
+                                                    console.log('2');
+                                                    console.log(whatsapp_number);
+                                                }
+
+                                            }
+                                            if (printChecked) {
+                                                let link = "{{ url('sales/gen_invoice') }}/" + response +
+                                                    "?is_print=true";
+                                                $.ajax({
+                                                    url: link,
+                                                    type: 'GET',
+                                                    success: function(data) {
+                                                        if (data.trim() === 'receipt_printer') {
+                                                            alert(
+                                                                "{{ __('db.The receipt has been successfully printed') }}"
+                                                            );
+                                                        } else if (data.trim() ===
+                                                            'invoice_settings_error') {
+                                                            alert(
+                                                                "{{ __('db.Please select either the 58mm or 80mm template as the default in Invoice Settings') }}"
+                                                            );
+                                                        } else {
+                                                            $('#pos-layout').css('display', 'none');
+                                                            $('head').html('');
+                                                            $('#print-layout').html(data);
+
+                                                            setTimeout(function() {
+                                                                window.print();
+                                                            }, 50);
+                                                        }
+                                                    },
+                                                    error: function(xhr, status, error) {
+                                                        console.error("Error loading invoice:", error);
+                                                    }
+                                                });
+                                            }
+                                            if (!whatsappChecked && !printChecked) {
+                                                location.replace('{{ url('/pos') }}');
+                                            }
+
+                                            $("#submit-btn").prop('disabled', false).html(
+                                                "{{ __('db.submit') }}");
+                                            $('#add-payment').modal('hide');
+                                            cancel($('table.order-list tbody tr:last').index());
+
+                                            setTimeout(function() {
+                                                window.onafterprint = (event) => {
+                                                    if (isMobile == false) {
+                                                        $('#pos-layout').css('display', 'block');
+                                                        $('#print-layout').html('');
+                                                        $('head').html(head);
+                                                        location.replace('{{ url('/pos') }}');
+                                                    }
+                                                };
+                                            }, 100);
+
+                                            $('input[name="sale_id"]').val('');
+                                            $('input[name="draft"]').val('');
+                                            history.replaceState('', '', '{{ url('/pos') }}');
+
+                                            $.get('{{ url('sales/recent-sale') }}', function(data) {
+                                                populateRecentSale(data);
+                                            });
+                                        } else if ($('input[name="sale_status"]').val() == 3) {
+                                            $('#pos-layout').prepend(
+                                                '<div class="alert alert-success alert-dismissible text-center"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>{{ __('db.Sale successfully added to draft') }}</div>'
+                                            );
+                                            $('input[name="sale_status"]').val(1);
+                                            cancel($('table.order-list tbody tr:last').index());
+                                            $.get('{{ url('sales/recent-draft') }}', function(data) {
+                                                populateRecentDraft(data);
+                                            });
+                                        }
+
+                                    },
+                                    error: function(xhr) {
+                                        console.log('Form submission failed.');
+                                    }
+                                });
+
+                            saveDataToLocalStorageForCustomerDisplay('clear_all');
+                        }
+                    });
+
+                @if (in_array('restaurant', explode(',', $general_setting->modules)))
+                    $('#service_id').change(function() {
+                        if ($(this).val() == 1) {
+                            $('#table_id').prop('disabled', false);
+                            $('#table_id').selectpicker('refresh');
+
+
+                            $('#waiter_id').prop('disabled', false);
+                            $('#waiter_id').selectpicker('refresh');
+
+                            $('#table_id').prop('required', true);
+                            $('#waiter_id').prop('required', true);
+                        } else {
+                            $('#table_id').prop('disabled', true);
+                            $('#table_id').selectpicker('refresh');
+
+                            $('#waiter_id').prop('disabled', true);
+                            $('#waiter_id').selectpicker('refresh');
+
+                            $('#table_id').prop('required', false);
+                            $('#waiter_id').prop('required', false);
+                        }
+                    });
+                @endif
+
+                // Load suppliers when the add supplier payment button is clicked
+                $(document).on('click', '.add-supplier-payment', function() {
+                    $('#add-supplier-payment form')[0].reset();
+                    $.ajax({
+                        url: "{{ route('supplier.all') }}", // Laravel route helper
+                        type: "GET",
+                        dataType: "json",
+                        success: function(response) {
+                            let $supplierSelect = $('#supplier_list');
+                            $supplierSelect.empty(); // Clear existing options
+
+                            $supplierSelect.append('<option value="">Select Supplier</option>');
+
+                            $supplierSelect.append(response);
+
+                            // Refresh bootstrap-select
+                            $supplierSelect.selectpicker('refresh');
+                        },
+                        error: function(xhr) {
+                            console.error("Error loading suppliers:", xhr.responseText);
+                        }
+                    });
+                });
+
+                $(document).on('change', '#supplier_list', function() {
+                    $('input[name="balance"]').val('');
+                    let supplierId = $(this).val();
+
+                    if (supplierId) {
+                        $.ajax({
+                            url: "{{ url('supplier-due') }}/" + supplierId,
+                            type: "GET",
+                            dataType: "json",
+                            success: function(response) {
+                                // response[0] = supplier data, response[1] = due
+                                let due = response[0];
+                                $('input[name="balance"]').val(due);
+                            },
+                            error: function(xhr) {
+                                console.error("Error fetching supplier due:", xhr.responseText);
+                                $('input[name="balance"]').val('');
+                            }
+                        });
+                    } else {
+                        $('input[name="balance"]').val('');
+                    }
+                });
+    </script>
+
+    <script>
+        const display = document.querySelector('.display');
+        const buttons = document.querySelectorAll('.btn');
+
+        let currentInput = '';
+        let operator = null;
+        let previousInput = '';
+
+        function updateDisplay() {
+            display.value = currentInput || previousInput || '0';
+        }
+
+        function calculate() {
+            let result;
+            const prev = parseFloat(previousInput);
+            const current = parseFloat(currentInput);
+
+            if (isNaN(prev) || isNaN(current)) return;
+
+            switch (operator) {
+                case '+':
+                    result = prev + current;
+                    break;
+                case '-':
+                    result = prev - current;
+                    break;
+                case 'x':
+                    result = prev * current;
+                    break;
+                case '÷':
+                    result = prev / current;
+                    break;
+                case '%':
+                    result = prev % current;
+                    break;
+                default:
+                    return;
+            }
+            currentInput = result.toString();
+            operator = null;
+            previousInput = '';
+        }
+
+        buttons.forEach(button => {
+            button.addEventListener('click', (e) => {
+                const value = e.target.textContent;
+
+                if (e.target.classList.contains('number') || value === '.') {
+                    currentInput += value;
+                } else if (e.target.classList.contains('operator')) {
+                    if (currentInput === '') return;
+                    if (previousInput !== '') calculate();
+                    operator = value;
+                    previousInput = currentInput;
+                    currentInput = '';
+                } else if (e.target.classList.contains('equals')) {
+                    calculate();
+                } else if (e.target.classList.contains('ac')) {
+                    currentInput = '';
+                    operator = null;
+                    previousInput = '';
+                } else if (e.target.classList.contains('ce')) {
+                    currentInput = currentInput.slice(0, -1);
+                }
+
+                updateDisplay();
+            });
+        });
+
+        updateDisplay();
+
+        $('#expense-amount').on('input', function() {
+            var value = $(this).val();
+            if (value < 0) {
+                alert('Amount cannot be negative');
+                $(this).val('');
+            } else if (isNaN(value)) {
+                alert('Please enter a valid number');
+                $(this).val('');
+            } else {
+                var cash_register_id = $("#register-details-btn").data('id');
+                if (cash_register_id) {
+                    $.ajax({
+                        url: '{{ url('cash-register/getDetails') }}/' + cash_register_id,
+                        type: "GET",
+                        success: function(data) {
+                            if (parseFloat(value) > parseFloat(data['total_cash'])) {
+                                alert("{{ __('db.Amount exceeds available balance') }}");
+                                $('#expense-amount').val('');
+                            }
+                        }
+                    })
+                }
+            }
+        });
+
+        $('#supplier-amount').on('input', function() {
+            var value = $(this).val();
+            if (value < 0) {
+                alert('Amount cannot be negative');
+                $(this).val('');
+            } else if (isNaN(value)) {
+                alert('Please enter a valid number');
+                $(this).val('');
+            } else {
+                var cash_register_id = $("#register-details-btn").data('id');
+                if (cash_register_id) {
+                    $.ajax({
+                        url: '{{ url('cash-register/getDetails') }}/' + cash_register_id,
+                        type: "GET",
+                        success: function(data) {
+                            if (parseFloat(value) > parseFloat(data['total_cash'])) {
+                                alert("{{ __('db.Amount exceeds available balance') }}");
+                                $('#supplier-amount').val('');
+                            }
+                        }
+                    })
+                }
+            }
+        });
+
+        $(document).on("click", "#print-last-reciept", function(e) {
+            e.preventDefault();
+            let link = $(this).attr('href');
+            $.ajax({
+                url: link,
+                type: 'GET',
+                success: function(data) {
+                    if (data.trim() === 'receipt_printer') {
+                        alert("{{ __('db.The receipt has been successfully printed') }}");
+                    } else if (data.trim() === 'invoice_settings_error') {
+                        alert(
+                            "{{ __('db.Please select either the 58mm or 80mm template as the default in Invoice Settings') }}"
+                        );
+                    } else {
+                        location.href = link;
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error loading invoice:", error);
+                }
+            });
+        });
+
+        /*-------------Start Customer Display-----------*/
+        $(document).on("click", "#customer-display", function(e) {
+            e.preventDefault();
+            window.open(
+                $(this).attr("href"),
+                "customer_display",
+                "width=" + screen.width + ",height=" + screen.height + ",top=0,left=0"
+            );
+        });
+
+        $('#add-payment').on('shown.bs.modal', function(e) {
+            saveDataToLocalStorageForCustomerDisplay('clear_no');
+            // Initialize selectpicker for new fields
+            $('#posdeliverytype, #order_mode, #posdeliverytime, #posdeliverytime2').selectpicker('refresh');
+            toggleReceiverBlocksByOrderType();
+            // Initialize datetime picker for delivery date
+            if ($('#sldate').length && typeof $.fn.datetimepicker !== 'undefined') {
+                $('#sldate').datetimepicker({
+                    format: 'YYYY-MM-DD',
+                    useCurrent: false,
+                    icons: {
+                        time: 'fa fa-time',
+                        date: 'fa fa-calendar',
+                        up: 'fa fa-chevron-up',
+                        down: 'fa fa-chevron-down',
+                        previous: 'fa fa-chevron-left',
+                        next: 'fa fa-chevron-right',
+                        today: 'fa fa-screenshot',
+                        clear: 'fa fa-trash',
+                        close: 'fa fa-remove'
+                    }
+                });
+            }
+        });
+        $('#add-payment').on('hidden.bs.modal', function(e) {
+            saveDataToLocalStorageForCustomerDisplay('clear_partial');
+        });
+
+        // Show/hide receiver fields based on Order Type (reference: gift_order_shop / gift_order_factory only)
+        function toggleReceiverBlocksByOrderType() {
+            var orderType = $('#posdeliverytype').val();
+            if (orderType === 'gift_order_shop' || orderType === 'gift_order_factory') {
+                $('#receivername_block, #receivernumber_block').removeClass('hide');
+            } else {
+                $('#receivername_block, #receivernumber_block').addClass('hide');
+                $('#receiver_name, #receiver_number').val('');
+            }
+        }
+        $(document).on('change', '#posdeliverytype', toggleReceiverBlocksByOrderType);
+
+        // Make delivery_time2 optional
+        $('#posdeliverytime2').attr('required', false);
+
+        function saveDataToLocalStorageForCustomerDisplay(is_clear_local_storage) {
+            if (is_clear_local_storage == 'clear_all') {
+                localStorage.setItem("customer_display_data_array", JSON.stringify([]));
+                return false;
+            }
+
+            let products = [];
+
+            $("#myTable tbody tr").each(function() {
+                let name = $(this).find(".product-title strong").clone()
+                    .children("svg").remove().end()
+                    .text().trim();
+
+                let price = $(this).find(".product-price.d-none.d-md-block").text().trim();
+                let qty = $(this).find("input.qty").val();
+                let subtotal = $(this).find(".sub-total").text().trim();
+
+                products.push({
+                    name: name,
+                    price: price,
+                    qty: qty,
+                    subtotal: subtotal
+                });
+            });
+
+            let CashReceived = 0;
+            $("input[name='paying_amount[]']").each(function() {
+                let val = parseFloat($(this).val()) || 0.00;
+                CashReceived += val;
+            });
+            CashReceived = CashReceived.toFixed({{ $general_setting->decimal }});
+
+            let customer_display_data_array = {
+                customer: $("#customer_id option:selected").text(),
+                products: products,
+                item: $("#item").text(),
+                subtotal: $("#subtotal").text(),
+                discount: $("#discount").text(),
+                couponText: $("#coupon-text").text(),
+                tax: $("#tax").text(),
+                shippingCost: $("#shipping-cost").text(),
+                totalPayable: $("#grand-total").text(),
+                CashReceived: CashReceived,
+                totalPaying: $(".total_paying").text(),
+                change: $(".change").text(),
+                due: $(".due").text(),
+            };
+
+            if (is_clear_local_storage == 'clear_partial') {
+                customer_display_data_array.CashReceived = (0).toFixed({{ $general_setting->decimal }});
+                customer_display_data_array.totalPaying = (0).toFixed({{ $general_setting->decimal }});
+                customer_display_data_array.change = (0).toFixed({{ $general_setting->decimal }});
+                customer_display_data_array.due = (0).toFixed({{ $general_setting->decimal }});
+
+            }
+
+            localStorage.setItem("customer_display_data_array", JSON.stringify(customer_display_data_array));
+        }
+        /*-------------End Customer Display-----------*/
+    </script>
+@endpush

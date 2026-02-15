@@ -209,7 +209,7 @@
                 @endif
 
                 @if (isset($show->show_customer_name) && $show->show_customer_name == 1)
-                    {{ bilingual('customer', 'العميل') }}: {{ $lims_customer_data->name }}
+                    {{ bilingual('customer', 'العميل') }}: {{ optional($lims_customer_data)->name ?? __('db.Walk-in Customer') }}
                 @endif
 
                 @if ($lims_sale_data->table_id)
@@ -221,9 +221,11 @@
                     $field_name = str_replace(' ', '_', strtolower($fieldName));
                     echo '<br>' . $fieldName . ': ' . $lims_sale_data->$field_name;
                 }
-                foreach ($customer_custom_fields as $key => $fieldName) {
-                    $field_name = str_replace(' ', '_', strtolower($fieldName));
-                    echo '<br>' . $fieldName . ': ' . $lims_customer_data->$field_name;
+                if ($lims_customer_data ?? null) {
+                    foreach ($customer_custom_fields as $key => $fieldName) {
+                        $field_name = str_replace(' ', '_', strtolower($fieldName));
+                        echo '<br>' . $fieldName . ': ' . $lims_customer_data->$field_name;
+                    }
                 }
                 ?>
 
@@ -233,13 +235,14 @@
                     <?php $total_product_tax = 0; ?>
                     @foreach ($lims_product_sale_data as $key => $product_sale_data)
                         <?php
-                        $lims_product_data = \App\Models\Product::find($product_sale_data->product_id);
+                        $lims_product_data = $product_data_by_index[$key] ?? null;
+                        if (!$lims_product_data) continue;
                         if ($product_sale_data->variant_id) {
                             $variant_data = \App\Models\Variant::find($product_sale_data->variant_id);
-                            $product_name = $lims_product_data->name . ' [' . $variant_data->name . ']';
+                            $product_name = $lims_product_data->name . ($variant_data ? ' [' . $variant_data->name . ']' : '');
                         } elseif ($product_sale_data->product_batch_id) {
                             $product_batch_data = \App\Models\ProductBatch::select('batch_no')->find($product_sale_data->product_batch_id);
-                            $product_name = $lims_product_data->name . ' [' . __('db.Batch No') . ':' . $product_batch_data->batch_no . ']';
+                            $product_name = $lims_product_data->name . ($product_batch_data ? ' [' . __('db.Batch No') . ':' . $product_batch_data->batch_no . ']' : '');
                         } else {
                             // Display product name in both English and Arabic
                             $product_name_en = $lims_product_data->name;

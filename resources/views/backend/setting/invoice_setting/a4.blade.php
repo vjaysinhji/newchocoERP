@@ -120,9 +120,11 @@
                     $field_name = str_replace(' ', '_', strtolower($fieldName));
                     echo '<div style="display: flex;justify-content: space-between;border-bottom:1px solid #aaa"><span>' . $fieldName . ':</span> <span> ' . $lims_sale_data->$field_name . '</span></div>';
                 }
-                foreach ($customer_custom_fields as $key => $fieldName) {
-                    $field_name = str_replace(' ', '_', strtolower($fieldName));
-                    echo '<div style="display: flex;justify-content: space-between;border-bottom:1px solid #aaa"><span>' . $fieldName . ':</span> <span>' . $lims_customer_data->$field_name . '</span></div>';
+                if ($lims_customer_data ?? null) {
+                    foreach ($customer_custom_fields as $key => $fieldName) {
+                        $field_name = str_replace(' ', '_', strtolower($fieldName));
+                        echo '<div style="display: flex;justify-content: space-between;border-bottom:1px solid #aaa"><span>' . $fieldName . ':</span> <span>' . $lims_customer_data->$field_name . '</span></div>';
+                    }
                 }
                 ?>
             </td>
@@ -141,7 +143,7 @@
                         Bill To
                     </h2>
                     <div style="margin-top: 10px;margin-left: 10px">
-                        <span>{{ __('db.customer') }}: {{ $lims_customer_data->name }}</span>
+                        <span>{{ __('db.customer') }}: {{ optional($lims_customer_data)->name ?? __('db.Walk-in Customer') }}</span>
                     </div>
                     {{-- <div style="margin-left: 10px">
                         <span>VAT Number:</span>&nbsp;&nbsp;<span>{{$lims_customer_data->tax_no}}</span>
@@ -154,16 +156,16 @@
                                 {{ $lims_sale_data->shipping_city }}, {{ $lims_sale_data->shipping_country }},
                                 {{ $lims_sale_data->shipping_zip }}</span>
                         @else
-                            <span>{{ $lims_customer_data->address }}</span>
+                            <span>{{ optional($lims_customer_data)->address ?? '' }}</span>
                         @endif
                     </div>
-                    @if (isset($lims_customer_data->phone_number) || isset($lims_sale_data->shipping_phone))
+                    @if (($lims_customer_data && isset($lims_customer_data->phone_number)) || isset($lims_sale_data->shipping_phone))
                         <div style="margin-bottom: 10px;margin-left: 10px">
                             <span>Phone:</span>&nbsp;&nbsp;
                             @if ($lims_sale_data->sale_type == 'online')
                                 <span>{{ $lims_sale_data->shipping_phone }}
                                 @else
-                                    <span>{{ $lims_customer_data->phone_number }}</span>
+                                    <span>{{ optional($lims_customer_data)->phone_number ?? '' }}</span>
                             @endif
                         </div>
                     @endif
@@ -197,7 +199,8 @@
 
         @foreach ($lims_product_sale_data as $key => $product_sale_data)
             <?php
-            $lims_product_data = \App\Models\Product::find($product_sale_data->product_id);
+            $lims_product_data = $product_data_by_index[$key] ?? null;
+            if (!$lims_product_data) continue;
             if ($product_sale_data->sale_unit_id) {
                 $unit = \App\Models\Unit::select('unit_code')->find($product_sale_data->sale_unit_id);
                 $unit_code = $unit->unit_code;
@@ -207,7 +210,7 @@
 
             if ($product_sale_data->variant_id) {
                 $variant = \App\Models\Variant::select('name')->find($product_sale_data->variant_id);
-                $variant_name = $variant->name;
+                $variant_name = $variant ? $variant->name : '';
             } else {
                 $variant_name = '';
             }

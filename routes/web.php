@@ -517,6 +517,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::get('sales/get-sale/{id}', 'getSale');
         Route::post('importsale', 'importSale')->name('sale.import');
         Route::get('pos/{id?}', 'posSale')->name('sale.pos');
+        Route::get('sales/next-pos-invoice-no', 'getNextPosInvoiceNo')->name('sale.nextPosInvoiceNo');
         Route::get('sales/recent-sale', 'recentSale');
         Route::get('sales/recent-draft', 'recentDraft');
         Route::get('sales/lims_sale_search', 'limsSaleSearch')->name('sale.search');
