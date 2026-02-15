@@ -13,13 +13,17 @@ class Subcategory extends Model
         'name_english',
         'name_arabic',
         'slug',
+        'show_in_menu',
+        'menu_sort_order',
         'sort_order',
         'description_english',
         'description_arabic',
     ];
 
     protected $casts = [
+        'show_in_menu' => 'boolean',
         'sort_order' => 'integer',
+        'menu_sort_order' => 'integer',
     ];
 
     /**

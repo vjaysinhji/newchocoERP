@@ -49,7 +49,7 @@ class SubcategoryController extends Controller
             2 => 'name_english',
             3 => 'name_arabic',
             4 => 'slug',
-            5 => 'sort_order',
+            5 => 'show_in_menu',
         ];
 
         $totalData = Subcategory::count();
@@ -60,12 +60,16 @@ class SubcategoryController extends Controller
         $order = $columns[$request->input('order.0.column')] ?? 'id';
         $dir = $request->input('order.0.dir') ?? 'asc';
 
+        $orderByCol = (\Schema::hasColumn('subcategories', 'menu_sort_order') && $order === 'show_in_menu') ? 'menu_sort_order' : $order;
+        $dirUpper = strtoupper($dir) === 'DESC' ? 'DESC' : 'ASC';
         if (empty($request->input('search.value'))) {
-            $subcategories = Subcategory::with('category')
-                ->offset($start)
-                ->limit($limit)
-                ->orderBy($order, $dir)
-                ->get();
+            $q = Subcategory::with('category')->offset($start)->limit($limit);
+            if ($orderByCol === 'menu_sort_order' && \Schema::hasColumn('subcategories', 'menu_sort_order')) {
+                $q->orderByRaw('COALESCE(menu_sort_order, 999999) ' . $dirUpper);
+            } else {
+                $q->orderBy($orderByCol, $dir);
+            }
+            $subcategories = $q->get();
         } else {
             $search = $request->input('search.value');
             $subcategories = Subcategory::with('category')
@@ -78,9 +82,13 @@ class SubcategoryController extends Controller
                         });
                 })
                 ->offset($start)
-                ->limit($limit)
-                ->orderBy($order, $dir)
-                ->get();
+                ->limit($limit);
+            if ($orderByCol === 'menu_sort_order' && \Schema::hasColumn('subcategories', 'menu_sort_order')) {
+                $subcategories->orderByRaw('COALESCE(menu_sort_order, 999999) ' . $dirUpper);
+            } else {
+                $subcategories->orderBy($orderByCol, $dir);
+            }
+            $subcategories = $subcategories->get();
             $totalFiltered = Subcategory::where(function ($q) use ($search) {
                 $q->where('name_english', 'LIKE', "%{$search}%")
                     ->orWhere('name_arabic', 'LIKE', "%{$search}%")
@@ -100,7 +108,8 @@ class SubcategoryController extends Controller
             $nestedData['name_arabic'] = e($sub->name_arabic ?? '—');
             $nestedData['category_name'] = $sub->category ? e($sub->category->name) : '—';
             $nestedData['slug'] = e($sub->slug ?? '—');
-            $nestedData['sort_order'] = (int) $sub->sort_order;
+            $checked = \Schema::hasColumn('subcategories', 'show_in_menu') && $sub->show_in_menu;
+            $nestedData['show_in_menu'] = '<label class="switch mb-0"><input type="checkbox" class="toggle-show-in-menu-sub" data-id="' . $sub->id . '" ' . ($checked ? 'checked' : '') . '><span class="slider round"></span></label>';
             $destroyUrl = route('subcategory.destroy', $sub->id);
             $nestedData['options'] = '<div class="btn-group">
                 <button type="button" class="btn btn-default btn-sm dropdown-toggle" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">' . __("db.action") . '
@@ -139,7 +148,6 @@ class SubcategoryController extends Controller
         }
 
         $data = $request->validated();
-        $data['sort_order'] = (int) ($request->sort_order ?? 0);
         $data['slug'] = $request->slug ? Str::slug($request->slug, '-') : Str::slug($request->name_english, '-');
 
         foreach (['subcate_banner_img', 'image'] as $field) {
@@ -181,7 +189,6 @@ class SubcategoryController extends Controller
         }
 
         $data = $request->except('_token', '_method', 'subcate_banner_img', 'image');
-        $data['sort_order'] = (int) ($request->sort_order ?? 0);
         $data['slug'] = $request->slug ? Str::slug($request->slug, '-') : Str::slug($request->name_english, '-');
 
         if ($request->hasFile('subcate_banner_img')) {
@@ -226,5 +233,67 @@ class SubcategoryController extends Controller
         $this->fileDelete($dirImg . '/', $subcategory->image);
         $subcategory->delete();
         return redirect()->route('subcategory.index')->with('message', __('Subcategory deleted successfully'));
+    }
+
+    /** Toggle Show in navbar for a subcategory (same as category). */
+    public function toggleShowInMenu(Request $request)
+    {
+        $request->validate([
+            'subcategory_id' => 'required|exists:subcategories,id',
+            'show_in_menu' => 'required|in:0,1',
+        ]);
+        $subcategory = Subcategory::find($request->subcategory_id);
+        if (!$subcategory) {
+            return response()->json(['success' => false, 'message' => 'Subcategory not found'], 404);
+        }
+        $showInMenu = (int) $request->show_in_menu;
+        $subcategory->show_in_menu = (bool) $showInMenu;
+        $subcategory->save();
+        if ($showInMenu === 1 && \Schema::hasColumn('subcategories', 'menu_sort_order')) {
+            $this->assignMenuSortOrderSubcategory($subcategory);
+        }
+        return response()->json(['success' => true, 'show_in_menu' => $subcategory->fresh()->show_in_menu]);
+    }
+
+    /** Set menu_sort_order to end when enabling show_in_menu (per category). */
+    protected function assignMenuSortOrderSubcategory(Subcategory $subcategory)
+    {
+        if (!\Schema::hasColumn('subcategories', 'menu_sort_order')) {
+            return;
+        }
+        $max = Subcategory::where('category_id', $subcategory->category_id)->max('menu_sort_order');
+        $subcategory->menu_sort_order = (int) $max + 1;
+        $subcategory->save();
+    }
+
+    /** Get subcategories shown in navbar for a category (for arrange modal). */
+    public function getMenuSubcategories(Request $request)
+    {
+        $request->validate(['category_id' => 'required|exists:categories,id']);
+        if (!\Schema::hasColumn('subcategories', 'show_in_menu')) {
+            return response()->json(['subcategories' => []]);
+        }
+        $subcategories = Subcategory::where('category_id', $request->category_id)
+            ->where('show_in_menu', 1)
+            ->orderByRaw('COALESCE(menu_sort_order, 999999) ASC')
+            ->orderBy('id')
+            ->get(['id', 'name_english', 'slug', 'menu_sort_order']);
+        return response()->json(['subcategories' => $subcategories]);
+    }
+
+    /** Save navbar menu order for subcategories (order array = subcategory ids). */
+    public function saveMenuOrder(Request $request)
+    {
+        $request->validate([
+            'order' => 'required|array',
+            'order.*' => 'required|integer|exists:subcategories,id',
+        ]);
+        if (!\Schema::hasColumn('subcategories', 'menu_sort_order')) {
+            return response()->json(['success' => false, 'message' => 'Column not available'], 400);
+        }
+        foreach ($request->order as $position => $id) {
+            Subcategory::where('id', $id)->update(['menu_sort_order' => $position]);
+        }
+        return response()->json(['success' => true, 'message' => __('Order saved.')]);
     }
 }

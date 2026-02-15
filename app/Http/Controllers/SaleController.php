@@ -11,6 +11,7 @@ use App\Models\CustomerGroup;
 use App\Models\Warehouse;
 use App\Models\Biller;
 use App\Models\Brand;
+use App\Models\Basement;
 use App\Models\Category;
 use App\Models\Product;
 use App\Models\Unit;
@@ -997,8 +998,53 @@ class SaleController extends Controller
         $log_data['item_description'] = '';
 
         foreach ($product_id as $i => $id) {
+            // POS customize: warehouse-store (basement) product from /warehouse-stores/create
+            if (is_string($id) && str_starts_with($id, 'ws_')) {
+                $basement_id = (int) substr($id, 3);
+                $basement = Basement::find($basement_id);
+                if (!$basement) {
+                    continue;
+                }
+                $sale_unit_id = $basement->sale_unit_id ?? 0;
+                if ($sale_unit[$i] != 'n/a') {
+                    $lims_sale_unit_data = Unit::where('unit_name', $sale_unit[$i])->first();
+                    if ($lims_sale_unit_data) {
+                        $sale_unit_id = $lims_sale_unit_data->id;
+                    }
+                }
+                $product_sale = [
+                    'sale_id' => $lims_sale_data->id,
+                    'product_id' => null,
+                    'warehouse_store_product_id' => $basement_id,
+                    'variant_id' => null,
+                    'product_batch_id' => null,
+                    'qty' => $qty[$i],
+                    'sale_unit_id' => $sale_unit_id,
+                    'net_unit_price' => $net_unit_price[$i],
+                    'discount' => $discount[$i],
+                    'tax_rate' => $tax_rate[$i],
+                    'tax' => $tax[$i],
+                    'total' => $total[$i],
+                    'customize_type_id' => (isset($customize_type_id[$i]) && $customize_type_id[$i] !== '' && $customize_type_id[$i] !== null) ? $customize_type_id[$i] : null,
+                    'custom_sort' => (isset($custom_sort[$i]) && $custom_sort[$i] !== '' && $custom_sort[$i] !== null) ? (int) $custom_sort[$i] : null,
+                    'custom_parent_id' => isset($is_customize_parent[$i]) && (int) $is_customize_parent[$i] === 1 ? null : $current_custom_parent_id,
+                ];
+                $created = Product_Sale::create($product_sale);
+                if (isset($is_customize_parent[$i]) && (int) $is_customize_parent[$i] === 1) {
+                    $current_custom_parent_id = $created->id;
+                }
+                $mail_data['products'][$i] = $basement->name;
+                $mail_data['unit'][$i] = $sale_unit[$i] ?? '';
+                $mail_data['qty'][$i] = $qty[$i];
+                $mail_data['total'][$i] = $total[$i];
+                $log_data['item_description'] .= $basement->name . '-' . $qty[$i] . '<br>';
+                continue;
+            }
+
             $lims_product_data = Product::where('id', $id)->first();
-            // DB::rollback();
+            if (!$lims_product_data) {
+                continue;
+            }
             $product_sale['variant_id'] = null;
             $product_sale['product_batch_id'] = null;
 
@@ -1570,16 +1616,18 @@ class SaleController extends Controller
             $mail_data['paid_amount'] = $lims_sale_data->paid_amount;
 
             foreach ($lims_product_sale_data as $key => $product_sale_data) {
-                $lims_product_data = Product::find($product_sale_data->product_id);
-                if ($product_sale_data->variant_id) {
+                $lims_product_data = $this->getProductOrBasementForSaleItem($product_sale_data);
+                if (!$product_sale_data->warehouse_store_product_id && $product_sale_data->variant_id) {
                     $variant_data = Variant::select('name')->find($product_sale_data->variant_id);
-                    $mail_data['products'][$key] = $lims_product_data->name . ' [' . $variant_data->name . ']';
-                } else
+                    $mail_data['products'][$key] = $lims_product_data->name . ($variant_data ? ' [' . $variant_data->name . ']' : '');
+                } else {
                     $mail_data['products'][$key] = $lims_product_data->name;
-                if ($lims_product_data->type == 'digital')
+                }
+                if ($lims_product_data->type == 'digital' && $lims_product_data->file) {
                     $mail_data['file'][$key] = url('/product/files') . '/' . $lims_product_data->file;
-                else
+                } else {
                     $mail_data['file'][$key] = '';
+                }
                 if ($product_sale_data->sale_unit_id) {
                     $lims_unit_data = Unit::find($product_sale_data->sale_unit_id);
                     $mail_data['unit'][$key] = $lims_unit_data->unit_code;
@@ -1674,7 +1722,7 @@ class SaleController extends Controller
         $payerID = $request->PayerID;
         $paypal_data['items'] = [];
         foreach ($lims_product_sale_data as $key => $product_sale_data) {
-            $lims_product_data = Product::find($product_sale_data->product_id);
+            $lims_product_data = $this->getProductOrBasementForSaleItem($product_sale_data);
             $paypal_data['items'][] = [
                 'name' => $lims_product_data->name,
                 'price' => ($product_sale_data->total / $product_sale_data->qty),
@@ -2085,29 +2133,40 @@ class SaleController extends Controller
                 $draft_product_data = [];
 
                 foreach ($lims_product_sale_data as $product_sale) {
-                    $draft_product_discount['discount'][$product_sale->product_id] = $product_sale->discount;
+                    $discountKey = $product_sale->warehouse_store_product_id ? 'ws_' . $product_sale->warehouse_store_product_id : $product_sale->product_id;
+                    $draft_product_discount['discount'][$discountKey] = $product_sale->discount;
 
-                    $draft_product_list = Product::join('product_warehouse', 'products.id', '=', 'product_warehouse.product_id')
-                        ->where('products.id', $product_sale->product_id)
-                        ->select('products.id', 'products.code', 'product_warehouse.qty')
-                        ->first();
-
-                    $product_code = $draft_product_list->code;
-
-                    if ($product_sale->variant_id) {
-                        $product_variant_data = ProductVariant::select('id', 'item_code')
-                            ->FindExactProduct($draft_product_list->id, $product_sale->variant_id)
+                    if ($product_sale->warehouse_store_product_id) {
+                        $basement = Basement::find($product_sale->warehouse_store_product_id);
+                        $product_code = $basement ? $basement->code : '';
+                        $warehouse_qty = $basement ? ($basement->qty ?? 0) : 0;
+                    } else {
+                        $draft_product_list = Product::join('product_warehouse', 'products.id', '=', 'product_warehouse.product_id')
+                            ->where('products.id', $product_sale->product_id)
+                            ->select('products.id', 'products.code', 'product_warehouse.qty')
                             ->first();
-                        $product_code = $product_variant_data->item_code;
+                        if (!$draft_product_list) {
+                            continue;
+                        }
+                        $product_code = $draft_product_list->code;
+                        $warehouse_qty = $draft_product_list->qty;
+                        if ($product_sale->variant_id) {
+                            $product_variant_data = ProductVariant::select('id', 'item_code')
+                                ->FindExactProduct($draft_product_list->id, $product_sale->variant_id)
+                                ->first();
+                            if ($product_variant_data) {
+                                $product_code = $product_variant_data->item_code;
+                            }
+                        }
                     }
 
                     for ($i = 0; $i < $product_sale->qty; $i++) {
-                        if (!empty($product_sale->imei_number)) {
+                        if (!$product_sale->warehouse_store_product_id && !empty($product_sale->imei_number)) {
                             $imei_numbers = explode(",", $product_sale->imei_number);
                             foreach ($imei_numbers as $key => $number) {
                                 $draft_product_data[] = [
                                     'code'     => $product_code,
-                                    'qty'      => $draft_product_list->qty,
+                                    'qty'      => $warehouse_qty,
                                     'imei'     => $number ?: null,
                                     'embedded' => 0,
                                     'batch'    => $product_sale->product_batch_id,
@@ -2120,7 +2179,7 @@ class SaleController extends Controller
                         } else {
                             $draft_product_data[] = [
                                 'code'     => $product_code,
-                                'qty'      => $draft_product_list->qty,
+                                'qty'      => $warehouse_qty,
                                 'imei'     => null,
                                 'embedded' => 0,
                                 'batch'    => $product_sale->product_batch_id,
@@ -2238,6 +2297,26 @@ class SaleController extends Controller
     }
 
     /**
+     * For a product_sale row, return Product or Basement (warehouse-store) for name/code/type.
+     * Returns object with at least: name, code, type (default 'standard'), file (null for basement).
+     */
+    private function getProductOrBasementForSaleItem($product_sale_data)
+    {
+        if ($product_sale_data->warehouse_store_product_id ?? null) {
+            $b = Basement::find($product_sale_data->warehouse_store_product_id);
+            if (!$b) {
+                return (object) ['name' => '—', 'code' => '', 'type' => 'standard', 'file' => null];
+            }
+            return (object) ['name' => $b->name, 'code' => $b->code, 'type' => 'standard', 'file' => null];
+        }
+        $p = Product::find($product_sale_data->product_id);
+        if (!$p) {
+            return (object) ['name' => '—', 'code' => '', 'type' => 'standard', 'file' => null];
+        }
+        return (object) ['name' => $p->name, 'code' => $p->code, 'type' => $p->type ?? 'standard', 'file' => $p->file ?? null];
+    }
+
+    /**
      * Category IDs to exclude from main POS grid (BOXES, EMPTY TRAY, Customer Tray).
      * Used by getProducts and search so these products load only via "Select Tray or Box".
      */
@@ -2255,9 +2334,37 @@ class SaleController extends Controller
 
     public function getProducts($warehouse_id, $key, $cat_or_brand_id)
     {
-        // dd($warehouse_id, $key, $cat_or_brand_id);
         $pos_customize = request()->query('pos_customize', 0);
         $excludeCategoryIds = $pos_customize ? [] : $this->getPosExcludeCategoryIds();
+
+        // POS customize: load from warehouse-stores (basements) table for BOXES / EMPTY TRAY / Customer Tray categories
+        $posCustomizeCategoryIds = $this->getPosExcludeCategoryIds();
+        if ($pos_customize && $key == 'category' && in_array((int) $cat_or_brand_id, $posCustomizeCategoryIds)) {
+            $lims_basement_list = Basement::where('category_id', $cat_or_brand_id)
+                ->where('is_active', true)
+                ->orderBy('name', 'asc')
+                ->paginate(15);
+            $index = 0;
+            $data = [];
+            foreach ($lims_basement_list as $b) {
+                $data['name'][$index] = $b->name;
+                $data['code'][$index] = $b->code;
+                $data['id'][$index] = 'ws_' . $b->id;
+                $data['is_imei'][$index] = 0;
+                $data['is_embeded'][$index] = 0;
+                $data['type'][$index] = 'product';
+                $img = $b->image ? explode(',', $b->image)[0] : 'zummXD2dvAtI.png';
+                $data['image'][$index] = $img;
+                $data['qty'][$index] = $b->qty ?? 0;
+                $data['price'][$index] = $b->price ?? 0;
+                $index++;
+            }
+            return response()->json([
+                'data' => $data,
+                'next_page_url' => $lims_basement_list->nextPageUrl(),
+                'image_base' => 'basement', // images/basement for warehouse-store products
+            ]);
+        }
 
         // Handle products only: category, product (single), combo
         $query = Product::join('product_warehouse', 'products.id', '=', 'product_warehouse.product_id')->where('products.is_active', true);
@@ -2452,6 +2559,62 @@ class SaleController extends Controller
             }
         }
 
+        // POS customize: search warehouse-stores (basements) for BOXES / EMPTY TRAY / Customer Tray
+        if (!$product) {
+            $posCategoryIds = $this->getPosExcludeCategoryIds();
+            $basement = Basement::where('code', $code)
+                ->where('is_active', true)
+                ->whereIn('category_id', $posCategoryIds)
+                ->first();
+            if ($basement) {
+                $taxRate = 0;
+                $taxName = 'No Tax';
+                if ($basement->tax_id) {
+                    $tax = Tax::find($basement->tax_id);
+                    if ($tax) {
+                        $taxRate = $tax->rate;
+                        $taxName = $tax->name;
+                    }
+                }
+                $unitNames = $unitOperators = $unitValues = ['n/a'];
+                if ($basement->sale_unit_id) {
+                    $saleUnit = Unit::find($basement->sale_unit_id);
+                    if ($saleUnit) {
+                        $unitNames = [$saleUnit->unit_name];
+                        $unitOperators = [$saleUnit->operator ?? ' *'];
+                        $unitValues = [$saleUnit->operation_value ?? 1];
+                    }
+                }
+                $price = $request->data['price'] && $request->data['price'] > 0 ? $request->data['price'] : ($basement->price ?? 0);
+                $productArray = [
+                    $basement->name,
+                    $basement->code,
+                    $price,
+                    $taxRate,
+                    $taxName,
+                    $basement->tax_method ?? null,
+                    implode(',', $unitNames) . ',',
+                    implode(',', $unitOperators) . ',',
+                    implode(',', $unitValues) . ',',
+                    'ws_' . $basement->id,
+                    null,
+                    0,
+                    0,
+                    0,
+                    0,
+                    $qty,
+                    $basement->price ?? 0,
+                    $basement->cost ?? 0,
+                    $request->data['imei'] ?? null,
+                    $request->data['qty'] ?? 0,
+                    'product',
+                    null,
+                    ''
+                ];
+                return response()->json($productArray);
+            }
+        }
+
         if (!$product) {
             return response()->json(['error' => 'Product not found', 'code' => $code], 404);
         }
@@ -2577,9 +2740,51 @@ class SaleController extends Controller
         $customer_id = $request->input('customer_id');
         $warehouse_id = $request->input('warehouse_id');
         $productDiscount = 0;
-        $lims_product_data = Product::select('id', 'price', 'promotion', 'promotion_price', 'last_date')->find($request->input('product_id'));
+        $product_id = $request->input('product_id');
+
+        // POS customize: warehouse-store (basement) product – no promotion, use basement price
+        if (is_string($product_id) && str_starts_with($product_id, 'ws_')) {
+            $basement_id = (int) substr($product_id, 3);
+            $basement = Basement::select('id', 'price')->find($basement_id);
+            if (!$basement) {
+                return response()->json([0, 0, 0]);
+            }
+            $price = $basement->price ?? 0;
+            $todayDate = date('Y-m-d');
+            $all_discount = DB::table('discount_plan_customers')
+                ->join('discount_plans', 'discount_plans.id', '=', 'discount_plan_customers.discount_plan_id')
+                ->join('discount_plan_discounts', 'discount_plans.id', '=', 'discount_plan_discounts.discount_id')
+                ->join('discounts', 'discounts.id', '=', 'discount_plan_discounts.discount_id')
+                ->where([
+                    ['discount_plans.is_active', true],
+                    ['discounts.is_active', true],
+                    ['discount_plan_customers.customer_id', $customer_id]
+                ])
+                ->select('discounts.*')
+                ->get();
+            foreach ($all_discount as $discount) {
+                $product_list = explode(",", $discount->product_list);
+                $days = explode(",", $discount->days);
+                if (($discount->applicable_for === 'All') && ($todayDate >= $discount->valid_from && $todayDate <= $discount->valid_till && in_array(date('D'), $days) && $qty >= $discount->minimum_qty && $qty <= $discount->maximum_qty)) {
+                    if ($discount->type === 'flat') {
+                        $productDiscount = $discount->value;
+                        $price = $price - $discount->value;
+                    } elseif ($discount->type === 'percentage') {
+                        $productDiscount = $price * ($discount->value / 100);
+                        $price = $price - ($price * ($discount->value / 100));
+                    }
+                    break;
+                }
+            }
+            return response()->json([$price, 0, $productDiscount]);
+        }
+
+        $lims_product_data = Product::select('id', 'price', 'promotion', 'promotion_price', 'last_date')->find($product_id);
+        if (!$lims_product_data) {
+            return response()->json([0, 0, 0]);
+        }
         $lims_product_warehouse_data = Product_Warehouse::where([
-            ['product_id', $request->input('product_id')],
+            ['product_id', $product_id],
             ['warehouse_id', $warehouse_id]
         ])->first();
         if ($lims_product_warehouse_data && $lims_product_warehouse_data->price) {
@@ -2636,10 +2841,12 @@ class SaleController extends Controller
     {
         $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
         foreach ($lims_product_sale_data as $key => $product_sale_data) {
-            $product = Product::find($product_sale_data->product_id);
-            if ($product_sale_data->variant_id) {
+            $product = $this->getProductOrBasementForSaleItem($product_sale_data);
+            if (!$product_sale_data->warehouse_store_product_id && $product_sale_data->variant_id) {
                 $lims_product_variant_data = ProductVariant::select('item_code')->FindExactProduct($product_sale_data->product_id, $product_sale_data->variant_id)->first();
-                $product->code = $lims_product_variant_data->item_code;
+                if ($lims_product_variant_data) {
+                    $product->code = $lims_product_variant_data->item_code;
+                }
             }
             $unit_data = Unit::find($product_sale_data->sale_unit_id);
             if ($unit_data) {
@@ -2653,7 +2860,7 @@ class SaleController extends Controller
                 $product_sale[7][$key] = 'N/A';
             $product_sale[0][$key] = $product->name . ' [' . $product->code . ']';
             $returned_imei_number_data = '';
-            if ($product_sale_data->imei_number && !str_contains($product_sale_data->imei_number, "null")) {
+            if (!$product_sale_data->warehouse_store_product_id && $product_sale_data->imei_number && !str_contains($product_sale_data->imei_number, "null")) {
                 $imeis = array_unique(explode(',', $product_sale_data->imei_number));
                 $imeis = implode(',', $imeis);
                 $product_sale[0][$key] .= '<br><span style="white-space: normal !important;word-break: break-word !important;overflow-wrap: anywhere !important;max-width: 100%;display: block;">IMEI or Serial Number: ' . $imeis . '</span>';
@@ -3060,10 +3267,17 @@ class SaleController extends Controller
         $old_product_id = [];
         $product_sale = [];
         foreach ($lims_product_sale_data as  $key => $product_sale_data) {
+            if ($product_sale_data->warehouse_store_product_id) {
+                $old_product_id[] = null;
+                $old_product_variant_id[] = null;
+                continue;
+            }
             $old_product_id[] = $product_sale_data->product_id;
             $old_product_variant_id[] = null;
             $lims_product_data = Product::find($product_sale_data->product_id);
-
+            if (!$lims_product_data) {
+                continue;
+            }
             if (($lims_sale_data->sale_status == 1) && ($lims_product_data->type == 'combo')) {
                 // if(!in_array('manufacturing',explode(',',config('addons')))) {
                 $product_list = explode(",", $lims_product_data->product_list);
@@ -4831,14 +5045,17 @@ class SaleController extends Controller
         $log_data['item_description'] = '';
 
         foreach ($lims_product_sale_data as $product_sale) {
-            $lims_product_data = Product::find($product_sale->product_id);
+            $lims_product_data = $this->getProductOrBasementForSaleItem($product_sale);
             if ($product_sale->sale_unit_id != 0) {
                 $lims_sale_unit_data = Unit::find($product_sale->sale_unit_id);
-                $log_data['item_description'] .= $lims_product_data->name . '-' . $product_sale->qty . ' ' . $lims_sale_unit_data->unit_code . '<br>';
+                $log_data['item_description'] .= $lims_product_data->name . '-' . $product_sale->qty . ($lims_sale_unit_data ? ' ' . $lims_sale_unit_data->unit_code : '') . '<br>';
             } else {
                 $log_data['item_description'] .= $lims_product_data->name . '-' . $product_sale->qty . '<br>';
             }
 
+            if ($product_sale->warehouse_store_product_id) {
+                continue;
+            }
             //adjust product quantity
             if (($lims_sale_data->sale_status == 1) && ($lims_product_data->type == 'combo')) {
                 // if(!in_array('manufacturing',explode(',',config('addons')))) {

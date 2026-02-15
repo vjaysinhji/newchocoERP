@@ -99,7 +99,7 @@ section.pos-section {
 
 /* First th (Product header) - remove any extra styling */
 .pos-page #myTable tr th:first-child.customize-parent-col {
-    padding: 0.5rem !important;
+    padding: 0rem !important;
     border: none !important;
 }
 

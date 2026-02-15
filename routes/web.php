@@ -409,6 +409,9 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
 
     Route::controller(SubcategoryController::class)->group(function () {
         Route::post('subcategory/subcategory-data', 'subcategoryData')->name('subcategory.data');
+        Route::post('subcategory/toggle-show-in-menu', 'toggleShowInMenu')->name('subcategory.toggle-show-in-menu');
+        Route::get('subcategory/menu-subcategories', 'getMenuSubcategories')->name('subcategory.menu-subcategories');
+        Route::post('subcategory/save-menu-order', 'saveMenuOrder')->name('subcategory.save-menu-order');
     });
     Route::resource('subcategory', SubcategoryController::class);
 

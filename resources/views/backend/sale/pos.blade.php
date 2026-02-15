@@ -431,7 +431,7 @@
                                 id="category-filter">{{ __('db.category') }}</button>
 
                             <button class="btn btn-block btn-secondary mt-0 ml-1 mr-1"
-                                id="product-filter">{{ __('db.Product') }}</button>
+                                id="product-filter">{{ __('Single') }}</button>
 
                             <button class="btn btn-block btn-info mt-0 ml-1 mr-1"
                                 id="combo-filter">{{ __('db.Combo Products') }}</button>
@@ -992,7 +992,7 @@
                                         <th class="col-sm-5 col-6">{{ __('db.product') }}</th>
                                         <th class="col-sm-2 d-none d-md-table-cell">{{ __('db.Price') }}</th>
                                         <th class="col-sm-2">{{ __('db.Quantity') }}</th>
-                                        <th class="col-sm-2">{{ __('db.Subtotal') }}</th>
+                                        <th class="col-sm-3" style="text-align: center;">{{ __('db.Subtotal') }}</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbody-id">
@@ -2912,18 +2912,22 @@
 
             $('#product-search-input').focus();
 
-            // Order Type: show/hide Box-Tray selection
+            // Order Type: show/hide Box-Tray selection; only one of default grid or customize grid visible
+            // Customize parent-radio column is never hidden: rows that have radio/— keep same view in Display too
             $('#order_type').on('change', function() {
                 var v = $(this).val();
                 if (v == '2') {
                     $('#customizetypebox').slideDown(200);
                     $('.customize_type').removeClass('btn-primary').addClass('btn-outline-secondary');
+                    $('#customize-product-grid-container').hide();
+                    $('#main-product-grid').show();
+                    $('.customize-parent-col').show();
+                    $('.customize-parent-td').show();
                 } else {
                     $('#customizetypebox').slideUp(200);
                     $('#customize_type').val('');
                     $('#customize-product-grid-container').hide();
-                    $('.customize-parent-col').hide();
-                    $('.customize-parent-td').hide();
+                    $('#main-product-grid').show();
                     customSortCounter = 0;
                 }
             });
@@ -2974,20 +2978,21 @@
                         }
                     });
                 } else if (typeId && !isNaN(parseInt(typeId, 10))) {
-                    $mainGrid.hide();
                     $container.show();
+                    $mainGrid.hide();
                     $container.find('.product-grid').html('<div class="loader" style="border:none;min-height:120px"><svg version="1.1" xmlns="http://www.w3.org/2000/svg" x="0px" y="0px" width="24px" height="30px" viewBox="0 0 24 30"><rect x="0" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0" dur="0.6s" repeatCount="indefinite"/></rect><rect x="10" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.2s" dur="0.6s" repeatCount="indefinite"/></rect><rect x="20" y="0" width="4" height="10" fill="#333"><animateTransform attributeType="xml" attributeName="transform" type="translate" values="0 0; 0 20; 0 0" begin="0.4s" dur="0.6s" repeatCount="indefinite"/></rect></svg></div>');
                     var wh = $('#warehouse_id').val();
                     if (!wh) { alert('Please select Warehouse.'); $container.hide(); $mainGrid.show(); return; }
                     $.get('{{ url("sales/getproducts") }}/' + wh + '/category/' + typeId + '?pos_customize=1', function(response) {
                         var tableData = '<div class="product-grid text-center">';
+                        var imageBase = (response.image_base === 'basement') ? '{{ url("/images/basement") }}' : '{{ url("/images/product") }}';
                         if (response.data && response.data['name']) {
                             $.each(response.data['name'], function(index) {
                                 var image = response.data['image'][index] || 'zummXD2dvAtI.png';
                                 var price = parseFloat(response.data['price'][index]) || 0;
                                 var formattedPrice = price.toFixed(2);
                                 var productType = (response.data['type'] && response.data['type'][index]) ? response.data['type'][index] : 'product';
-                                tableData += '<div class="product-img sound-btn customize-grid-product" title="' + response.data['name'][index] + '" data-code="' + response.data['code'][index] + '" data-qty="' + response.data['qty'][index] + '" data-imei="' + (response.data['is_imei'] ? response.data['is_imei'][index] : 0) + '" data-embedded="' + (response.data['is_embeded'] ? response.data['is_embeded'][index] : 0) + '" data-batch="" data-price="' + response.data['price'][index] + '" data-type="' + productType + '"><img src="{{ url("/images/product") }}/' + image + '" width="100%" /><p>' + response.data['name'][index] + '</p><span>[' + response.data['code'][index] + ']</span> <span class="d-block" style="font-weight:600;color:#5f27cd;">Price: ' + formattedPrice + '</span> <span class="d-block">Qty: ' + response.data['qty'][index] + '</span></div>';
+                                tableData += '<div class="product-img sound-btn customize-grid-product" title="' + response.data['name'][index] + '" data-code="' + response.data['code'][index] + '" data-id="' + (response.data['id'] ? response.data['id'][index] : '') + '" data-qty="' + response.data['qty'][index] + '" data-imei="' + (response.data['is_imei'] ? response.data['is_imei'][index] : 0) + '" data-embedded="' + (response.data['is_embeded'] ? response.data['is_embeded'][index] : 0) + '" data-batch="" data-price="' + response.data['price'][index] + '" data-type="' + productType + '"><img src="' + imageBase + '/' + image + '" width="100%" /><p>' + response.data['name'][index] + '</p><span>[' + response.data['code'][index] + ']</span> <span class="d-block" style="font-weight:600;color:#5f27cd;">Price: ' + formattedPrice + '</span> <span class="d-block">Qty: ' + response.data['qty'][index] + '</span></div>';
                             });
                         } else {
                             tableData += '<p class="text-muted py-3">No products in this category</p>';
@@ -3832,7 +3837,7 @@
             return false;
         });
 
-        // Customization grid (Boxes / Empty Tray): add product as PARENT row with radio; name + 1,2,3 for same product
+        // Customization grid (Boxes / Empty Tray): add product as PARENT row; then show default product grid again
         $(document).on('click', '.customize-grid-product', function(e) {
             e.stopPropagation();
             playSound();
@@ -3844,6 +3849,8 @@
             var data = $(this).data();
             if (!data.type) data.type = $(this).attr('data-type') || 'product';
             var product = { code: data.code, qty: data.qty, pre_qty: 1, imei: data.imei || null, embedded: data.embedded || 0, batch: data.batch || '', price: data.price, customer_id: customer_id, type: data.type || 'product' };
+            var $customizeContainer = $('#customize-product-grid-container');
+            var $mainGrid = $('#main-product-grid');
             $.ajax({
                 type: 'GET',
                 url: '{{ url("sales/lims_product_search") }}',
@@ -3854,6 +3861,12 @@
                         var sameCodeCount = $('table.order-list tbody tr').filter(function() { return $(this).find('.product-code').val() === productCode; }).length;
                         addNewProduct(responseData, null, true, sameCodeCount + 1);
                         $('.customize-parent-col').show();
+                        $customizeContainer.hide();
+                        $mainGrid.show();
+                        currentFilterType = 'product';
+                        $.get('{{ url("sales/getproducts") }}/' + warehouse_id + '/product/0', function(response) {
+                            populateProduct(response);
+                        });
                     }
                 }
             });
@@ -3924,17 +3937,13 @@
         }
 
         function productSearch(productInput) {
-            // Customization: must select Tray or Box before adding product (skip when loading draft with customize_type_id)
-            if ($('#order_type').val() == '2') {
-                if (!$('#customize_type').val() && !(productInput.customize_type_id)) {
-                    alert('{{ __("db.Select Tray or Box") }}');
-                    return;
-                }
-            }
+            // --- FLOW: type decides merge vs new row ---
+            // DISPLAY (order_type 1): Product already in cart as DISPLAY? → qty plus on that row. Else → new display row.
+            // CUSTOMIZE (order_type 2): (1) Not a custom/tray product and no radio selected? → alert "Select Tray or Box".
+            //   (2) Radio selected + product already inside that tray? → qty plus on that inside row. Else → new row inside selected parent.
             var item_code = productInput.code;
             var pre_qty = 0;
             var flag = true;
-            // In customize mode: only merge qty if same product exists in the SELECTED radio's group (that box/tray)
             var selectedParentRowIndices = [];
             var isCustomizeParentProduct = (productInput.is_customize_parent == 1 || productInput.is_customize_parent === true);
             if ($('#order_type').val() == '2') {
@@ -3949,29 +3958,33 @@
                     }
                 }
                 if (!isCustomizeParentProduct && selectedParentRowIndices.length === 0) {
-                    alert('{{ __("db.Please select a Tray or Box row first") }}');
+                    alert('{{ __("db.Select Tray or Box") }}');
                     return;
                 }
             }
             $(".product-code").each(function(i) {
-                if ($(this).val().trim() == item_code) {
-                    if ($('#order_type').val() == '2' && selectedParentRowIndices.length > 0 && selectedParentRowIndices.indexOf(i) === -1)
-                        return;
-                    rowindex = i;
-                    if (productInput.imei != 'null' && productInput.imei != '') {
-                        imeiNumbers = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .imei-number')
-                            .val();
-                        imeiNumbersArray = imeiNumbers.split(",");
-
-                        if (imeiNumbersArray.includes(productInput.imei)) {
-                            alert('Same imei or serial number is not allowed!');
-                            flag = false;
-                            $('#product-search-input').val('');
-                            return;
-                        }
-                    }
-                    pre_qty = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .qty').val();
+                if ($(this).val().trim() != item_code) return;
+                var $row = $('table.order-list tbody tr').eq(i);
+                var orderType = $('#order_type').val();
+                if (orderType == '1') {
+                    if (!$row.hasClass('pos-row-display')) return;
+                } else if (orderType == '2') {
+                    if ($row.hasClass('pos-row-display')) return;
+                    if (selectedParentRowIndices.length > 0 && selectedParentRowIndices.indexOf(i) === -1) return;
                 }
+                rowindex = i;
+                if (productInput.imei != 'null' && productInput.imei != '') {
+                    var imeiNumbers = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .imei-number').val();
+                    var imeiNumbersArray = imeiNumbers ? imeiNumbers.split(",") : [];
+                    if (imeiNumbersArray.includes(productInput.imei)) {
+                        alert('Same imei or serial number is not allowed!');
+                        flag = false;
+                        $('#product-search-input').val('');
+                        return false;
+                    }
+                }
+                pre_qty = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ') .qty').val();
+                return false;
             });
             if (flag) {
                 let product = {
@@ -4096,7 +4109,7 @@
                     cols += '<td class="align-middle text-center customize-parent-td">&mdash;</td>';
                 }
             } else {
-                cols += '<td class="customize-parent-td" style="display:none;"></td>';
+                // Display rows: no extra td so UI stays as before (customize column only for customize rows)
             }
             //pos = product_code.indexOf(data[1]);
 
@@ -4109,14 +4122,15 @@
                 }
             }
 
+            var productTitleTdStyle = orderType2 ? '' : ' style="max-width: 39.333%;"';
             if (all_permission.includes("cart-product-update")) {
                 cols +=
-                    '<td class="col-sm-5 col-6 product-title"><strong class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal">' +
+                    '<td class="col-sm-4 col-6 product-title"' + productTitleTdStyle + '><strong class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal">' +
                     displayName +
                     ' <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg></strong><br><span>' +
                     data[1] + '</span>' + stockDisplay + ' <strong class="product-price d-none"></strong>';
             } else {
-                cols += '<td class="col-sm-5 col-6 product-title"><strong>' + displayName + '<br><span>' + data[1] + '</span>' +
+                cols += '<td class="col-sm-4 col-6 product-title"' + productTitleTdStyle + '><strong>' + displayName + '<br><span>' + data[1] + '</span>' +
                     stockDisplay + ' <strong class="product-price d-none"></strong>';
             }
 
@@ -4133,7 +4147,7 @@
 
             cols += '</td>';
             cols += '<td class="col-sm-2 product-price d-none d-md-block"></td>';
-            cols += '<td class="col-sm-2" style="min-width:140px"><div class="input-group flex-nowrap">';
+            cols += '<td class="col-sm-3" style="min-width:140px"><div class="input-group flex-nowrap">';
 
             // Show minus button if no IMEI (for all product types including raw_material and warehouse_store)
             if (!data[18] || data[18] == 'null' || data[18] == '0' || data[18] == 0 || data[18] === '' || (data[20] && (data[20].trim() == 'raw_material' || data[20].trim() == 'warehouse_store'))) {
@@ -4195,11 +4209,22 @@
             newRow.append(cols);
 
             var $tbody = $("table.order-list tbody");
-            var $selectedParent = $tbody.find('tr').has('.customize-parent-radio:checked');
+            var $rows = $tbody.find('tr');
+            var $selectedParent = $rows.has('.customize-parent-radio:checked');
             if (orderType2 && !isParentRow && $selectedParent.length) {
-                $selectedParent.after(newRow);
+                var idx = $rows.index($selectedParent.first());
+                var lastInGroup = idx;
+                for (var r = idx + 1; r < $rows.length; r++) {
+                    if ($rows.eq(r).find('.customize-parent-radio').length) break;
+                    lastInGroup = r;
+                }
+                $rows.eq(lastInGroup).after(newRow);
+            } else if (orderType2 && isParentRow) {
+                $tbody.append(newRow);
             } else {
-                $tbody.prepend(newRow);
+                var $firstCustomize = $rows.filter('.pos-row-customize, .pos-row-customize-parent, .pos-row-customize-child').first();
+                if ($firstCustomize.length) $firstCustomize.before(newRow);
+                else $tbody.prepend(newRow);
             }
 
             if (keyboard_active == 1) {
@@ -5536,27 +5561,47 @@
             rowindex = $(this).closest('tr').index();
         });
 
-        //Delete product (row remove: subtotal column delete icon)
+        //Delete product: display = that row only; customize parent = parent + all its children; customize child = that row only. Then recalc.
         $("table.order-list tbody").on("click", ".ibtnDel", function(event) {
+            event.preventDefault();
+            event.stopPropagation();
             playSound();
-            rowindex = $(this).closest('tr').index();
-            var qty = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')').find('.qty').val();
-            checkDiscount(qty, false);
-            product_price.splice(rowindex, 1);
-            wholesale_price.splice(rowindex, 1);
-            product_discount.splice(rowindex, 1);
-            tax_rate.splice(rowindex, 1);
-            tax_name.splice(rowindex, 1);
-            tax_method.splice(rowindex, 1);
-            unit_name.splice(rowindex, 1);
-            unit_operator.splice(rowindex, 1);
-            unit_operation_value.splice(rowindex, 1);
-            if (typeof cost !== 'undefined') cost.splice(rowindex, 1);
-            if (typeof is_imei !== 'undefined') is_imei.splice(rowindex, 1);
-            if (typeof is_variant !== 'undefined') is_variant.splice(rowindex, 1);
-            $(this).closest("tr").remove();
+            var $tr = $(this).closest('tr');
+            var clickedIndex = $tr.index();
+            var $tbody = $("table.order-list tbody");
+            var $rows = $tbody.find('tr');
+            var indicesToRemove = [];
+            if ($tr.hasClass('pos-row-display')) {
+                indicesToRemove = [clickedIndex];
+            } else if ($tr.hasClass('pos-row-customize-parent') || $tr.find('.customize-parent-radio').length) {
+                for (var r = clickedIndex; r < $rows.length; r++) {
+                    indicesToRemove.push(r);
+                    if (r > clickedIndex && $rows.eq(r).find('.customize-parent-radio').length) break;
+                }
+            } else {
+                indicesToRemove = [clickedIndex];
+            }
+            indicesToRemove.sort(function(a, b) { return b - a; });
+            for (var i = 0; i < indicesToRemove.length; i++) {
+                var idx = indicesToRemove[i];
+                product_price.splice(idx, 1);
+                wholesale_price.splice(idx, 1);
+                product_discount.splice(idx, 1);
+                tax_rate.splice(idx, 1);
+                tax_name.splice(idx, 1);
+                tax_method.splice(idx, 1);
+                unit_name.splice(idx, 1);
+                unit_operator.splice(idx, 1);
+                unit_operation_value.splice(idx, 1);
+                if (typeof cost !== 'undefined') cost.splice(idx, 1);
+                if (typeof is_imei !== 'undefined') is_imei.splice(idx, 1);
+                if (typeof is_variant !== 'undefined') is_variant.splice(idx, 1);
+                $rows.eq(idx).remove();
+            }
+            var $remaining = $tbody.find('tr');
+            rowindex = $remaining.length > 0 ? 0 : -1;
             calculateTotal();
-            if ($('#tbody-id tr').length < 1) {
+            if ($remaining.length < 1) {
                 $('.payment-btn').attr('disabled', true);
                 $('#installmentPlanBtn').attr('disabled', true);
             }

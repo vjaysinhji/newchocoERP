@@ -21,7 +21,6 @@ class UpdateSubcategoryRequest extends FormRequest
             'name_english' => 'required|string|max:255',
             'name_arabic' => 'nullable|string|max:255',
             'slug' => 'nullable|string|max:255',
-            'sort_order' => 'nullable|integer|min:0',
             'description_english' => 'nullable|string|max:5000',
             'description_arabic' => 'nullable|string|max:5000',
         ];
