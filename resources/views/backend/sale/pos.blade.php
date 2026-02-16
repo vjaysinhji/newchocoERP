@@ -485,7 +485,11 @@
                 </div>
 
                 <div class="col-md-7 pos-form">
-                    {!! Form::open(['route' => 'sales.store', 'method' => 'post', 'files' => true, 'class' => 'payment-form']) !!}
+                    @if(isset($lims_sale_data) && $lims_sale_data)
+                        {!! Form::model($lims_sale_data, ['route' => ['sales.update', $lims_sale_data->id], 'method' => 'put', 'files' => true, 'class' => 'payment-form']) !!}
+                    @else
+                        {!! Form::open(['route' => 'sales.store', 'method' => 'post', 'files' => true, 'class' => 'payment-form']) !!}
+                    @endif
 
                     @php
                         if ($lims_pos_setting_data) {
@@ -582,7 +586,7 @@
                                         </div>
                                     </div>
                                 @endif
-                                <div class="col-md-12 col-6">
+                                <div class="col-md-8 col-6">
                                     <div class="form-group top-fields">
                                         <label>{{ __('db.customer') }}</label>
                                         <div class="input-group pos">
@@ -647,6 +651,16 @@
                                                     </svg></button>
                                             @endif
                                             <x-validation-error fieldName="customer_id" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-4 col-6">
+                                    <div class="form-group top-fields">
+                                        <label>{{ __('Invoice No') }}</label>
+                                        <div class="input-group pos">
+                                            <input type="text" id="pos-invoice-no-display" class="form-control"
+                                                readonly placeholder="—" style="background-color: #f5f5f5;" />
+                                            <input type="hidden" id="pos-reference-no" name="reference_no" value="" />
                                         </div>
                                     </div>
                                 </div>
@@ -837,11 +851,11 @@
                                     @endif
                                     <div class="col-md-3">
                                         <label>{{ __('db.Sale Reference No') }} <x-info
-                                                title="Sale reference is auto-generated if not inserted manually"
+                                                title="Invoice No is auto-generated (same as main Invoice No above)"
                                                 type="info" /></label>
                                         <div class="form-group">
-                                            <input type="text" id="reference-no" name="reference_no"
-                                                class="form-control" placeholder="Type reference number" />
+                                            <input type="text" id="reference-no" class="form-control" readonly
+                                                placeholder="—" style="background-color: #f5f5f5;" />
                                         </div>
                                         <x-validation-error fieldName="reference_no" />
                                     </div>
@@ -988,7 +1002,7 @@
                             <table id="myTable" class="table table-hover table-striped order-list table-fixed">
                                 <thead class="d-none d-md-block">
                                     <tr>
-                                        <th class="customize-parent-col" style="width:36px; display:none;"></th>
+                                        <th class="customize-parent-col" style="width:36px; @if(!isset($lims_sale_data) || empty($lims_sale_data) || ($lims_sale_data->order_type ?? 1) != 2) display:none; @endif"></th>
                                         <th class="col-sm-5 col-6">{{ __('db.product') }}</th>
                                         <th class="col-sm-2 d-none d-md-table-cell">{{ __('db.Price') }}</th>
                                         <th class="col-sm-2">{{ __('db.Quantity') }}</th>
@@ -1384,7 +1398,7 @@
                                                 <div class="row">
                                                     <div class="col-sm-6 col-xs-6">
                                                         <label for="delivery_date">{{ __('db.Delivery Date') }}</label>
-                                                        <input type="text" name="delivery_date" value="" class="form-control input-tip datetime" id="sldate" placeholder="{{ __('db.Select Date') }}">
+                                                        <input type="date" name="delivery_date" value="" class="form-control input-tip datetime" id="sldate" placeholder="{{ __('db.Select Date') }}">
                                                     </div>
                                                     <div class="col-sm-6 col-xs-6">
                                                         <label for="delivery_time">{{ __('db.Delivery Time') }}</label>
@@ -3368,6 +3382,21 @@
         $(window).on('load', async function() {
             //await getProduct(warehouse_id);
 
+            @if (isset($lims_sale_data) && !empty($lims_sale_data))
+                var existingRefNo = @json($lims_sale_data->reference_no);
+                $('#pos-invoice-no-display').val(existingRefNo);
+                $('#pos-reference-no').val(existingRefNo);
+                $('#reference-no').val(existingRefNo);
+            @else
+                $.get('{{ route('sale.nextPosInvoiceNo') }}', function(res) {
+                    if (res.success && res.data) {
+                        $('#pos-invoice-no-display').val(res.data.display_number);
+                        $('#pos-reference-no').val(res.data.reference_no);
+                        $('#reference-no').val(res.data.reference_no);
+                    }
+                });
+            @endif
+
             var customer_id = $('#customer_id').val();
             var cus_gr_rt = await $.get('{{ url('sales/getcustomergroup') }}/' + customer_id);
             customer_group_rate = (cus_gr_rt / 100);
@@ -3924,23 +3953,33 @@
 
         function processDraftData() {
             @if (isset($lims_sale_data))
-                let draft_product_data = @json($draft_product_data);
+                var orderType2 = ($('#order_type').val() == '2');
+                // Ensure Customization UI is ready when order_type is Custom Creation
+                if (orderType2) {
+                    $('#customizetypebox').show();
+                    $('.customize-parent-col').show();
+                    $('.customize-parent-td').show();
+                    window.firstDraftParentChecked = false;
+                }
+                customizeParentCounter = 0;
+                let draft_product_data = @json($draft_product_data ?? []);
                 var maxSort = 0;
                 draft_product_data.forEach(function(p) {
                     if (p.custom_sort != null && p.custom_sort > maxSort) maxSort = parseInt(p.custom_sort, 10);
                 });
                 if (maxSort > 0) customSortCounter = maxSort;
                 draft_product_data.forEach(function(product) {
-                    productSearch(product);
+                    productSearch(product, true); // isDraftLoad = true to bypass "Select Tray or Box" when restoring
                 });
             @endif
         }
 
-        function productSearch(productInput) {
+        function productSearch(productInput, isDraftLoad) {
             // --- FLOW: type decides merge vs new row ---
             // DISPLAY (order_type 1): Product already in cart as DISPLAY? → qty plus on that row. Else → new display row.
             // CUSTOMIZE (order_type 2): (1) Not a custom/tray product and no radio selected? → alert "Select Tray or Box".
             //   (2) Radio selected + product already inside that tray? → qty plus on that inside row. Else → new row inside selected parent.
+            if (typeof isDraftLoad === 'undefined') isDraftLoad = false;
             var item_code = productInput.code;
             var pre_qty = 0;
             var flag = true;
@@ -3957,7 +3996,7 @@
                         if (r > idx && $rows.eq(r).find('.customize-parent-radio').length) break;
                     }
                 }
-                if (!isCustomizeParentProduct && selectedParentRowIndices.length === 0) {
+                if (!isDraftLoad && !isCustomizeParentProduct && selectedParentRowIndices.length === 0) {
                     alert('{{ __("db.Select Tray or Box") }}');
                     return;
                 }
@@ -3987,10 +4026,12 @@
                 return false;
             });
             if (flag) {
+                // When loading draft/edit: use line qty from draft; else default to 1 (productInput.qty = stock qty, not order qty)
+                var useDraftQty = isDraftLoad && (parseFloat(pre_qty) === 0 && productInput.qty != null && productInput.qty !== '' && !isNaN(parseFloat(productInput.qty)));
                 let product = {
                     code: productInput.code,
                     qty: productInput.qty,
-                    pre_qty: (parseFloat(pre_qty) + 1),
+                    pre_qty: useDraftQty ? parseFloat(productInput.qty) : (parseFloat(pre_qty) || 0) + 1,
                     imei: productInput.imei,
                     embedded: productInput.embedded,
                     batch: productInput.batch,
@@ -4044,12 +4085,13 @@
 
                         if (flag) {
                             var draftCustomize = null;
-                            if (productInput.customize_type_id != null && productInput.customize_type_id !== '') {
+                            var isDisplayRow = !(productInput.customize_type_id != null && productInput.customize_type_id !== '');
+                            if (!isDisplayRow) {
                                 draftCustomize = { customize_type_id: productInput.customize_type_id, custom_sort: productInput.custom_sort };
                                 if (productInput.is_customize_parent !== undefined) draftCustomize.is_customize_parent = productInput.is_customize_parent;
                             }
                             var isParentRow = (draftCustomize && draftCustomize.is_customize_parent == 1) ? true : false;
-                            addNewProduct(data, draftCustomize, isParentRow);
+                            addNewProduct(data, draftCustomize, isParentRow, null, isDisplayRow);
                         } else if (data[18] != 'null' && data[18] != '') {
                             var imeiNumbers = $('table.order-list tbody tr:nth-child(' + (rowindex + 1) + ')')
                                 .find('.imei-number').val();
@@ -4073,8 +4115,9 @@
         @endif
 
         var customizeParentCounter = 0;
-        function addNewProduct(data, draftCustomize, isParentRow, instanceNumber) {
+        function addNewProduct(data, draftCustomize, isParentRow, instanceNumber, isDisplayRow) {
             if (typeof isParentRow === 'undefined') isParentRow = false;
+            if (typeof isDisplayRow === 'undefined') isDisplayRow = false;
             $('.payment-btn').removeAttr('disabled');
             $('#installmentPlanBtn').removeAttr('disabled');
             var orderType2 = ($('#order_type').val() == '2');
@@ -4092,10 +4135,12 @@
                 if (requestedQty > maxStock) data[15] = maxStock;
             }
             var rowId = String(data[1]).replace(/[^a-zA-Z0-9_-]/g, '_') + '_' + (isParentRow ? 'p' + customizeParentCounter : Date.now());
-            var rowClass = orderType2 ? (isParentRow ? 'pos-row-customize pos-row-customize-parent' : 'pos-row-customize-child') : 'pos-row-display';
+            // Display products (no customize_type_id): pos-row-display; customize parent: pos-row-customize-parent; customize child: pos-row-customize-child
+            var rowClass = isDisplayRow ? 'pos-row-display' : (orderType2 ? (isParentRow ? 'pos-row-customize pos-row-customize-parent' : 'pos-row-customize-child') : 'pos-row-display');
             var newRow = $('<tr id="' + rowId + '" class=\"' + rowClass + '\">');
             var cols = '';
             temp_unit_name = (data[6]).split(',');
+            // Add first td (customize column): parent=radio, child=—, display=empty for alignment when orderType2
             if (orderType2) {
                 $('.customize-parent-col').show();
                 if (isParentRow) {
@@ -4105,11 +4150,13 @@
                     if (!fromDraft) $('.customize-parent-radio').prop('checked', false);
                     var radioId = 'custom_parent_' + customizeParentCounter;
                     cols += '<td class="align-middle text-center customize-parent-td"><label class="d-flex align-items-center justify-content-center mb-0" for="' + radioId + '"><input type="radio" class="customize-parent-radio" name="customize_parent_row" value="' + radioId + '" id="' + radioId + '"' + (shouldCheck ? ' checked' : '') + ' /></label></td>';
+                } else if (isDisplayRow) {
+                    cols += '<td class="align-middle text-center customize-parent-td"></td>';
                 } else {
                     cols += '<td class="align-middle text-center customize-parent-td">&mdash;</td>';
                 }
             } else {
-                // Display rows: no extra td so UI stays as before (customize column only for customize rows)
+                // Display mode: no extra td (customize column hidden)
             }
             //pos = product_code.indexOf(data[1]);
 
@@ -4122,7 +4169,7 @@
                 }
             }
 
-            var productTitleTdStyle = orderType2 ? '' : ' style="max-width: 39.333%;"';
+            var productTitleTdStyle = (isDisplayRow || !orderType2) ? ' style="max-width: 345px;"' : '';
             if (all_permission.includes("cart-product-update")) {
                 cols +=
                     '<td class="col-sm-4 col-6 product-title"' + productTitleTdStyle + '><strong class="edit-product btn btn-link" data-toggle="modal" data-target="#editModal">' +
@@ -5395,8 +5442,8 @@
                     '"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg></button>&nbsp';
                 // }
                 if (all_permission.includes("sales-edit")) {
-                    tableData += '<a href="sales/' + sale.id +
-                        '/edit" class="btn btn-warning btn-sm" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg></a>&nbsp';
+                    tableData += '<a href="{{ url('pos') }}/' + sale.id +
+                        '" class="btn btn-warning btn-sm" title="Edit"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" /></svg></a>&nbsp';
                 }
                 if (all_permission.includes("sales-delete")) {
                     tableData += '<form class="d-inline" action="{{ url('/sales') }}/' + sale.id +
