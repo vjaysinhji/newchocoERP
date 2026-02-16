@@ -4150,8 +4150,6 @@
                     if (!fromDraft) $('.customize-parent-radio').prop('checked', false);
                     var radioId = 'custom_parent_' + customizeParentCounter;
                     cols += '<td class="align-middle text-center customize-parent-td"><label class="d-flex align-items-center justify-content-center mb-0" for="' + radioId + '"><input type="radio" class="customize-parent-radio" name="customize_parent_row" value="' + radioId + '" id="' + radioId + '"' + (shouldCheck ? ' checked' : '') + ' /></label></td>';
-                } else if (isDisplayRow) {
-                    cols += '<td class="align-middle text-center customize-parent-td"></td>';
                 } else {
                     cols += '<td class="align-middle text-center customize-parent-td">&mdash;</td>';
                 }
