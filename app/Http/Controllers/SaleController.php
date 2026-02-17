@@ -5855,12 +5855,18 @@ class SaleController extends Controller
                 $log_data['item_description'] .= $lims_product_data->name . '-' . $product_sale->qty . '<br>';
             }
 
+            // Handle basement (warehouse_store) products - restore qty directly without unit conversion
+            // Basement qty is stored as-is in product_sales table (no unit conversion applied during create)
             if ($product_sale->warehouse_store_product_id) {
                 if ($lims_sale_data->sale_status == 1) {
                     $old_basement = Basement::find($product_sale->warehouse_store_product_id);
                     if ($old_basement && $old_basement->qty !== null) {
-                        $old_basement->qty = (float) $old_basement->qty + (float) $product_sale->qty;
+                        // Use original qty from product_sale (basement qty is stored without unit conversion)
+                        $restore_qty = (float) $product_sale->qty;
+                        $old_qty = (float) $old_basement->qty;
+                        $old_basement->qty = $old_qty + $restore_qty;
                         $old_basement->save();
+                        \Log::info("Basement Qty Restored on Delete - ID: {$product_sale->warehouse_store_product_id}, Pos Row Type: {$product_sale->pos_row_type}, Restore Qty: {$restore_qty}, Old Qty: {$old_qty}, New Qty: {$old_basement->qty}");
                     }
                 }
                 $product_sale->delete();
@@ -5922,22 +5928,34 @@ class SaleController extends Controller
                 // }
             }
 
+            // Restore regular product quantity (display/child products)
+            // Apply unit conversion to match what was deducted during create
             if (($lims_sale_data->sale_status == 1) && ($product_sale->sale_unit_id != 0)) {
                 $lims_sale_unit_data = Unit::find($product_sale->sale_unit_id);
                 if (!$lims_sale_unit_data) {
                     $product_sale->delete();
                     continue;
                 }
+                
+                // Store original qty before conversion for logging
+                $original_qty = (float) $product_sale->qty;
+                
+                // Apply unit conversion (same as was applied during create/deduct)
                 if ($lims_sale_unit_data->operator == '*')
-                    $product_sale->qty = $product_sale->qty * $lims_sale_unit_data->operation_value;
+                    $restore_qty = $product_sale->qty * $lims_sale_unit_data->operation_value;
                 else
-                    $product_sale->qty = $product_sale->qty / $lims_sale_unit_data->operation_value;
+                    $restore_qty = $product_sale->qty / $lims_sale_unit_data->operation_value;
+                
+                \Log::info("Product Qty Restore on Delete - Product ID: {$lims_product_model->id}, Pos Row Type: {$product_sale->pos_row_type}, Original Qty: {$original_qty}, Restore Qty (after unit conversion): {$restore_qty}");
+                
                 if ($product_sale->variant_id) {
                     $lims_product_variant_data = ProductVariant::select('id', 'qty')->FindExactProduct($lims_product_model->id, $product_sale->variant_id)->first();
                     $lims_product_warehouse_data = Product_Warehouse::FindProductWithVariant($lims_product_model->id, $product_sale->variant_id, $lims_sale_data->warehouse_id)->first();
                     if ($lims_product_variant_data) {
-                        $lims_product_variant_data->qty += $product_sale->qty;
+                        $old_variant_qty = (float) $lims_product_variant_data->qty;
+                        $lims_product_variant_data->qty += $restore_qty;
                         $lims_product_variant_data->save();
+                        \Log::info("Variant Qty Restored - Product ID: {$lims_product_model->id}, Variant ID: {$product_sale->variant_id}, Old Qty: {$old_variant_qty}, Restore: {$restore_qty}, New Qty: {$lims_product_variant_data->qty}");
                     }
                 } elseif ($product_sale->product_batch_id) {
                     $lims_product_batch_data = ProductBatch::find($product_sale->product_batch_id);
@@ -5947,19 +5965,27 @@ class SaleController extends Controller
                     ])->first();
 
                     if ($lims_product_batch_data) {
-                        $lims_product_batch_data->qty += $product_sale->qty;
+                        $old_batch_qty = (float) $lims_product_batch_data->qty;
+                        $lims_product_batch_data->qty += $restore_qty;
                         $lims_product_batch_data->save();
+                        \Log::info("Batch Qty Restored - Batch ID: {$product_sale->product_batch_id}, Old Qty: {$old_batch_qty}, Restore: {$restore_qty}, New Qty: {$lims_product_batch_data->qty}");
                     }
                 } else {
                     $lims_product_warehouse_data = Product_Warehouse::FindProductWithoutVariant($lims_product_model->id, $lims_sale_data->warehouse_id)->first();
                 }
 
-                $lims_product_model->qty += $product_sale->qty;
+                // Restore main product qty
+                $old_product_qty = (float) $lims_product_model->qty;
+                $lims_product_model->qty += $restore_qty;
                 $lims_product_model->save();
+                \Log::info("Main Product Qty Restored - Product ID: {$lims_product_model->id}, Old Qty: {$old_product_qty}, Restore: {$restore_qty}, New Qty: {$lims_product_model->qty}");
 
+                // Restore warehouse qty
                 if ($lims_product_warehouse_data) {
-                    $lims_product_warehouse_data->qty += $product_sale->qty;
+                    $old_warehouse_qty = (float) $lims_product_warehouse_data->qty;
+                    $lims_product_warehouse_data->qty += $restore_qty;
                     $lims_product_warehouse_data->save();
+                    \Log::info("Warehouse Qty Restored - Product ID: {$lims_product_model->id}, Warehouse ID: {$lims_sale_data->warehouse_id}, Old Qty: {$old_warehouse_qty}, Restore: {$restore_qty}, New Qty: {$lims_product_warehouse_data->qty}");
                 }
 
                 //restore imei numbers
