@@ -1104,8 +1104,10 @@ class SaleController extends Controller
                     $current_custom_parent_id = $created->id;
                 }
                 // Deduct warehouse store (basement) stock when sale is completed
-                // This applies to all basement products (parent, child, and display types)
-                if ((int) ($data['sale_status'] ?? 0) === 1) {
+                // IMPORTANT: Only parent and display type basement products deduct from basement
+                // Child products come from products table and should NOT deduct from basement
+                // (Child products with 'ws_' IDs are already prevented by check at line 1062-1065)
+                if ((int) ($data['sale_status'] ?? 0) === 1 && $pos_row_type !== 'child') {
                     // Refresh basement to get latest qty value
                     $basement->refresh();
                     // Check if qty is set and is a valid number (not null, not empty string)
@@ -1119,7 +1121,11 @@ class SaleController extends Controller
                         \Log::warning("Basement Qty is invalid - ID: {$basement_id}, Type: {$pos_row_type} (is_parent: " . ($is_parent_row ? 'yes' : 'no') . "), Qty value: " . var_export($basement->qty, true) . ", Cannot deduct");
                     }
                 } else {
-                    \Log::info("Sale status is not completed - ID: {$basement_id}, Type: {$pos_row_type}, Sale Status: " . ($data['sale_status'] ?? 'not set'));
+                    if ($pos_row_type === 'child') {
+                        \Log::info("Child product skipped basement deduction - ID: {$basement_id}, Sale Status: " . ($data['sale_status'] ?? 'not set'));
+                    } else {
+                        \Log::info("Sale status is not completed - ID: {$basement_id}, Type: {$pos_row_type}, Sale Status: " . ($data['sale_status'] ?? 'not set'));
+                    }
                 }
                 $mail_data['products'][$i] = $basement->name;
                 $mail_data['unit'][$i] = $sale_unit[$i] ?? '';
@@ -4248,8 +4254,9 @@ class SaleController extends Controller
                     $current_custom_parent_id = $created->id;
                 }
                 // Deduct basement (warehouse store) stock when sale is completed (POS edit flow)
-                // This applies to all basement products (parent, child, and display types)
-                if (($data['sale_status'] ?? 1) == 1) {
+                // IMPORTANT: Only parent and display type basement products deduct from basement
+                // Child products come from products table and should NOT deduct from basement
+                if (($data['sale_status'] ?? 1) == 1 && $pos_row_type !== 'child') {
                     // Refresh basement to get latest qty value
                     $basement->refresh();
                     // Check if qty is set and is a valid number (not null, not empty string)
@@ -4263,7 +4270,11 @@ class SaleController extends Controller
                         \Log::warning("Basement Qty is invalid (Edit) - ID: {$basement_id}, Type: {$pos_row_type} (is_parent: " . ($is_parent_row ? 'yes' : 'no') . "), Qty value: " . var_export($basement->qty, true) . ", Cannot deduct");
                     }
                 } else {
-                    \Log::info("Sale status is not completed (Edit) - ID: {$basement_id}, Type: {$pos_row_type}, Sale Status: " . ($data['sale_status'] ?? 'not set'));
+                    if ($pos_row_type === 'child') {
+                        \Log::info("Child product skipped basement deduction (Edit) - ID: {$basement_id}, Sale Status: " . ($data['sale_status'] ?? 'not set'));
+                    } else {
+                        \Log::info("Sale status is not completed (Edit) - ID: {$basement_id}, Type: {$pos_row_type}, Sale Status: " . ($data['sale_status'] ?? 'not set'));
+                    }
                 }
                 continue;
             }
@@ -5860,8 +5871,10 @@ class SaleController extends Controller
             }
 
             // Handle basement (warehouse_store) products - restore qty directly without unit conversion
-            // Basement qty is stored as-is in product_sales table (no unit conversion applied during create)
-            if ($product_sale->warehouse_store_product_id) {
+            // IMPORTANT: Child products come from products table, NOT basement table
+            // Only parent and display type basement products should restore basement qty
+            // Child products (pos_row_type === 'child') should be treated as regular products
+            if ($product_sale->warehouse_store_product_id && $product_sale->pos_row_type !== 'child') {
                 if ($lims_sale_data->sale_status == 1) {
                     $old_basement = Basement::find($product_sale->warehouse_store_product_id);
                     if ($old_basement && $old_basement->qty !== null) {
@@ -5875,6 +5888,12 @@ class SaleController extends Controller
                 }
                 $product_sale->delete();
                 continue;
+            }
+            
+            // If child product has warehouse_store_product_id (old data issue), skip basement restore
+            // Child products should restore from products table, not basement
+            if ($product_sale->pos_row_type === 'child' && $product_sale->warehouse_store_product_id) {
+                \Log::warning("Child product has warehouse_store_product_id - skipping basement restore. Product Sale ID: {$product_sale->id}, Basement ID: {$product_sale->warehouse_store_product_id}");
             }
             
             // Get actual Product model instance for operations that require saving
