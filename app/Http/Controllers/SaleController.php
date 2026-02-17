@@ -1104,10 +1104,22 @@ class SaleController extends Controller
                     $current_custom_parent_id = $created->id;
                 }
                 // Deduct warehouse store (basement) stock when sale is completed
-                if ((int) ($data['sale_status'] ?? 0) === 1 && $basement->qty !== null) {
-                    $deduct_qty = (float) $qty[$i];
-                    $basement->qty = max(0, (float) $basement->qty - $deduct_qty);
-                    $basement->save();
+                // This applies to all basement products (parent, child, and display types)
+                if ((int) ($data['sale_status'] ?? 0) === 1) {
+                    // Refresh basement to get latest qty value
+                    $basement->refresh();
+                    // Check if qty is set and is a valid number (not null, not empty string)
+                    if ($basement->qty !== null && $basement->qty !== '' && is_numeric($basement->qty)) {
+                        $deduct_qty = (float) $qty[$i];
+                        $old_qty = (float) $basement->qty;
+                        $basement->qty = max(0, $old_qty - $deduct_qty);
+                        $saved = $basement->save();
+                        \Log::info("Basement Qty Deducted - ID: {$basement_id}, Type: {$pos_row_type} (is_parent: " . ($is_parent_row ? 'yes' : 'no') . "), Old Qty: {$old_qty}, Deduct: {$deduct_qty}, New Qty: {$basement->qty}, Saved: " . ($saved ? 'yes' : 'no'));
+                    } else {
+                        \Log::warning("Basement Qty is invalid - ID: {$basement_id}, Type: {$pos_row_type} (is_parent: " . ($is_parent_row ? 'yes' : 'no') . "), Qty value: " . var_export($basement->qty, true) . ", Cannot deduct");
+                    }
+                } else {
+                    \Log::info("Sale status is not completed - ID: {$basement_id}, Type: {$pos_row_type}, Sale Status: " . ($data['sale_status'] ?? 'not set'));
                 }
                 $mail_data['products'][$i] = $basement->name;
                 $mail_data['unit'][$i] = $sale_unit[$i] ?? '';
@@ -4236,10 +4248,22 @@ class SaleController extends Controller
                     $current_custom_parent_id = $created->id;
                 }
                 // Deduct basement (warehouse store) stock when sale is completed (POS edit flow)
-                if (($data['sale_status'] ?? 1) == 1 && $basement->qty !== null) {
-                    $deduct_qty = (float) ($qty[$i] ?? 0);
-                    $basement->qty = max(0, (float) $basement->qty - $deduct_qty);
-                    $basement->save();
+                // This applies to all basement products (parent, child, and display types)
+                if (($data['sale_status'] ?? 1) == 1) {
+                    // Refresh basement to get latest qty value
+                    $basement->refresh();
+                    // Check if qty is set and is a valid number (not null, not empty string)
+                    if ($basement->qty !== null && $basement->qty !== '' && is_numeric($basement->qty)) {
+                        $deduct_qty = (float) ($qty[$i] ?? 0);
+                        $old_qty = (float) $basement->qty;
+                        $basement->qty = max(0, $old_qty - $deduct_qty);
+                        $saved = $basement->save();
+                        \Log::info("Basement Qty Deducted (Edit) - ID: {$basement_id}, Type: {$pos_row_type} (is_parent: " . ($is_parent_row ? 'yes' : 'no') . "), Old Qty: {$old_qty}, Deduct: {$deduct_qty}, New Qty: {$basement->qty}, Saved: " . ($saved ? 'yes' : 'no'));
+                    } else {
+                        \Log::warning("Basement Qty is invalid (Edit) - ID: {$basement_id}, Type: {$pos_row_type} (is_parent: " . ($is_parent_row ? 'yes' : 'no') . "), Qty value: " . var_export($basement->qty, true) . ", Cannot deduct");
+                    }
+                } else {
+                    \Log::info("Sale status is not completed (Edit) - ID: {$basement_id}, Type: {$pos_row_type}, Sale Status: " . ($data['sale_status'] ?? 'not set'));
                 }
                 continue;
             }
