@@ -374,6 +374,46 @@
                                         <input type="number" class="form-control" name="expiry_value" value="{{ $lims_general_setting_data->expiry_value ?? '0' }}">
                                     </div>
                                 </div> -->
+                                <div class="col-md-12 mt-4">
+                                    <div class="form-group">
+                                        <label><strong>{{__('db.Modules')}}</strong></label>
+                                        <div class="row">
+                                            @php
+                                                $current_modules = $lims_general_setting_data->modules ? explode(',', $lims_general_setting_data->modules) : [];
+                                            @endphp
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input type="checkbox" name="modules[]" value="manufacturing" class="form-check-input" id="module_manufacturing" {{ in_array('manufacturing', $current_modules) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="module_manufacturing">{{__('db.Manufacturing')}}</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input type="checkbox" name="modules[]" value="ecommerce" class="form-check-input" id="module_ecommerce" {{ in_array('ecommerce', $current_modules) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="module_ecommerce">eCommerce</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input type="checkbox" name="modules[]" value="restaurant" class="form-check-input" id="module_restaurant" {{ in_array('restaurant', $current_modules) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="module_restaurant">{{__('db.Restaurant')}}</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input type="checkbox" name="modules[]" value="project" class="form-check-input" id="module_project" {{ in_array('project', $current_modules) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="module_project">{{__('db.Project')}}</label>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="form-check">
+                                                    <input type="checkbox" name="modules[]" value="woocommerce" class="form-check-input" id="module_woocommerce" {{ in_array('woocommerce', $current_modules) ? 'checked' : '' }}>
+                                                    <label class="form-check-label" for="module_woocommerce">WooCommerce</label>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                                 <div class="col-md-4 mt-4">
                                     <div class="form-group mt-2">
                                         @if($lims_general_setting_data->disable_signup)

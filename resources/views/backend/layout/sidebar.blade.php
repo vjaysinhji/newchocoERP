@@ -719,13 +719,15 @@
                 @endif
             @endif
 
-            <li>
-                <a href="#ecommerce" aria-expanded="false" data-toggle="collapse"> <i
-                        class="dripicons-shopping-bag"></i><span>eCommerce</span></a>
-                <ul id="ecommerce" class="collapse list-unstyled ">
-                    @include('ecommerce::backend.layout.sidebar-menu')
-                </ul>
-            </li>
+            @if (in_array('ecommerce', explode(',', $general_setting->modules)))
+                <li>
+                    <a href="#ecommerce" aria-expanded="false" data-toggle="collapse"> <i
+                            class="dripicons-shopping-bag"></i><span>eCommerce</span></a>
+                    <ul id="ecommerce" class="collapse list-unstyled ">
+                        @include('ecommerce::backend.layout.sidebar-menu')
+                    </ul>
+                </li>
+            @endif
             @can('addons')
                 @if (\Auth::user()->role_id != 5)
                     @if (!config('database.connections.saleprosaas_landlord'))

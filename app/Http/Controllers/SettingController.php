@@ -191,6 +191,14 @@ class SettingController extends Controller
 
         $general_setting->website_default_locale = $data['website_default_locale'] ?? config('website.default_locale', 'en');
         $general_setting->website_rtl_locales = isset($data['website_rtl_locales']) ? implode(',', (array) $data['website_rtl_locales']) : null;
+        
+        // Save modules (comma-separated string)
+        if (isset($data['modules']) && is_array($data['modules'])) {
+            $general_setting->modules = implode(',', array_filter($data['modules']));
+        } else {
+            $general_setting->modules = null;
+        }
+        
         $logo = $request->site_logo;
         if ($logo) {
             $this->fileDelete('logo/', $general_setting->site_logo);
