@@ -3614,7 +3614,14 @@
                             var nameEsc = escapeHtml(p.name || '');
                             var codeEsc = escapeHtml(p.code || '');
                             var pid = (p.id != null && p.id !== '') ? escapeHtml(String(p.id)) : '';
-                            tableData += '<div class="product-img sound-btn" data-product-id="' + pid + '" title="' + nameEsc.replace(/"/g, '&quot;') + '" data-code="' + codeEsc.replace(/"/g, '&quot;') + '" data-qty="' + (p.qty || 0) + '" data-imei="' + (p.is_imei || 0) + '" data-embedded="' + (p.is_embeded || 0) + '" data-batch="" data-price="' + price + '" data-type="' + escapeHtml(pType) + '"><span class="pos-product-view-btn" title="{{ __("db.View") }}" role="button"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg></span><img src="{{ url("/images/product") }}/' + escapeHtml(img) + '" width="100%" /><p>' + nameEsc + '</p><span>[' + codeEsc + ']</span> <span class="d-block" style="font-weight:600;color:#5f27cd;">Price: ' + formattedPrice + '</span> <span class="d-block">Qty: ' + (p.qty || 0) + '</span></div>';
+                            // Add badge for combo products
+                            var typeBadge = '';
+                            if (pType === 'combo') {
+                                typeBadge = '<span class="badge badge-info" style="position: absolute; top: 5px; right: 5px; background: #17a2b8; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: 600;">COMBO</span>';
+                            } else {
+                                typeBadge = '<span class="badge badge-secondary" style="position: absolute; top: 5px; right: 5px; background: #6c757d; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: 600;">SINGLE</span>';
+                            }
+                            tableData += '<div class="product-img sound-btn" data-product-id="' + pid + '" title="' + nameEsc.replace(/"/g, '&quot;') + '" data-code="' + codeEsc.replace(/"/g, '&quot;') + '" data-qty="' + (p.qty || 0) + '" data-imei="' + (p.is_imei || 0) + '" data-embedded="' + (p.is_embeded || 0) + '" data-batch="" data-price="' + price + '" data-type="' + escapeHtml(pType) + '" style="position: relative;"><span class="pos-product-view-btn" title="{{ __("db.View") }}" role="button"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg></span>' + typeBadge + '<img src="{{ url("/images/product") }}/' + escapeHtml(img) + '" width="100%" /><p>' + nameEsc + '</p><span>[' + codeEsc + ']</span> <span class="d-block" style="font-weight:600;color:#5f27cd;">Price: ' + formattedPrice + '</span> <span class="d-block">Qty: ' + (p.qty || 0) + '</span></div>';
                         });
                     } else {
                         tableData += '<p class="text-muted py-4">No products found.</p>';
@@ -3706,12 +3713,19 @@
                 var formattedPrice = price.toFixed(2);
                 var productType = (response.data['type'] && response.data['type'][index]) ? response.data['type'][index] : (currentFilterType || 'product');
                 var productId = (response.data['id'] && response.data['id'][index] != null) ? response.data['id'][index] : '';
+                // Add badge for combo products
+                var typeBadge = '';
+                if (productType === 'combo') {
+                    typeBadge = '<span class="badge badge-info" style="position: absolute; top: 5px; right: 5px; background: #17a2b8; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: 600;">COMBO</span>';
+                } else {
+                    typeBadge = '<span class="badge badge-secondary" style="position: absolute; top: 5px; right: 5px; background: #6c757d; color: white; padding: 3px 8px; border-radius: 3px; font-size: 11px; font-weight: 600;">SINGLE</span>';
+                }
                 tableData += '<div class="product-img sound-btn" data-product-id="' + productId + '" title="' + response.data['name'][index] +
                     '" data-code = "' + response.data['code'][index] + '" data-qty="' + response.data['qty'][
                         index
                     ] + '" data-imei="' + response.data['is_imei'][index] + '" data-embedded="' + response
                     .data['is_embeded'][index] + '" data-batch="" data-price="' + response.data['price'][index] +
-                    '" data-type="' + productType + '"><span class="pos-product-view-btn" title="{{ __("db.View") }}" role="button"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg></span><img  src="{{ url('/images/product') }}/' + image + '" width="100%" /><p>' + response.data[
+                    '" data-type="' + productType + '" style="position: relative;"><span class="pos-product-view-btn" title="{{ __("db.View") }}" role="button"><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" width="18" height="18"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg></span>' + typeBadge + '<img  src="{{ url('/images/product') }}/' + image + '" width="100%" /><p>' + response.data[
                         'name'][index] + '</p><span>[' + response.data['code'][index] +
                     ']</span> <span class="d-block" style="font-weight: 600; color: #5f27cd;">Price: ' +
                     formattedPrice + '</span> <span class="d-block">Qty: ' + response.data['qty'][index] +

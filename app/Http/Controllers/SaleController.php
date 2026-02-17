@@ -2854,7 +2854,7 @@ class SaleController extends Controller
                     $query->where('products.category_id', $cat_or_brand_id)
                         ->orWhere('categories.parent_id', $cat_or_brand_id);
                 });
-            $query = $query->where('products.type', '!=', 'combo');
+            // Include both single and combo products for category filter
         } elseif ($key == 'brand') {
             $query = $query->where('products.brand_id', $cat_or_brand_id);
             $query = $query->where('products.type', '!=', 'combo');
@@ -2891,7 +2891,8 @@ class SaleController extends Controller
             'products.image',
             'products.qty',
             'products.price',
-            'products.is_variant'
+            'products.is_variant',
+            'products.type'
         ) // Fetch required fields
             ->orderBy('products.name', 'asc') // Sort by name
             ->groupBy('products.id')

@@ -719,6 +719,16 @@ class ProductController extends Controller
             $product_list_raw = array_filter(array_map('trim', explode(',', $data['product_list'] ?? '')));
             $qty_list = array_map('floatval', explode(',', $data['qty_list'] ?? ''));
             
+            // Get default warehouse if available (from initial stock or first active warehouse)
+            $default_warehouse_id = 0;
+            if (isset($data['stock_warehouse_id']) && is_array($data['stock_warehouse_id']) && count($data['stock_warehouse_id']) > 0) {
+                $default_warehouse_id = (int) ($data['stock_warehouse_id'][0] ?? 0);
+            }
+            if ($default_warehouse_id <= 0) {
+                $default_warehouse = Warehouse::where('is_active', true)->first();
+                $default_warehouse_id = $default_warehouse ? (int) $default_warehouse->id : 0;
+            }
+            
             DB::beginTransaction();
             try {
                 foreach ($product_list_raw as $i => $item_id) {
@@ -740,15 +750,43 @@ class ProductController extends Controller
                     $basement->refresh(); // Get latest qty
                     $old_main_qty = (float) ($basement->qty ?? 0);
                     
-                    if ($old_main_qty < $required_qty) {
-                        \Log::warning("Combo Create - Insufficient basement stock - Basement ID: {$basement_id}, Name: {$basement->name}, Required: {$required_qty}, Available: {$old_main_qty}");
-                        throw new \Exception(__('db.Insufficient stock for') . ' ' . $basement->name . '. ' . __('db.Required') . ': ' . $required_qty . ', ' . __('db.Available') . ': ' . $old_main_qty);
+                    // Check and deduct from basement_warehouse if warehouse is available
+                    if ($default_warehouse_id > 0) {
+                        $basement_warehouse = Basement_Warehouse::getOrCreate($basement_id, $default_warehouse_id);
+                        $old_wh_qty = (float) $basement_warehouse->qty;
+                        
+                        // Check stock from warehouse first, then main qty
+                        if ($old_wh_qty < $required_qty && $old_main_qty < $required_qty) {
+                            \Log::warning("Combo Create - Insufficient basement stock (warehouse + main) - Basement ID: {$basement_id}, Warehouse ID: {$default_warehouse_id}, Required: {$required_qty}, Warehouse Available: {$old_wh_qty}, Main Available: {$old_main_qty}");
+                            throw new \Exception(__('db.Insufficient stock for') . ' ' . $basement->name . '. ' . __('db.Required') . ': ' . $required_qty . ', ' . __('db.Available') . ': ' . ($old_wh_qty + $old_main_qty));
+                        }
+                        
+                        // Deduct from warehouse first, then from main if needed
+                        $warehouse_deduct = min($required_qty, $old_wh_qty);
+                        $main_deduct = $required_qty - $warehouse_deduct;
+                        
+                        if ($warehouse_deduct > 0) {
+                            $basement_warehouse->qty = max(0, $old_wh_qty - $warehouse_deduct);
+                            $basement_warehouse->save();
+                            \Log::info("Combo Create - Basement Warehouse Qty Deducted - Basement ID: {$basement_id}, Warehouse ID: {$default_warehouse_id}, Old Qty: {$old_wh_qty}, Deduct: {$warehouse_deduct}, New Qty: {$basement_warehouse->qty}");
+                        }
+                        
+                        if ($main_deduct > 0) {
+                            $basement->qty = max(0, $old_main_qty - $main_deduct);
+                            $basement->save();
+                            \Log::info("Combo Create - Basement Main Qty Deducted (after warehouse) - Basement ID: {$basement_id}, Old Qty: {$old_main_qty}, Deduct: {$main_deduct}, New Qty: {$basement->qty}");
+                        }
+                    } else {
+                        // No warehouse available, deduct from main qty only
+                        if ($old_main_qty < $required_qty) {
+                            \Log::warning("Combo Create - Insufficient basement stock - Basement ID: {$basement_id}, Name: {$basement->name}, Required: {$required_qty}, Available: {$old_main_qty}");
+                            throw new \Exception(__('db.Insufficient stock for') . ' ' . $basement->name . '. ' . __('db.Required') . ': ' . $required_qty . ', ' . __('db.Available') . ': ' . $old_main_qty);
+                        }
+                        
+                        $basement->qty = max(0, $old_main_qty - $required_qty);
+                        $basement->save();
+                        \Log::info("Combo Create - Basement Main Qty Deducted - Basement ID: {$basement_id}, Name: {$basement->name}, Old Qty: {$old_main_qty}, Deduct: {$required_qty}, New Qty: {$basement->qty}");
                     }
-                    
-                    // Update main basement qty
-                    $basement->qty = max(0, $old_main_qty - $required_qty);
-                    $basement->save();
-                    \Log::info("Combo Create - Basement Qty Deducted - Basement ID: {$basement_id}, Name: {$basement->name}, Old Qty: {$old_main_qty}, Deduct: {$required_qty}, New Qty: {$basement->qty}");
                 }
                 DB::commit();
             } catch (\Exception $e) {
@@ -1692,6 +1730,16 @@ class ProductController extends Controller
                 $new_product_list = $data['product_list'] ?? '';
                 $new_qty_list = array_map('floatval', explode(',', $data['qty_list'] ?? ''));
                 
+                // Get default warehouse if available
+                $default_warehouse_id = 0;
+                if (isset($data['warehouse_id']) && is_array($data['warehouse_id']) && count($data['warehouse_id']) > 0) {
+                    $default_warehouse_id = (int) ($data['warehouse_id'][0] ?? 0);
+                }
+                if ($default_warehouse_id <= 0) {
+                    $default_warehouse = Warehouse::where('is_active', true)->first();
+                    $default_warehouse_id = $default_warehouse ? (int) $default_warehouse->id : 0;
+                }
+                
                 // Restore quantities from old basement ingredients
                 if ($old_product_list) {
                     $old_product_list_raw = array_filter(array_map('trim', explode(',', $old_product_list)));
@@ -1709,9 +1757,20 @@ class ProductController extends Controller
                         if ($basement) {
                             $basement->refresh();
                             $old_main_qty = (float) ($basement->qty ?? 0);
+                            
+                            // Restore to basement_warehouse if warehouse is available
+                            if ($default_warehouse_id > 0) {
+                                $basement_warehouse = Basement_Warehouse::getOrCreate($basement_id, $default_warehouse_id);
+                                $old_wh_qty = (float) $basement_warehouse->qty;
+                                $basement_warehouse->qty = $old_wh_qty + $restore_qty;
+                                $basement_warehouse->save();
+                                \Log::info("Combo Update - Basement Warehouse Qty Restored - Basement ID: {$basement_id}, Warehouse ID: {$default_warehouse_id}, Old Qty: {$old_wh_qty}, Restore: {$restore_qty}, New Qty: {$basement_warehouse->qty}");
+                            }
+                            
+                            // Restore main basement qty
                             $basement->qty = $old_main_qty + $restore_qty;
                             $basement->save();
-                            \Log::info("Combo Update - Basement Qty Restored - Basement ID: {$basement_id}, Name: {$basement->name}, Old Qty: {$old_main_qty}, Restore: {$restore_qty}, New Qty: {$basement->qty}");
+                            \Log::info("Combo Update - Basement Main Qty Restored - Basement ID: {$basement_id}, Name: {$basement->name}, Old Qty: {$old_main_qty}, Restore: {$restore_qty}, New Qty: {$basement->qty}");
                         }
                     }
                 }
@@ -1738,14 +1797,43 @@ class ProductController extends Controller
                         $basement->refresh();
                         $old_main_qty = (float) ($basement->qty ?? 0);
                         
-                        if ($old_main_qty < $required_qty) {
-                            \Log::warning("Combo Update - Insufficient basement stock - Basement ID: {$basement_id}, Name: {$basement->name}, Required: {$required_qty}, Available: {$old_main_qty}");
-                            throw new \Exception(__('db.Insufficient stock for') . ' ' . $basement->name . '. ' . __('db.Required') . ': ' . $required_qty . ', ' . __('db.Available') . ': ' . $old_main_qty);
+                        // Check and deduct from basement_warehouse if warehouse is available
+                        if ($default_warehouse_id > 0) {
+                            $basement_warehouse = Basement_Warehouse::getOrCreate($basement_id, $default_warehouse_id);
+                            $old_wh_qty = (float) $basement_warehouse->qty;
+                            
+                            // Check stock from warehouse first, then main qty
+                            if ($old_wh_qty < $required_qty && $old_main_qty < $required_qty) {
+                                \Log::warning("Combo Update - Insufficient basement stock (warehouse + main) - Basement ID: {$basement_id}, Warehouse ID: {$default_warehouse_id}, Required: {$required_qty}, Warehouse Available: {$old_wh_qty}, Main Available: {$old_main_qty}");
+                                throw new \Exception(__('db.Insufficient stock for') . ' ' . $basement->name . '. ' . __('db.Required') . ': ' . $required_qty . ', ' . __('db.Available') . ': ' . ($old_wh_qty + $old_main_qty));
+                            }
+                            
+                            // Deduct from warehouse first, then from main if needed
+                            $warehouse_deduct = min($required_qty, $old_wh_qty);
+                            $main_deduct = $required_qty - $warehouse_deduct;
+                            
+                            if ($warehouse_deduct > 0) {
+                                $basement_warehouse->qty = max(0, $old_wh_qty - $warehouse_deduct);
+                                $basement_warehouse->save();
+                                \Log::info("Combo Update - Basement Warehouse Qty Deducted - Basement ID: {$basement_id}, Warehouse ID: {$default_warehouse_id}, Old Qty: {$old_wh_qty}, Deduct: {$warehouse_deduct}, New Qty: {$basement_warehouse->qty}");
+                            }
+                            
+                            if ($main_deduct > 0) {
+                                $basement->qty = max(0, $old_main_qty - $main_deduct);
+                                $basement->save();
+                                \Log::info("Combo Update - Basement Main Qty Deducted (after warehouse) - Basement ID: {$basement_id}, Old Qty: {$old_main_qty}, Deduct: {$main_deduct}, New Qty: {$basement->qty}");
+                            }
+                        } else {
+                            // No warehouse available, deduct from main qty only
+                            if ($old_main_qty < $required_qty) {
+                                \Log::warning("Combo Update - Insufficient basement stock - Basement ID: {$basement_id}, Name: {$basement->name}, Required: {$required_qty}, Available: {$old_main_qty}");
+                                throw new \Exception(__('db.Insufficient stock for') . ' ' . $basement->name . '. ' . __('db.Required') . ': ' . $required_qty . ', ' . __('db.Available') . ': ' . $old_main_qty);
+                            }
+                            
+                            $basement->qty = max(0, $old_main_qty - $required_qty);
+                            $basement->save();
+                            \Log::info("Combo Update - Basement Main Qty Deducted - Basement ID: {$basement_id}, Name: {$basement->name}, Old Qty: {$old_main_qty}, Deduct: {$required_qty}, New Qty: {$basement->qty}");
                         }
-                        
-                        $basement->qty = max(0, $old_main_qty - $required_qty);
-                        $basement->save();
-                        \Log::info("Combo Update - Basement Qty Deducted - Basement ID: {$basement_id}, Name: {$basement->name}, Old Qty: {$old_main_qty}, Deduct: {$required_qty}, New Qty: {$basement->qty}");
                     }
                 }
             }
