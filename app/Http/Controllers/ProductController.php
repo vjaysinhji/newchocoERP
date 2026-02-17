@@ -1995,6 +1995,7 @@ class ProductController extends Controller
      */
     public function comboAssemble(Request $request)
     {
+        dd($request->all());
         $request->validate([
             'combo_product_id' => 'required|exists:products,id',
             'combo_warehouse_id' => 'required|exists:warehouses,id',
