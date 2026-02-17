@@ -1,5 +1,5 @@
 <?php
-
+	
 use Modules\Ecommerce\Http\Controllers\AuthController;
 use Modules\Ecommerce\Http\Controllers\CartController;
 use Modules\Ecommerce\Http\Controllers\CheckoutController;
@@ -92,7 +92,7 @@ Route::middleware(['common', 'auth', 'active'])->group(function () {
     Route::prefix('setting')->group(function () {
         Route::get('ecommerce-setting', [EcommerceSettingController::class, 'index'])->name('setting.ecommerce');
         Route::post('ecommerce-setting/update', [EcommerceSettingController::class, 'update'])->name('setting.ecommerce.update');
-        Route::get('payment-gateways', [EcommerceSettingController::class, 'gateway'])->name('setting.gateway');
+        Route::get('payment-gateways', [EcommerceSettingController::class, 'gateway'])->name('ecommerce.setting.gateway');
         Route::post('payment-gateways/update', [EcommerceSettingController::class, 'gatewayUpdate'])->name('setting.ecommerce.gateway.update');
     });
 
