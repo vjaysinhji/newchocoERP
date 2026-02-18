@@ -42,8 +42,25 @@ class RouteServiceProvider extends ServiceProvider
         // Admin routes FIRST - so /rawmaterials, /purchases, /brand, etc. work correctly
         $this->mapWebRoutes();
 
+        // Manufacturing module routes - before Ecommerce so /manufacturing/* is not caught by catch-all
+        $this->mapManufacturingRoutes();
+
         // Ecommerce frontend routes SECOND - /, /shop, /brands, /collections, etc.
         $this->mapEcommerceRoutes();
+    }
+
+    /**
+     * Manufacturing module web routes (productions, recipes, etc.)
+     */
+    protected function mapManufacturingRoutes()
+    {
+        $path = base_path('Modules/Manufacturing/Routes/web.php');
+        if (!file_exists($path)) {
+            return;
+        }
+        Route::middleware('web')
+            ->namespace('Modules\Manufacturing\Http\Controllers')
+            ->group($path);
     }
 
     /**
