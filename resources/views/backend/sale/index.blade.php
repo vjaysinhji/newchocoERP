@@ -1712,57 +1712,91 @@
             $.get('sales/product_sale/' + sale[13], function(data) {
                 // console.log(data);
                 $(".product-sale-list tbody").remove();
+                var name_code = data[0];
+                var qty = data[1];
+                var unit_code = data[2];
+                var tax = data[3];
+                var tax_rate = data[4];
+                var discount = data[5];
+                var subtotal = data[6];
+                var batch_no = data[7];
+                var return_qty = data[8];
+                var is_delivered = data[9];
+                // Check if data[10] exists
+                var toppings = data[10] ? data[10] : [];
                 var total_qty = 0;
                 var newBody = $("<tbody>");
-                var rowIndex = 1;
 
-                if (data.groups) {
-                    total_qty = (data.total_qty !== undefined && data.total_qty !== null) ? data.total_qty : 0;
-                    $.each(data.groups, function(gIdx, group) {
-                        $.each(group.rows, function(rIdx, r) {
-                            var newRow = $("<tr>");
-                            var cols = '';
-                            if (rIdx === 0) {
-                                cols += '<td rowspan="' + group.rowspan + '" class="align-middle" style="vertical-align:middle !important;">' + rowIndex + '</td>';
-                            }
-                            var productCell = r.name_code;
-                            if (r.topping_id) {
-                                try {
-                                    var toppingData = JSON.parse(r.topping_id);
-                                    var toppingNames = toppingData.map(function(t) { return t.name; }).join(', ');
-                                    productCell += ' (' + toppingNames + ')';
-                                } catch (e) {}
-                            }
-                            cols += '<td>' + productCell + '</td>';
-                            cols += '<td>' + r.batch_no + '</td>';
-                            cols += '<td>' + r.qty + '</td>';
-                            cols += '<td>' + r.return_qty + '</td>';
-                            var unitPriceCell = r.unit_price;
-                            if (r.topping_id) {
-                                try {
-                                    var toppingData = JSON.parse(r.topping_id);
-                                    var toppingPrices = toppingData.map(function(t) { return parseFloat(t.price).toFixed({{ $general_setting->decimal }}); }).join(' + ');
-                                    unitPriceCell += ' (' + toppingPrices + ')';
-                                } catch (e) {}
-                            }
-                            cols += '<td>' + unitPriceCell + '</td>';
-                            cols += '<td>' + r.tax + '</td>';
-                            cols += '<td>' + r.discount + '</td>';
-                            var subtotalVal = parseFloat(r.subtotal);
-                            if (r.topping_id) {
-                                try {
-                                    var toppingData = JSON.parse(r.topping_id);
-                                    toppingData.forEach(function(t) { subtotalVal += parseFloat(t.price || 0); });
-                                } catch (e) {}
-                            }
-                            cols += '<td>' + subtotalVal.toFixed({{ $general_setting->decimal }}) + '</td>';
-                            cols += '<td>' + r.is_delivered + '</td>';
-                            newRow.append(cols);
-                            newBody.append(newRow);
-                        });
-                        rowIndex++;
-                    });
-                }
+                $.each(name_code, function(index) {
+                    var newRow = $("<tr>");
+                    var cols = '';
+                    cols += '<td>' + (index + 1) + '</td>';
+                    cols += '<td>' + name_code[index];
+
+                    // Append topping names if toppings[index] exists
+                    if (toppings[index]) {
+                        try {
+                            // Parse and extract topping names
+                            var toppingData = JSON.parse(toppings[index]);
+                            var toppingNames = toppingData.map(topping => topping.name).join(', ');
+                            cols += ' (' + toppingNames + ')';
+                        } catch (error) {
+                            console.error('Error parsing toppings for index', index, toppings[index],
+                            error);
+                        }
+                    }
+
+                    cols += '</td>';
+                    cols += '<td>' + batch_no[index] + '</td>';
+                    cols += '<td>' + qty[index] + ' ' + unit_code[index] + '</td>';
+                    cols += '<td>' + return_qty[index] + '</td>';
+
+                    // Calculate unit price
+                    var unitPrice = parseFloat(subtotal[index] / qty[index]).toFixed(
+                        {{ $general_setting->decimal }});
+
+                    // Calculate topping prices if toppings[index] exists
+                    var toppingPrices = '';
+                    if (toppings[index]) {
+                        try {
+                            var toppingData = JSON.parse(toppings[index]); // Parse topping data
+                            toppingPrices = toppingData
+                                .map(topping => parseFloat(topping.price).toFixed(
+                                    {{ $general_setting->decimal }}
+                                    )) // Extract and format each topping price
+                                .join(' + '); // Join prices with '+'
+                        } catch (error) {
+                            console.error('Error calculating topping prices for index', index, toppings[
+                                index], error);
+                        }
+                    }
+
+                    cols += '<td>' + unitPrice + ' (' + toppingPrices + ')</td>';
+
+                    cols += '<td>' + tax[index] + '(' + tax_rate[index] + '%)' + '</td>';
+                    cols += '<td>' + discount[index] + '</td>';
+
+                    // Update subtotal to include topping prices
+                    var toppingPricesRowTotal = 0;
+                    if (toppings[index]) {
+                        try {
+                            var toppingData = JSON.parse(toppings[index]);
+                            toppingPricesRowTotal = toppingData.reduce((sum, topping) => sum + parseFloat(
+                                topping.price), 0);
+                        } catch (error) {
+                            console.error('Error calculating topping prices for index', index, toppings[
+                                index], error);
+                        }
+                    }
+                    subtotal[index] = parseFloat(subtotal[index]) + toppingPricesRowTotal;
+
+                    cols += '<td>' + subtotal[index].toFixed({{ $general_setting->decimal }}) + '</td>';
+                    cols += '<td>' + is_delivered[index] + '</td>';
+
+                    total_qty += parseFloat(qty[index]);
+                    newRow.append(cols);
+                    newBody.append(newRow);
+                });
 
                 var newRow = $("<tr>");
                 cols = '';

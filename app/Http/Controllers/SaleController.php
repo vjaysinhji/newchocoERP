@@ -3379,9 +3379,9 @@ class SaleController extends Controller
     public function productSaleData($id)
     {
         $lims_product_sale_data = Product_Sale::where('sale_id', $id)->get();
-        $display_rows = $this->buildProductSaleDisplayRows($lims_product_sale_data);
+        $rows = $this->buildProductSaleDisplayRows($lims_product_sale_data);
+        $product_sale = [];
         $decimal = (int) (config('decimal') ?? 2);
-        $fmt = function ($val, $dec = null) use ($decimal) { return number_format((float) $val, $dec ?? $decimal, '.', ''); };
 
         if (cache()->has('general_setting')) {
             $general_setting = cache()->get('general_setting');
@@ -3390,47 +3390,32 @@ class SaleController extends Controller
             cache()->put('general_setting', $general_setting, 60 * 60 * 24);
         }
 
-        $groups = [];
-        $total_qty = 0;
-        $has_restaurant = in_array('restaurant', explode(',', $general_setting->modules));
-
-        foreach ($display_rows as $groupIndex => $row) {
+        foreach ($rows as $key => $row) {
             $product_sale_data = $row['product_sale'];
             $children = $row['children'];
-            $item = $row['item'];
-            $parent_name_with_code = $item->name . ' [' . ($item->code ?? '') . ']';
+            $name_with_code = $row['display_name_with_code'];
             if (!$product_sale_data->warehouse_store_product_id && $product_sale_data->variant_id) {
                 $lims_product_variant_data = ProductVariant::select('item_code')->FindExactProduct($product_sale_data->product_id, $product_sale_data->variant_id)->first();
                 if ($lims_product_variant_data) {
-                    $parent_name_with_code = $item->name . ' [' . $lims_product_variant_data->item_code . ']';
+                    $name_with_code = preg_replace('/ \[[^\]]*\]/', ' [' . $lims_product_variant_data->item_code . ']', $name_with_code, 1);
                 }
             }
             $unit_data = Unit::find($product_sale_data->sale_unit_id);
             $unit = $unit_data ? $unit_data->unit_code : '';
 
-            $returned_imei_html = '';
-            if (!$product_sale_data->warehouse_store_product_id && $product_sale_data->imei_number && !str_contains($product_sale_data->imei_number, "null")) {
-                $imeis = array_unique(explode(',', $product_sale_data->imei_number));
-                $returned_imei_html = '<br><span style="white-space: normal !important;word-break: break-word !important;overflow-wrap: anywhere !important;max-width: 100%;display: block;">IMEI or Serial Number: ' . implode(',', $imeis) . '</span>';
-            }
+            $fmt = function ($val, $dec = null) use ($decimal) { return number_format((float) $val, $dec ?? $decimal, '.', ''); };
+            $rowQtySum = (float) $product_sale_data->qty;
 
-            $group_rows = [];
-            $batch = $product_sale_data->product_batch_id
+            $batch_val = $product_sale_data->product_batch_id
                 ? (ProductBatch::select('batch_no')->find($product_sale_data->product_batch_id)->batch_no ?? 'N/A')
                 : 'N/A';
-            $group_rows[] = [
-                'name_code' => e($parent_name_with_code) . $returned_imei_html,
-                'batch_no' => $batch,
-                'qty' => (string) $product_sale_data->qty . ($unit ? ' ' . $unit : ''),
-                'return_qty' => $this->formatReturnQtyWithImei($product_sale_data, $id),
-                'unit_price' => $product_sale_data->qty ? $fmt($product_sale_data->total / $product_sale_data->qty) : '0',
-                'tax' => $fmt($product_sale_data->tax) . '(' . $product_sale_data->tax_rate . '%)',
-                'discount' => $fmt($product_sale_data->discount),
-                'subtotal' => $fmt($product_sale_data->total),
-                'is_delivered' => $product_sale_data->is_delivered ? __('db.Yes') : __('db.No'),
-                'topping_id' => $has_restaurant ? ($product_sale_data->topping_id ?? null) : null,
-            ];
-            $group_qty = (float) $product_sale_data->qty;
+            $qty_val = $children->isNotEmpty() ? ((string) $product_sale_data->qty . ($unit ? ' ' . $unit : '')) : (string) $product_sale_data->qty;
+            $returned_val = (string) $product_sale_data->return_qty;
+            $unit_price_val = $product_sale_data->qty ? $fmt($product_sale_data->total / $product_sale_data->qty) : '0';
+            $tax_val = $fmt($product_sale_data->tax) . '(' . $product_sale_data->tax_rate . '%)';
+            $discount_val = $fmt($product_sale_data->discount);
+            $subtotal_val = $fmt($product_sale_data->total);
+            $delivered_val = $product_sale_data->is_delivered ? __('db.Yes') : __('db.No');
 
             $letter = 'a';
             foreach ($children as $child) {
@@ -3444,46 +3429,56 @@ class SaleController extends Controller
                     $ud = Unit::find($child->sale_unit_id);
                     $c_unit = $ud ? $ud->unit_code : '';
                 }
-                $citem = $this->getProductOrBasementForSaleItem($child);
-                $group_rows[] = [
-                    'name_code' => '&nbsp;&nbsp;&nbsp;&nbsp;' . $letter . '. ' . e($citem->name),
-                    'batch_no' => $c_batch,
-                    'qty' => (string) $child->qty . ($c_unit ? ' ' . $c_unit : ''),
-                    'return_qty' => (string) $child->return_qty,
-                    'unit_price' => $child->qty ? $fmt($child->total / $child->qty) : '0',
-                    'tax' => $fmt($child->tax) . '(' . $child->tax_rate . '%)',
-                    'discount' => $fmt($child->discount),
-                    'subtotal' => $fmt($child->total),
-                    'is_delivered' => $child->is_delivered ? __('db.Yes') : __('db.No'),
-                    'topping_id' => null,
-                ];
-                $group_qty += (float) $child->qty;
+                $rowQtySum += (float) $child->qty;
+                $c_unit_price = $child->qty ? $fmt($child->total / $child->qty) : '0';
+                $batch_val .= '<br>    ' . $letter . '. ' . $c_batch;
+                $qty_val .= '<br>    ' . $letter . '. ' . $child->qty . ($c_unit ? ' ' . $c_unit : '');
+                $returned_val .= '<br>    ' . $letter . '. ' . $child->return_qty;
+                $unit_price_val .= '<br>    ' . $letter . '. ' . $c_unit_price;
+                $tax_val .= '<br>    ' . $letter . '. ' . $fmt($child->tax) . '(' . $child->tax_rate . '%)';
+                $discount_val .= '<br>    ' . $letter . '. ' . $fmt($child->discount);
+                $subtotal_val .= '<br>    ' . $letter . '. ' . $fmt($child->total);
+                $delivered_val .= '<br>    ' . $letter . '. ' . ($child->is_delivered ? __('db.Yes') : __('db.No'));
                 $letter++;
             }
 
-            $total_qty += $group_qty;
-            $groups[] = ['rowspan' => count($group_rows), 'rows' => $group_rows];
-        }
+            $product_sale[7][$key] = $batch_val;
+            $product_sale[0][$key] = nl2br(e($name_with_code));
+            $returned_imei_number_data = '';
+            if (!$product_sale_data->warehouse_store_product_id && $product_sale_data->imei_number && !str_contains($product_sale_data->imei_number, "null")) {
+                $imeis = array_unique(explode(',', $product_sale_data->imei_number));
+                $imeis = implode(',', $imeis);
+                $product_sale[0][$key] .= '<br><span style="white-space: normal !important;word-break: break-word !important;overflow-wrap: anywhere !important;max-width: 100%;display: block;">IMEI or Serial Number: ' . $imeis . '</span>';
+                $returned_imei_number_data = DB::table('returns')
+                    ->join('product_returns', 'returns.id', '=', 'product_returns.return_id')
+                    ->where([
+                        ['returns.sale_id', $id],
+                        ['product_returns.product_id', $product_sale_data->product_id]
+                    ])->select('product_returns.imei_number')
+                    ->first();
+            }
+            $product_sale[1][$key] = $qty_val;
+            $product_sale[2][$key] = $children->isNotEmpty() ? '' : $unit;
+            $product_sale[12][$key] = $unit_price_val;
+            $product_sale[3][$key] = $tax_val;
+            $product_sale[4][$key] = $product_sale_data->tax_rate;
+            $product_sale[5][$key] = $discount_val;
+            $product_sale[6][$key] = $subtotal_val;
+            if ($returned_imei_number_data) {
+                $imeis = array_unique(explode(',', $returned_imei_number_data->imei_number));
+                $imeis = implode(',', $imeis);
+                $product_sale[8][$key] = $product_sale_data->return_qty . '<br><span style="white-space: normal !important;word-break: break-word !important;overflow-wrap: anywhere !important;max-width: 100%;display: block;">IMEI or Serial Number: ' . $imeis . '</span>';
+            } else {
+                $product_sale[8][$key] = $returned_val;
+            }
+            $product_sale[9][$key] = $delivered_val;
+            $product_sale[11][$key] = $rowQtySum;
 
-        return ['groups' => $groups, 'total_qty' => $total_qty];
-    }
-
-    private function formatReturnQtyWithImei($product_sale_data, $sale_id)
-    {
-        if ($product_sale_data->warehouse_store_product_id || !$product_sale_data->imei_number || str_contains($product_sale_data->imei_number, "null")) {
-            return (string) $product_sale_data->return_qty;
+            if (in_array('restaurant', explode(',', $general_setting->modules))) {
+                $product_sale[10][$key] = $product_sale_data->topping_id;
+            }
         }
-        $returned_imei = DB::table('returns')
-            ->join('product_returns', 'returns.id', '=', 'product_returns.return_id')
-            ->where([
-                ['returns.sale_id', $sale_id],
-                ['product_returns.product_id', $product_sale_data->product_id]
-            ])->select('product_returns.imei_number')->first();
-        if (!$returned_imei) {
-            return (string) $product_sale_data->return_qty;
-        }
-        $imeis = implode(',', array_unique(explode(',', $returned_imei->imei_number)));
-        return $product_sale_data->return_qty . '<br><span style="white-space: normal !important;word-break: break-word !important;overflow-wrap: anywhere !important;max-width: 100%;display: block;">IMEI or Serial Number: ' . $imeis . '</span>';
+        return $product_sale;
     }
 
     public function getSale($id)
