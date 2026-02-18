@@ -437,14 +437,15 @@ class SaleController extends Controller
                 $nestedData['warehouse_name'] = $warehouse->name;
                 $nestedData['currency'] = $currency;
 
-                // Products details logic (make sure $sale->products relationship is working)
+                // Products details logic - use Product_Sale directly so parent-type basement items (warehouse_store_product_id) are included
                 $productNames = [];
                 $productQtys = [];
-                $total_products = $sale->products->count();
-                foreach ($sale->products as $key_prod => $product) {
-                    $product_sale = Product_Sale::where(['product_id' => $product->id, 'sale_id' => $sale->id])->first();
+                $product_sales = Product_Sale::where('sale_id', $sale->id)->orderBy('pos_sort_order')->orderBy('id')->get();
+                $total_products = $product_sales->count();
+                foreach ($product_sales as $key_prod => $product_sale) {
+                    $item = $this->getProductOrBasementForSaleItem($product_sale);
                     $html_tag_start = ($key_prod + 1 < $total_products) ? '<div style="border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-bottom: 4px;">' : '<div style="padding-bottom: 4px; margin-bottom: 4px;">';
-                    $productNames[] = $html_tag_start . e($product->name) . '</div>';
+                    $productNames[] = $html_tag_start . e($item->name) . '</div>';
                     $productQtys[] = '<div style="padding-bottom: 4px; margin-bottom: 4px;">' . '<span class="badge badge-primary">' . e($product_sale->qty) . '</span></div>';
                 }
                 $nestedData['products'] = implode('', $productNames);
