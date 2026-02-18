@@ -5255,13 +5255,20 @@
             $('#edit_full_phone').val(full_number_edit);
 
             // Update form action URL
+            // var form = $('#customer-edit-form');
+            // form.attr('action', "{{ url('customer') }}/" + customer_id);
             var form = $('#customer-edit-form');
-            form.attr('action', "{{ url('customer') }}/" + customer_id);
+            var updateUrlTemplate = "{{ route('customer.update', ['customer' => '__ID__']) }}";
+            var updateUrl = updateUrlTemplate.replace('__ID__', customer_id);
+            form.attr('action', updateUrl);
 
             $.ajax({
-                type: 'PUT',
-                url: "{{ url('customer') }}/" + customer_id,
-                data: $("#customer-edit-form").serialize(),
+               // type: 'PUT',
+                // url: "{{ url('customer') }}/" + customer_id,
+                // data: $("#customer-edit-form").serialize(),
+                type: 'POST',
+                url: updateUrl,
+                data: form.serialize() + '&from_pos=1',
                 success: function(response) {
                     // Update the select option with new data
                     var customer_name = $('#edit_customer_name').val();

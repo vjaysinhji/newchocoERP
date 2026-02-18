@@ -1036,8 +1036,38 @@ class SaleController extends Controller
                 $lims_sale_data = $existing;
             }
         }
-        if (!$lims_sale_data) {
-            $lims_sale_data = Sale::create($data);
+        // if (!$lims_sale_data) {
+            //     $lims_sale_data = Sale::create($data);
+            // }
+            
+                $lims_sale_data = Sale::create($data);
+        if (isset($data['pos']) && $data['pos']) {
+            // agar draft edit se aa raha ho to purana address delete karein
+            if (!empty($data['sale_id'])) {
+                DB::table('sale_addresses')
+                    ->where('sale_id', $data['sale_id'])
+                    ->delete();
+            }
+
+            $customer = Customer::find($data['customer_id']);
+
+            if ($customer) {
+                DB::table('sale_addresses')->updateOrInsert(
+                    ['invoice_number' => $lims_sale_data->reference_no],
+                    [
+                        'sale_id'      => $lims_sale_data->id,
+                        'customer_id'  => $customer->id,
+                        'address'      => $customer->address,
+                        'area'         => $customer->area,
+                        'house_number' => $customer->house_number,
+                        'street'       => $customer->street,
+                        'ave'          => $customer->ave,
+                        'block'        => $customer->block,
+                        'created_at'   => now(),
+                        'updated_at'   => now(),
+                    ]
+                );
+            }
         }
 
         // add the $new_data variable value to $data['paid_amount'] variable

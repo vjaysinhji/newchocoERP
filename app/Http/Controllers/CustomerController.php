@@ -736,6 +736,25 @@ class CustomerController extends Controller
         if(count($custom_field_data))
             DB::table('customers')->where('id', $lims_customer_data->id)->update($custom_field_data);
         $this->cacheForget('customer_list');
+        if ($request->boolean('from_pos')) {
+            DB::table('sale_addresses')
+                ->where('customer_id', $lims_customer_data->id)
+                ->update([
+                    'address' => $lims_customer_data->address,
+                    'area' => $lims_customer_data->area,
+                    'house_number' => $lims_customer_data->house_number,
+                    'street' => $lims_customer_data->street,
+                    'ave' => $lims_customer_data->ave,
+                    'block' => $lims_customer_data->block,
+                    'updated_at' => now(),
+                ]);
+        }
+        if ($request->ajax() || $request->wantsJson() || $request->boolean('from_pos')) {
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+            ]);
+        }
 
         return redirect('customer')->with('edit_message', $message);
     }

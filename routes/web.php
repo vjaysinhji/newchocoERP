@@ -92,6 +92,12 @@ use App\Http\Controllers\OvertimeController;
 use App\Http\Controllers\SaleAgentController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\WhatsappController;
+use App\Http\Controllers\GovernorateController;
+use App\Http\Controllers\AreaController;
+use App\Http\Controllers\DisabledDateController;
+use App\Http\Controllers\DeliveryTimeController;
+use App\Http\Controllers\DisabledPickupDateController;
+use App\Http\Controllers\PickupTimeController;
 
 Route::get('webview/auth', function (Request $request) {
     // Get token from Authorization header
@@ -112,10 +118,10 @@ Route::get('webview/auth', function (Request $request) {
     return redirect($redirect . '?app=true');
 });
 
-Route::get('migrate', function() {
-	Artisan::call('migrate');
+Route::get('migrate', function () {
+    Artisan::call('migrate');
     Artisan::call('db:seed');
-	dd('migrated');
+    dd('migrated');
 });
 
 // DEBUG: Find Blade syntax error - visit /debug-blade-syntax
@@ -168,7 +174,7 @@ Route::get('debug-blade-syntax', function () {
     return response('<pre>' . print_r($results, true) . '</pre>');
 });
 
-Route::get('clear',function() {
+Route::get('clear', function () {
     Artisan::call('optimize:clear');
     cache()->forget('biller_list');
     cache()->forget('brand_list');
@@ -203,13 +209,13 @@ Route::controller(InstallController::class)->group(function () {
 
 Auth::routes();
 
-Route::group(['middleware' => 'auth'], function() {
+Route::group(['middleware' => 'auth'], function () {
     Route::controller(HomeController::class)->group(function () {
         Route::get('home', 'home');
     });
 });
 
-Route::group(['middleware' => ['common', 'auth', 'active']], function() {
+Route::group(['middleware' => ['common', 'auth', 'active']], function () {
 
     Route::get('/languages', [LanguageController::class, 'index'])->name('languages');
     Route::post('/languages/create', [LanguageController::class, 'store']);
@@ -246,22 +252,22 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
     Route::get('products/combo', [ProductController::class, 'indexCombo'])->name('products.combo.index');
     Route::get('products/single/create', [ProductController::class, 'createSingle'])->name('products.single.create');
     Route::get('products/combo/create', [ProductController::class, 'createCombo'])->name('products.combo.create');
-    Route::resource('products',ProductController::class)->except([ 'show']);
+    Route::resource('products', ProductController::class)->except(['show']);
     Route::controller(ProductController::class)->group(function () {
         Route::post('products/product-data', 'productData');
         Route::get('products/gencode', 'generateCode')->name('product.gencode');
         Route::get('products/search', 'search');
-        Route::get('products/saleunit/{id}', 'saleUnit')->name ('product-saleunit');
+        Route::get('products/saleunit/{id}', 'saleUnit')->name('product-saleunit');
         Route::get('products/getdata/{id}/{variant_id}', 'getData')->name('products.getdata');
         Route::get('products/product_warehouse/{id}', 'productWarehouseData')->name('product.warehouse');
         Route::get('products/combo-ingredients/{id}', 'comboIngredientsData')->name('product.combo.ingredients');
         Route::get('products/product-view-data-for-pos/{id}', 'productViewDataForPos')->name('product.view-data-pos');
         Route::post('products/combo-assemble', 'comboAssemble')->name('product.combo.assemble');
-        Route::get('products/print_barcode','printBarcode')->name('product.printBarcode');
+        Route::get('products/print_barcode', 'printBarcode')->name('product.printBarcode');
         Route::get('products/lims_product_search', 'limsProductSearch')->name('product.search');
         Route::post('products/deletebyselection', 'deleteBySelection')->name('products.deletebyselection');
         Route::post('products/update', 'updateProduct');
-        Route::get('products/variant-data/{id}','variantData');
+        Route::get('products/variant-data/{id}', 'variantData');
         Route::get('products/history', 'history')->name('products.history');
         Route::post('products/sale-history-data', 'saleHistoryData');
         Route::post('products/purchase-history-data', 'purchaseHistoryData');
@@ -274,16 +280,16 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::get('products/show-all-product-online', 'showAllProductOnline')->name('product.showAllProductOnline');
         Route::get('check-batch-availability/{product_id}/{batch_no}/{warehouse_id}', 'checkBatchAvailability');
         Route::get('product-price/{id}', 'getProductPrice');
-     });
+    });
 
     // Raw Materials Routes
-    Route::resource('rawmaterials',RawMaterialController::class)->except([ 'show']);
+    Route::resource('rawmaterials', RawMaterialController::class)->except(['show']);
     Route::controller(RawMaterialController::class)->group(function () {
         Route::post('rawmaterials/rawmaterial-data', 'rawMaterialData')->name('rawmaterials.rawmaterial-data');
         Route::get('rawmaterials/gencode', 'generateCode')->name('rawmaterial.gencode');
         Route::post('rawmaterials/deletebyselection', 'deleteBySelection')->name('rawmaterials.deletebyselection');
         Route::post('rawmaterials/update', 'update')->name('rawmaterials.updateData');
-        
+
         // Raw Material Category Routes
         Route::get('rawmaterials/category', 'indexCategory')->name('rawmaterials.category.index');
         Route::post('rawmaterials/category/category-data', 'categoryData')->name('rawmaterials.category.data');
@@ -292,7 +298,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::get('rawmaterials/category/{id}/edit', 'editCategory')->name('rawmaterials.category.edit');
         Route::put('rawmaterials/category/{id}', 'updateCategory')->name('rawmaterials.category.update');
         Route::delete('rawmaterials/category/{id}', 'destroyCategory')->name('rawmaterials.category.destroy');
-        
+
         // Raw Material Brand Routes
         Route::get('rawmaterials/brand', 'indexBrand')->name('rawmaterials.brand.index');
         Route::post('rawmaterials/brand', 'storeBrand')->name('rawmaterials.brand.store');
@@ -300,7 +306,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::get('rawmaterials/brand/{id}/edit', 'editBrand')->name('rawmaterials.brand.edit');
         Route::put('rawmaterials/brand/{id}', 'updateBrand')->name('rawmaterials.brand.update');
         Route::delete('rawmaterials/brand/{id}', 'destroyBrand')->name('rawmaterials.brand.destroy');
-        
+
         // Raw Material Unit Routes
         Route::get('rawmaterials/unit', 'indexUnit')->name('rawmaterials.unit.index');
         Route::post('rawmaterials/unit', 'storeUnit')->name('rawmaterials.unit.store');
@@ -308,8 +314,8 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::get('rawmaterials/unit/{id}/edit', 'editUnit')->name('rawmaterials.unit.edit');
         Route::put('rawmaterials/unit/{id}', 'updateUnit')->name('rawmaterials.unit.update');
         Route::delete('rawmaterials/unit/{id}', 'destroyUnit')->name('rawmaterials.unit.destroy');
-     });
-     
+    });
+
     // Raw Material Adjustment Routes
     Route::controller(RawMaterialAdjustmentController::class)->group(function () {
         Route::get('rawmaterial-adjustment/getrawmaterial/{id}', 'getRawMaterial')->name('rawmaterial.adjustment.getrawmaterial');
@@ -317,7 +323,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::post('rawmaterial-adjustment/deletebyselection', 'deleteBySelection');
     });
     Route::resource('rawmaterial-adjustment', RawMaterialAdjustmentController::class);
-    
+
     // Raw Material Stock Count Routes
     Route::controller(RawMaterialStockCountController::class)->group(function () {
         Route::post('rawmaterial-stock-count/finalize', 'finalize')->name('rawmaterial-stock-count.finalize');
@@ -341,22 +347,22 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
     Route::resource('warehouse-store-stock-count', WarehouseStoreStockCountController::class);
 
     // Cold Storages Routes
-    Route::resource('coldstorages',ColdStorageController::class)->except([ 'show']);
+    Route::resource('coldstorages', ColdStorageController::class)->except(['show']);
     Route::controller(ColdStorageController::class)->group(function () {
         Route::post('coldstorages/coldstorage-data', 'coldStorageData')->name('coldstorages.coldstorage-data');
         Route::get('coldstorages/gencode', 'generateCode')->name('coldstorage.gencode');
         Route::post('coldstorages/deletebyselection', 'deleteBySelection')->name('coldstorages.deletebyselection');
         Route::post('coldstorages/update', 'update')->name('coldstorages.updateData');
-     });
+    });
 
     // Warehouse Stores Routes
-    Route::resource('warehouse-stores',BasementController::class)->except([ 'show']);
+    Route::resource('warehouse-stores', BasementController::class)->except(['show']);
     Route::controller(BasementController::class)->group(function () {
         Route::post('warehouse-stores/basement-data', 'basementData')->name('warehouse-stores.basement-data');
         Route::get('warehouse-stores/gencode', 'generateCode')->name('warehouse-store.gencode');
         Route::post('warehouse-stores/deletebyselection', 'deleteBySelection')->name('warehouse-stores.deletebyselection');
         Route::post('warehouse-stores/update', 'update')->name('warehouse-stores.updateData');
-     });
+    });
     Route::controller(WarehouseStoreController::class)->group(function () {
         Route::get('warehouse-stores/category', 'indexCategory')->name('warehouse-stores.category.index');
         Route::post('warehouse-stores/category/category-data', 'categoryData')->name('warehouse-stores.category.data');
@@ -377,25 +383,25 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::get('warehouse-stores/unit/{id}/edit', 'editUnit')->name('warehouse-stores.unit.edit');
         Route::put('warehouse-stores/unit/{id}', 'updateUnit')->name('warehouse-stores.unit.update');
         Route::delete('warehouse-stores/unit/{id}', 'destroyUnit')->name('warehouse-stores.unit.destroy');
-     });
+    });
 
 
     Route::get('language_switch/{id}', [LanguageController::class, 'switchLanguage']);
 
-    Route::resource('role',RoleController::class);
+    Route::resource('role', RoleController::class);
     Route::controller(RoleController::class)->group(function () {
         Route::get('role/permission/{id}', 'permission')->name('role.permission');
         Route::post('role/set_permission', 'setPermission')->name('role.setPermission');
     });
 
     //Sms Template
-    Route::resource('smstemplates',SmsTemplateController::class);
+    Route::resource('smstemplates', SmsTemplateController::class);
     Route::resource('unit', UnitController::class);
     Route::controller(UnitController::class)->group(function () {
         Route::post('importunit', 'importUnit')->name('unit.import');
         Route::post('unit/deletebyselection', 'deleteBySelection');
         Route::get('unit/lims_unit_search', 'limsUnitSearch')->name('unit.search');
-     });
+    });
 
     Route::controller(CategoryController::class)->group(function () {
         Route::post('category/import', 'import')->name('category.import');
@@ -467,7 +473,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
 
     Route::resource('discount-plans', DiscountPlanController::class);
     Route::resource('discounts', DiscountController::class);
-    Route::get('discounts/product-search/{code}', [DiscountController::class,'productSearch']);
+    Route::get('discounts/product-search/{code}', [DiscountController::class, 'productSearch']);
 
 
     Route::controller(CustomerController::class)->group(function () {
@@ -509,10 +515,10 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::post('sales/sendmail', 'sendMail')->name('sale.sendmail');
         Route::get('sales/sale_by_csv', 'saleByCsv')->middleware('permission:sales-import');
         Route::get('sales/deleted_data', 'showDeletedSales')
-                ->middleware('hasPermanentDeletePermission');
+            ->middleware('hasPermanentDeletePermission');
         Route::delete('sales/force-delete-selected', 'forceDeleteSelected')
             ->name('sales.forceDeleteSelected')
-                ->middleware('hasPermanentDeletePermission');
+            ->middleware('hasPermanentDeletePermission');
         Route::get('sales/product_sale/{id}', 'productSaleData');
         Route::get('sales/get-sale/{id}', 'getSale');
         Route::post('importsale', 'importSale')->name('sale.import');
@@ -583,8 +589,8 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
     Route::controller(DeliveryController::class)->group(function () {
         Route::prefix('delivery')->group(function () {
             Route::get('/', 'index')->name('delivery.index');
-            Route::get('delivery_list_data','deliveryListData');
-            Route::get('product_delivery/{id}','productDeliveryData');
+            Route::get('delivery_list_data', 'deliveryListData');
+            Route::get('product_delivery/{id}', 'productDeliveryData');
             Route::get('create/{id}', 'create');
             Route::post('store', 'store')->name('delivery.store');
             Route::post('sendmail', 'sendMail')->name('delivery.sendMail');
@@ -593,13 +599,13 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
             Route::post('deletebyselection', 'deleteBySelection');
             Route::post('delete/{id}', 'delete')->name('delivery.delete');
         });
-     });
+    });
 
 
     Route::controller(QuotationController::class)->group(function () {
         Route::prefix('quotations')->group(function () {
             Route::post('quotation-data', 'quotationData')->name('quotations.data');
-            Route::get('product_quotation/{id}','productQuotationData');
+            Route::get('product_quotation/{id}', 'productQuotationData');
             Route::get('lims_product_search', 'limsProductSearch')->name('product_quotation.search');
             Route::get('getcustomergroup/{id}', 'getCustomerGroup')->name('quotation.getcustomergroup');
             Route::get('getproduct/{id}', 'getProduct')->name('quotation.getproduct');
@@ -608,7 +614,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
             Route::post('sendmail', 'sendMail')->name('quotation.sendmail');
             Route::post('deletebyselection', 'deleteBySelection');
         });
-     });
+    });
     Route::resource('quotations', QuotationController::class);
 
 
@@ -675,7 +681,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
             Route::put('change-status/{id}', 'changeStatus')->name('transfers.changeStatus');
             Route::get('lims_product_search', 'limsProductSearch')->name('product_transfer.search');
             Route::post('deletebyselection', 'deleteBySelection');
-         });
+        });
         Route::post('importtransfer', 'importTransfer')->name('transfer.import');
     });
     Route::resource('transfers', TransferController::class);
@@ -699,7 +705,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
             Route::get('lims_product_search', 'limsProductSearch')->name('product_return-sale.search');
             Route::get('product_return/{id}', 'productReturnData');
             Route::post('deletebyselection', 'deleteBySelection');
-         });
+        });
     });
     Route::resource('return-sale', ReturnController::class);
 
@@ -713,7 +719,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
             Route::get('lims_product_search', 'limsProductSearch')->name('product_return-purchase.search');
             Route::get('product_return/{id}', 'productReturnData');
             Route::post('deletebyselection', 'deleteBySelection');
-         });
+        });
     });
     Route::resource('return-purchase', ReturnPurchaseController::class);
 
@@ -760,9 +766,9 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
             Route::post('user-transfer-data', 'userTransferData');
             Route::post('user-payroll-data', 'userPayrollData');
             Route::post('biller_report', 'billerReport')->name('report.biller');
-            Route::post('biller-sale-data','billerSaleData');
-            Route::post('biller-quotation-data','billerQuotationData');
-            Route::post('biller-payment-data','billerPaymentData');
+            Route::post('biller-sale-data', 'billerSaleData');
+            Route::post('biller-quotation-data', 'billerQuotationData');
+            Route::post('biller-payment-data', 'billerPaymentData');
             Route::post('customer_report', 'customerReport')->name('report.customer');
             Route::post('customer-sale-data', 'customerSaleData');
             Route::post('customer-payment-data', 'customerPaymentData');
@@ -815,7 +821,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
             Route::get('createsms', 'createSms')->name('setting.createSms');
             Route::post('sendsms', 'sendSMS')->name('setting.sendSms');
             Route::get('payment-gateways/list', 'gateway')->name('setting.gateway');
-            Route::post('payment-gateways/update','gatewayUpdate')->name('setting.gateway.update');
+            Route::post('payment-gateways/update', 'gatewayUpdate')->name('setting.gateway.update');
             Route::get('hrm_setting', 'hrmSetting')->name('setting.hrm');
             Route::post('hrm_setting_store', 'hrmSettingStore')->name('setting.hrmStore');
             Route::post('mail_setting_store', 'mailSettingStore')->name('setting.mailStore');
@@ -824,7 +830,7 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
             Route::post('pos_setting_store', 'posSettingStore')->name('setting.posStore');
             Route::get('empty-database', 'emptyDatabase')->name('setting.emptyDatabase');
 
-         });
+        });
         Route::get('backup', 'backup')->name('setting.backup');
     });
 
@@ -847,7 +853,8 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::get('expense_categories/gencode', 'generateCode');
         Route::post('expense_categories/import', 'import')->name('expense_category.import');
         Route::post('expense_categories/deletebyselection', 'deleteBySelection');
-        Route::get('expense_categories/all', 'expenseCategoriesAll')->name('expense_category.all');;
+        Route::get('expense_categories/all', 'expenseCategoriesAll')->name('expense_category.all');
+        ;
     });
     Route::resource('expense_categories', ExpenseCategoryController::class);
 
@@ -863,7 +870,8 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
         Route::get('income_categories/gencode', 'generateCode');
         Route::post('income_categories/import', 'import')->name('income_category.import');
         Route::post('income_categories/deletebyselection', 'deleteBySelection');
-        Route::get('income_categories/all', 'incomeCategoriesAll')->name('income_category.all');;
+        Route::get('income_categories/all', 'incomeCategoriesAll')->name('income_category.all');
+        ;
     });
     Route::resource('income_categories', IncomeCategoryController::class);
 
@@ -884,6 +892,31 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
     Route::resource('gift_cards', GiftCardController::class);
 
     Route::resource('couriers', CourierController::class);
+    Route::resource('governorates', GovernorateController::class);
+    Route::resource('areas', AreaController::class);
+    Route::resource('disabled-dates', DisabledDateController::class);
+    Route::resource('delivery-times', DeliveryTimeController::class);
+    Route::resource('disabled-pickup-dates', DisabledPickupDateController::class);
+    Route::resource('pickup-times', PickupTimeController::class);
+
+    // Inline update routes for Delivery Operation modules
+    Route::post('governorates/{id}/status', [GovernorateController::class, 'inlineStatus'])->name('governorates.inlineStatus');
+    Route::post('governorates/{id}/sort-order', [GovernorateController::class, 'inlineSort'])->name('governorates.inlineSort');
+
+    Route::post('areas/{id}/status', [AreaController::class, 'inlineStatus'])->name('areas.inlineStatus');
+    Route::post('areas/{id}/sort-order', [AreaController::class, 'inlineSort'])->name('areas.inlineSort');
+
+    Route::post('disabled-dates/{id}/status', [DisabledDateController::class, 'inlineStatus'])->name('disabled-dates.inlineStatus');
+    Route::post('disabled-dates/{id}/sort-order', [DisabledDateController::class, 'inlineSort'])->name('disabled-dates.inlineSort');
+
+    Route::post('delivery-times/{id}/status', [DeliveryTimeController::class, 'inlineStatus'])->name('delivery-times.inlineStatus');
+    Route::post('delivery-times/{id}/sort-order', [DeliveryTimeController::class, 'inlineSort'])->name('delivery-times.inlineSort');
+
+    Route::post('disabled-pickup-dates/{id}/status', [DisabledPickupDateController::class, 'inlineStatus'])->name('disabled-pickup-dates.inlineStatus');
+    Route::post('disabled-pickup-dates/{id}/sort-order', [DisabledPickupDateController::class, 'inlineSort'])->name('disabled-pickup-dates.inlineSort');
+
+    Route::post('pickup-times/{id}/status', [PickupTimeController::class, 'inlineStatus'])->name('pickup-times.inlineStatus');
+    Route::post('pickup-times/{id}/sort-order', [PickupTimeController::class, 'inlineSort'])->name('pickup-times.inlineSort');
 
     Route::controller(CouponController::class)->group(function () {
         Route::get('coupons/gencode', 'generateCode');
@@ -910,14 +943,14 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
 
 
     //HRM routes
-    Route::post('departments/deletebyselection', [DepartmentController::class,'deleteBySelection']);
+    Route::post('departments/deletebyselection', [DepartmentController::class, 'deleteBySelection']);
     Route::resource('departments', DepartmentController::class);
     Route::resource('designations', DesignationController::class);
     Route::resource('shift', ShiftController::class);
     Route::resource('overtime', OvertimeController::class);
     Route::resource('leave-type', LeaveTypeController::class);
     Route::resource('leave', LeaveController::class);
-    Route::get('hrm-panel',[HrmController::class,'index'])->name('hrm-panel');
+    Route::get('hrm-panel', [HrmController::class, 'index'])->name('hrm-panel');
     Route::resource('sale-agents', SaleAgentController::class)->except('show');
     Route::get('/payroll/monthly-data', [PayrollController::class, 'monthlyData'])->name('payroll.monthlyData');
     Route::get('payroll/get-employees-by-warehouse', [PayrollController::class, 'getEmployeesByWarehouse'])->name('payroll.getEmployeesByWarehouse');
@@ -983,8 +1016,8 @@ Route::group(['middleware' => ['common', 'auth', 'active']], function() {
 
     Route::controller(AddonInstallController::class)->group(function () {
         Route::post('saas-install', 'saasInstall')->name('saas.install');
-        Route::post('ecommerce-install','ecommerceInstall')->name('ecommerce.install');
-        Route::post('woocommerce-install','woocommerceInstall')->name('woocommerce.install');
+        Route::post('ecommerce-install', 'ecommerceInstall')->name('ecommerce.install');
+        Route::post('woocommerce-install', 'woocommerceInstall')->name('woocommerce.install');
         Route::post('api-install', 'apiInstall')->name('api.install');
     });
 
