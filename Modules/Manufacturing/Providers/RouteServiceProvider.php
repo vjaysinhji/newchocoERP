@@ -35,13 +35,14 @@ class RouteServiceProvider extends ServiceProvider
     {
         $this->mapApiRoutes();
 
-        $this->mapWebRoutes();
+        // Web routes are loaded from App\Providers\RouteServiceProvider::mapManufacturingRoutes()
+        // so they are registered before Ecommerce and avoid 404 on /manufacturing/* URLs.
+        // $this->mapWebRoutes();
     }
 
     /**
      * Define the "web" routes for the application.
-     *
-     * These routes all receive session state, CSRF protection, etc.
+     * (Kept for reference; actually loaded by App RouteServiceProvider.)
      *
      * @return void
      */
