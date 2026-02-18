@@ -2600,10 +2600,18 @@ class SaleController extends Controller
 
     /**
      * For a product_sale row, return Product or Basement (warehouse-store) for name/code/type.
-     * Returns object with at least: name, code, type (default 'standard'), file (null for basement).
+     * Matches POS store logic: child always deducts from products table → show Product; parent/display from basement → show Basement.
      */
     private function getProductOrBasementForSaleItem($product_sale_data)
     {
+        // Child products: same as store - deduct from products table, so show Product name
+        if (($product_sale_data->pos_row_type ?? null) === 'child' && $product_sale_data->product_id) {
+            $p = Product::find($product_sale_data->product_id);
+            if ($p) {
+                return (object) ['id' => $p->id, 'name' => $p->name, 'code' => $p->code, 'type' => $p->type ?? 'standard', 'file' => $p->file ?? null];
+            }
+        }
+        // Parent/display from basement: same as store - deduct from basement, so show Basement name
         if ($product_sale_data->warehouse_store_product_id ?? null) {
             $b = Basement::find($product_sale_data->warehouse_store_product_id);
             if (!$b) {
@@ -2611,6 +2619,7 @@ class SaleController extends Controller
             }
             return (object) ['id' => $b->id, 'name' => $b->name, 'code' => $b->code, 'type' => 'standard', 'file' => null];
         }
+        // Regular product (display)
         $p = Product::find($product_sale_data->product_id);
         if (!$p) {
             return (object) ['id' => null, 'name' => '—', 'code' => '', 'type' => 'standard', 'file' => null];
