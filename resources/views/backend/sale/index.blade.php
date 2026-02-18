@@ -1722,8 +1722,9 @@
                 var batch_no = data[7];
                 var return_qty = data[8];
                 var is_delivered = data[9];
-                // Check if data[10] exists
                 var toppings = data[10] ? data[10] : [];
+                var row_qty_sum = data[11] ? data[11] : [];
+                var unit_price_display = data[12] ? data[12] : [];
                 var total_qty = 0;
                 var newBody = $("<tbody>");
 
@@ -1733,10 +1734,8 @@
                     cols += '<td>' + (index + 1) + '</td>';
                     cols += '<td>' + name_code[index];
 
-                    // Append topping names if toppings[index] exists
                     if (toppings[index]) {
                         try {
-                            // Parse and extract topping names
                             var toppingData = JSON.parse(toppings[index]);
                             var toppingNames = toppingData.map(topping => topping.name).join(', ');
                             cols += ' (' + toppingNames + ')';
@@ -1748,35 +1747,33 @@
 
                     cols += '</td>';
                     cols += '<td>' + batch_no[index] + '</td>';
-                    cols += '<td>' + qty[index] + ' ' + unit_code[index] + '</td>';
+                    cols += '<td>' + (String(qty[index]).indexOf('<br>') !== -1 ? qty[index] : (qty[index] + (unit_code[index] ? ' ' + unit_code[index] : ''))) + '</td>';
                     cols += '<td>' + return_qty[index] + '</td>';
 
-                    // Calculate unit price
-                    var unitPrice = parseFloat(subtotal[index] / qty[index]).toFixed(
-                        {{ $general_setting->decimal }});
-
-                    // Calculate topping prices if toppings[index] exists
+                    var unitPriceCell;
+                    if (unit_price_display[index]) {
+                        unitPriceCell = unit_price_display[index];
+                    } else {
+                        unitPriceCell = parseFloat(subtotal[index] / qty[index]).toFixed(
+                            {{ $general_setting->decimal }});
+                    }
                     var toppingPrices = '';
                     if (toppings[index]) {
                         try {
-                            var toppingData = JSON.parse(toppings[index]); // Parse topping data
+                            var toppingData = JSON.parse(toppings[index]);
                             toppingPrices = toppingData
                                 .map(topping => parseFloat(topping.price).toFixed(
-                                    {{ $general_setting->decimal }}
-                                    )) // Extract and format each topping price
-                                .join(' + '); // Join prices with '+'
+                                    {{ $general_setting->decimal }})).join(' + ');
                         } catch (error) {
                             console.error('Error calculating topping prices for index', index, toppings[
                                 index], error);
                         }
                     }
+                    cols += '<td>' + unitPriceCell + (toppingPrices ? ' (' + toppingPrices + ')' : '') + '</td>';
 
-                    cols += '<td>' + unitPrice + ' (' + toppingPrices + ')</td>';
-
-                    cols += '<td>' + tax[index] + '(' + tax_rate[index] + '%)' + '</td>';
+                    cols += '<td>' + (String(tax[index]).indexOf('%)') !== -1 ? tax[index] : (tax[index] + '(' + tax_rate[index] + '%)')) + '</td>';
                     cols += '<td>' + discount[index] + '</td>';
 
-                    // Update subtotal to include topping prices
                     var toppingPricesRowTotal = 0;
                     if (toppings[index]) {
                         try {
@@ -1788,12 +1785,14 @@
                                 index], error);
                         }
                     }
-                    subtotal[index] = parseFloat(subtotal[index]) + toppingPricesRowTotal;
+                    var subtotalVal = String(subtotal[index]).indexOf('<br>') !== -1
+                        ? subtotal[index]
+                        : (parseFloat(subtotal[index]) + toppingPricesRowTotal).toFixed({{ $general_setting->decimal }});
 
-                    cols += '<td>' + subtotal[index].toFixed({{ $general_setting->decimal }}) + '</td>';
+                    cols += '<td>' + subtotalVal + '</td>';
                     cols += '<td>' + is_delivered[index] + '</td>';
 
-                    total_qty += parseFloat(qty[index]);
+                    total_qty += (row_qty_sum[index] !== undefined) ? parseFloat(row_qty_sum[index]) : parseFloat(qty[index]);
                     newRow.append(cols);
                     newBody.append(newRow);
                 });
